@@ -1,0 +1,20 @@
+services: 
+  redis:
+    image: redis:8.0-M02-alpine3.20
+    #todo
+  neo4j:
+    image: neo4j:5.26.0-community-bullseye
+    #todo
+  app:
+    image: server-cont
+    ports:
+      - 18683:18683
+    #develop:
+      #watch:
+       # - action: sync
+         # path: .
+        #  target: .
+
+        #- action: rebuild
+        #  path: package.json
+        #  target: /usr/src/app
