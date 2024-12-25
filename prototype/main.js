@@ -13,6 +13,7 @@ document.addEventListener("DOMContentLoaded", function () {
     
     const baseMax = 32;
     const playerCountMax = 4;
+    const maxVal = 32;
 
     for (let base = 2; base <= baseMax; base++) {
         const option = document.createElement("option");
@@ -61,6 +62,16 @@ document.addEventListener("DOMContentLoaded", function () {
         buttonContainer.classList.add("button-container");
 
         const threshold = selectedBase - 1
+        
+        const randomInt = genRandomInt(maxVal);
+
+        const randomNum = document.createElement("label");
+        label.setAttribute("for", "newInput");  
+        label.textContent = `${randomInt}`;
+        label.id = "randomNum";
+        label.classList.add("random-num-label") 
+        container.appendChild(label);  
+
 
         function handleButtonClick(event) {
             const button = event.target;  // Get the button that was clicked
@@ -93,6 +104,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const confirmButton = document.createElement("button");
         confirmButton.textContent = "Confirm";
         confirmButton.classList.add("check-button");
+        confirmButton.addEventListener("click", checkInput)
         container.appendChild(confirmButton);
     });
 
@@ -101,5 +113,21 @@ document.addEventListener("DOMContentLoaded", function () {
             return num.toString(base).toUpperCase(); // Convert to base and make letters uppercase
         }
         return num.toString(); // For bases <= 10, just return the number as a string
+    }
+
+    function checkInput(base) {
+        const label = document.getElementById("randomNum"); // Get the label displaying the random number
+        const targetNumber = label.textContent; // The number we need to check
+        const buttons = document.querySelectorAll(".dynamic-button"); // Get all the buttons
+        let combinedValue = "";
+        
+    
+       
+        label.textContent = `${genRandomInt(maxVal)}`
+        
+    }
+
+    function genRandomInt(max) {
+        return randomInt = Math.floor(Math.random() * max);
     }
 });
