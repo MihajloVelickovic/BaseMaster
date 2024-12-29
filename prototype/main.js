@@ -90,7 +90,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         buttonCount = logBase(maxVal, selectedBase) + 1;
-
+        
         // Dynamically create 4 buttons
         for (let i = 1; i <= buttonCount; i++) {
             const button = document.createElement("button");
