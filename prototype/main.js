@@ -89,22 +89,36 @@ document.addEventListener("DOMContentLoaded", function () {
 
         }
 
+        buttonCount = logBase(maxVal, selectedBase) + 1;
 
         // Dynamically create 4 buttons
-        for (let i = 1; i <= 4; i++) {
+        for (let i = 1; i <= buttonCount; i++) {
             const button = document.createElement("button");
             button.classList.add("dynamic-button");
             button.textContent = `0`; 
             button.addEventListener("click", handleButtonClick);
             buttonContainer.appendChild(button);
         }
-       
+        
         container.appendChild(buttonContainer);
+
+        const cleatButton = document.createElement("button");
+        cleatButton.textContent = "CLEAR";
+        cleatButton.classList.add("clear-button");
+        cleatButton.addEventListener("click", () => {
+            Array.from(buttonContainer.children).forEach(b => {
+                b.textContent = "0"
+            });
+        });
+        container.appendChild(cleatButton);
+
 
         const confirmButton = document.createElement("button");
         confirmButton.textContent = "Confirm";
         confirmButton.classList.add("check-button");
-        confirmButton.addEventListener("click", checkInput)
+        confirmButton.addEventListener("click", () => {
+            checkInput(selectedBase);
+        });
         container.appendChild(confirmButton);
     });
 
@@ -117,17 +131,51 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function checkInput(base) {
         const label = document.getElementById("randomNum"); // Get the label displaying the random number
-        const targetNumber = label.textContent; // The number we need to check
+        let targetNumber = label.textContent; // The number we need to check
         const buttons = document.querySelectorAll(".dynamic-button"); // Get all the buttons
         let combinedValue = "";
         
-    
-       
+        let firstOne = false;
+
+        //console.log(`Number ${typeof(targetNumber)}, base: ${base}`)
+
+        targetNumber = parseInt(targetNumber, 10).toString(base).toUpperCase();
+
+        //console.log(`Number after${targetNumber}`)
+
+        buttons.forEach(b => {
+            if(firstOne)
+                combinedValue += b.textContent;
+            else if(!firstOne && b.textContent !== "0") {
+                combinedValue += b.textContent;
+                firstOne = true;
+            }
+
+        });
+        
+        combinedValue = combinedValue === "" ? "0":combinedValue;
+
+        combinedValue.toUpperCase();
+
+        //console.log(`Combined value: ${combinedValue}`)
+
+        if(combinedValue === targetNumber)
+            alert("Correct!");
+        else
+            alert("Incorrect! Going to next num....");
+
         label.textContent = `${genRandomInt(maxVal)}`
+        
         
     }
 
     function genRandomInt(max) {
         return randomInt = Math.floor(Math.random() * max);
     }
+
+    function logBase(x, base) {
+        return Math.log(x) / Math.log(base);
+    }
+
+    
 });
