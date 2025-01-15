@@ -3,10 +3,11 @@ document.addEventListener("DOMContentLoaded", function () {
     const playerSelect = document.querySelector("#playerSelect");
     const confirmButton = document.querySelector("#confirmButton");
     const helpChbx = document.querySelector("#help");
+    const gamemode = document.querySelector("#gamemodeSelect");
 
-    let selectedBase = "";
+    let toBase = "";
     let selectedPlayers = "";
-    let convertBase = "10";
+    let fromBase = "10";
     if (!baseSelect || !playerSelect) {
         console.error("One or more dropdown elements not found");
         return;
@@ -14,7 +15,9 @@ document.addEventListener("DOMContentLoaded", function () {
     
     const baseMax = 32;
     const playerCountMax = 4;
-    const maxVal = 32;
+    const maxVal = 255;
+    const minVal = 0;
+    const minBase = 2;
 
     for (let base = 2; base <= baseMax; base++) {
         const option = document.createElement("option");
@@ -46,31 +49,41 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         }
         
-        selectedBase = baseSelect.value;
+        toBase = baseSelect.value;
         selectedPlayers = playerSelect.value;
-        buttonCount = Math.floor(logBase(maxVal, selectedBase)) + 1;
+        
 
         console.log("All elements removed except the header.");
 
         container.classList.add("main-div")
 
+        if(gamemode.value.toLowerCase() === "reverse") {
+            [fromBase, toBase] = [toBase, fromBase];
+        }
+        else if (gamemode.value.toLowerCase() === "chaos") {
+            fromBase = genRandomInt(minBase, baseMax);
+            toBase = genRandomInt(minBase, baseMax);
+        }
+        buttonCount = Math.floor(logBase(maxVal, toBase)) + 1;
+
         const label = document.createElement("label");
         label.setAttribute("for", "newInput");  
-        label.textContent = `BASE ${selectedBase}`; 
+        label.textContent = `BASE ${toBase}`; 
         container.appendChild(label);   
 
         // Create the button container
         const buttonContainer = document.createElement("div");
         buttonContainer.classList.add("button-container");
 
-        const threshold = parseInt(selectedBase) - 1
+        const threshold = parseInt(toBase) - 1
         
-        const randomInt = genRandomInt(maxVal);
+        const randomInt = genRandomInt(minVal, maxVal);
 
         const randomNum = document.createElement("label");
         label.setAttribute("for", "newInput");  
-        label.textContent = `( ${randomInt} )${toSubstript(parseInt(convertBase))}
-                             → ( ? ) ${toSubstript(parseInt(selectedBase))} `;
+        label.textContent = `( ${randomInt.toString(fromBase).toUpperCase()} )
+                               ${toSubstript(parseInt(fromBase))}
+                               → ( ? ) ${toSubstript(parseInt(toBase))} `;
         label.id = "randomNum";
         label.classList.add("random-num-label") 
         container.appendChild(label);  
@@ -82,7 +95,7 @@ document.addEventListener("DOMContentLoaded", function () {
             // Increment the value until it reaches the threshold
             if (currentValue < threshold) {
                 currentValue++;
-                button.textContent = convertToBase(currentValue, selectedBase);
+                button.textContent = convertToBase(currentValue, toBase);
             }
             else {
                 currentValue = 0;
@@ -96,7 +109,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
             if(helpChbx.checked) {
                 
-                const sBase = parseInt(selectedBase);
+                const sBase = parseInt(toBase);
                 console.log(`Selected base: ${sBase}`);
                 console.log(`Power: ${buttonCount - i}`);
                 const helpLabel = document.createElement("label");
@@ -135,7 +148,7 @@ document.addEventListener("DOMContentLoaded", function () {
         confirmButton.textContent = "Confirm";
         confirmButton.classList.add("check-button");
         confirmButton.addEventListener("click", () => {
-            checkInput(selectedBase);
+            checkInput(toBase);
         });
         container.appendChild(confirmButton);
     });
@@ -157,7 +170,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
         //console.log(`Number ${typeof(targetNumber)}, base: ${base}`)
 
-        targetNumber = parseInt(targetNumber.split(" ")[1], 10).toString(base).toUpperCase();
+        targetNumber =
+         parseInt(targetNumber.split(" ")[1], fromBase).toString(base)
+                                                       .toUpperCase();
 
         //console.log(`Number after${targetNumber}`)
 
@@ -182,16 +197,23 @@ document.addEventListener("DOMContentLoaded", function () {
         else
             alert("Incorrect! Going to next num....");
 
-            label.textContent = `( ${genRandomInt(maxVal)} )${toSubstript(parseInt(convertBase))}
-            → ( ? ) ${toSubstript(parseInt(selectedBase))} `;
+        if (gamemode.value.toLowerCase() === "chaos") {
+            fromBase = genRandomInt(minBase, baseMax);
+            toBase = genRandomInt(minBase, baseMax);
+        }
+        
+        label.textContent = `( ${genRandomInt(minVal, maxVal).toString(fromBase)
+                                                     .toUpperCase()} )
+                                ${toSubstript(parseInt(fromBase))}
+                                → ( ? ) ${toSubstript(parseInt(toBase))} `;
         
         
     }
 
-    function genRandomInt(max) {
-        return randomInt = Math.floor(Math.random() * max);
+    function genRandomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
     }
-
+    
     function logBase(x, base) {
         return Math.log(x) / Math.log(base);
     }
