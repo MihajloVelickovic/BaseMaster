@@ -2,10 +2,11 @@ document.addEventListener("DOMContentLoaded", function () {
     const baseSelect = document.querySelector("#baseSelect");
     const playerSelect = document.querySelector("#playerSelect");
     const confirmButton = document.querySelector("#confirmButton");
+    const helpChbx = document.querySelector("#help");
 
     let selectedBase = "";
     let selectedPlayers = "";
-
+    let convertBase = "10";
     if (!baseSelect || !playerSelect) {
         console.error("One or more dropdown elements not found");
         return;
@@ -47,6 +48,7 @@ document.addEventListener("DOMContentLoaded", function () {
         
         selectedBase = baseSelect.value;
         selectedPlayers = playerSelect.value;
+        buttonCount = Math.floor(logBase(maxVal, selectedBase)) + 1;
 
         console.log("All elements removed except the header.");
 
@@ -55,23 +57,23 @@ document.addEventListener("DOMContentLoaded", function () {
         const label = document.createElement("label");
         label.setAttribute("for", "newInput");  
         label.textContent = `BASE ${selectedBase}`; 
-        container.appendChild(label);  
+        container.appendChild(label);   
 
         // Create the button container
         const buttonContainer = document.createElement("div");
         buttonContainer.classList.add("button-container");
 
-        const threshold = selectedBase - 1
+        const threshold = parseInt(selectedBase) - 1
         
         const randomInt = genRandomInt(maxVal);
 
         const randomNum = document.createElement("label");
         label.setAttribute("for", "newInput");  
-        label.textContent = `${randomInt}`;
+        label.textContent = `( ${randomInt} )${toSubstript(parseInt(convertBase))}
+                             → ( ? ) ${toSubstript(parseInt(selectedBase))} `;
         label.id = "randomNum";
         label.classList.add("random-num-label") 
         container.appendChild(label);  
-
 
         function handleButtonClick(event) {
             const button = event.target;  // Get the button that was clicked
@@ -86,18 +88,31 @@ document.addEventListener("DOMContentLoaded", function () {
                 currentValue = 0;
                 button.textContent = `0`;
             }
-
-        }
-
-        buttonCount = logBase(maxVal, selectedBase) + 1;
-        
-        // Dynamically create 4 buttons
+        }  
+        // Dynamically create buttons
         for (let i = 1; i <= buttonCount; i++) {
+            const buttonWrapper = document.createElement("div");
+            buttonWrapper.classList.add("button-wrapper")
+
+            if(helpChbx.checked) {
+                
+                const sBase = parseInt(selectedBase);
+                console.log(`Selected base: ${sBase}`);
+                console.log(`Power: ${buttonCount - i}`);
+                const helpLabel = document.createElement("label");
+                helpLabel.setAttribute("for", "newInput");
+                helpLabel.classList.add("help-label")  
+                helpLabel.textContent = 
+                `${Math.pow(sBase, buttonCount - i)}`; 
+                buttonWrapper.appendChild(helpLabel);
+            }
+
             const button = document.createElement("button");
             button.classList.add("dynamic-button");
             button.textContent = `0`; 
             button.addEventListener("click", handleButtonClick);
-            buttonContainer.appendChild(button);
+            buttonWrapper.appendChild(button);
+            buttonContainer.appendChild(buttonWrapper);
         }
         
         container.appendChild(buttonContainer);
@@ -107,7 +122,10 @@ document.addEventListener("DOMContentLoaded", function () {
         cleatButton.classList.add("clear-button");
         cleatButton.addEventListener("click", () => {
             Array.from(buttonContainer.children).forEach(b => {
-                b.textContent = "0"
+                const button = b.querySelector("button"); // Find the button inside the div
+                if (button) {
+                    button.textContent = "0"; // Set the button's text
+                }
             });
         });
         container.appendChild(cleatButton);
@@ -139,7 +157,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         //console.log(`Number ${typeof(targetNumber)}, base: ${base}`)
 
-        targetNumber = parseInt(targetNumber, 10).toString(base).toUpperCase();
+        targetNumber = parseInt(targetNumber.split(" ")[1], 10).toString(base).toUpperCase();
 
         //console.log(`Number after${targetNumber}`)
 
@@ -164,7 +182,8 @@ document.addEventListener("DOMContentLoaded", function () {
         else
             alert("Incorrect! Going to next num....");
 
-        label.textContent = `${genRandomInt(maxVal)}`
+            label.textContent = `( ${genRandomInt(maxVal)} )${toSubstript(parseInt(convertBase))}
+            → ( ? ) ${toSubstript(parseInt(selectedBase))} `;
         
         
     }
@@ -177,5 +196,25 @@ document.addEventListener("DOMContentLoaded", function () {
         return Math.log(x) / Math.log(base);
     }
 
-    
+    function toSubstript(num) {
+        const base = 0x2080;
+
+        return num.toString()
+                  .split("")
+                  .map((digit) => String.fromCharCode(parseInt(digit,10) + base))
+                  .join("");
+    }
+
+    function createHelpLables(count, selectedBase) {
+        let lblContainer = document.createElement("div");
+        lblContainer.classList.add("help-label-div")
+        for(let i = count - 1; i>=0; --i) {
+            const label = document.createElement("label");
+            label.setAttribute("for", "newInput");
+            label.classList.add("help-label")  
+            label.textContent = `${Math.pow(selectedBase, i)}`; 
+            lblContainer.appendChild(label);  
+        }
+        return lblContainer;
+    }
 });
