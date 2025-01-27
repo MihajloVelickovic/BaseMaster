@@ -74,90 +74,88 @@ document.addEventListener("DOMContentLoaded", function () {
         // Create the button container
         const buttonContainer = document.createElement("div");
         buttonContainer.classList.add("button-container");
-
+        buttonContainer.id = "buttonContainer";
         const threshold = parseInt(toBase) - 1
         
         const randomInt = genRandomInt(minVal, maxVal);
 
         const randomNum = document.createElement("label");
         label.setAttribute("for", "newInput");  
-        label.textContent = `( ${randomInt.toString(fromBase).toUpperCase()} )
-                               ${toSubstript(parseInt(fromBase))}
-                               → ( ? ) ${toSubstript(parseInt(toBase))} `;
+        label.textContent = genRandomNumLblText(randomInt, fromBase,toBase);
         label.id = "randomNum";
         label.classList.add("random-num-label") 
         container.appendChild(label);  
 
-        function handleButtonClick(event) {
-            const button = event.target;  // Get the button that was clicked
-            let currentValue = parseInt(button.textContent, 36);
-
-            // Increment the value until it reaches the threshold
-            if (currentValue < threshold) {
-                currentValue++;
-                button.textContent = convertToBase(currentValue, toBase);
-            }
-            else {
-                currentValue = 0;
-                button.textContent = `0`;
-            }
-        }  
+  
         // Dynamically create buttons
-        for (let i = 1; i <= buttonCount; i++) {
-            const buttonWrapper = document.createElement("div");
-            buttonWrapper.classList.add("button-wrapper")
 
-            if(helpChbx.checked) {
-                
-                const sBase = parseInt(toBase);
-                console.log(`Selected base: ${sBase}`);
-                console.log(`Power: ${buttonCount - i}`);
-                const helpLabel = document.createElement("label");
-                helpLabel.setAttribute("for", "newInput");
-                helpLabel.classList.add("help-label")  
-                helpLabel.textContent = 
-                `${Math.pow(sBase, buttonCount - i)}`; 
-                buttonWrapper.appendChild(helpLabel);
-            }
+        fillButtonContainer(buttonCount, buttonContainer, helpChbx.checked, handleButtonClick, toBase);
 
-            const button = document.createElement("button");
-            button.classList.add("dynamic-button");
-            button.textContent = `0`; 
-            button.addEventListener("click", handleButtonClick);
-            buttonWrapper.appendChild(button);
-            buttonContainer.appendChild(buttonWrapper);
-        }
         
         container.appendChild(buttonContainer);
 
         const cleatButton = document.createElement("button");
         cleatButton.textContent = "CLEAR";
         cleatButton.classList.add("clear-button");
-        cleatButton.addEventListener("click", () => {
-            Array.from(buttonContainer.children).forEach(b => {
-                const button = b.querySelector("button"); // Find the button inside the div
-                if (button) {
-                    button.textContent = "0"; // Set the button's text
-                }
-            });
-        });
+        cleatButton.addEventListener("click", clearButtonValues);
         container.appendChild(cleatButton);
 
 
         const confirmButton = document.createElement("button");
         confirmButton.textContent = "Confirm";
         confirmButton.classList.add("check-button");
-        confirmButton.addEventListener("click", () => {
-            checkInput(toBase);
-        });
+        confirmButton.addEventListener("click", checkInputPressedHandle);
         container.appendChild(confirmButton);
     });
+
+    function checkInputPressedHandle() {
+        checkInput(toBase);
+            if(gamemode === "chaos") {
+                while (buttonContainer.firstChild) {
+                    buttonContainer.removeChild(buttonContainer.firstChild);
+                }
+                buttonCount = Math.floor(logBase(maxVal, toBase)) + 1;
+                fillButtonContainer(buttonCount, buttonContainer, helpChbx.checked, handleButtonClick, toBase);
+            }
+    }
+
+    function clearButtonValues() {
+        const buttonContainer = document.querySelector("buttonContainer");
+        Array.from(buttonContainer.children).forEach(b => {
+            const button = b.querySelector("button"); // Find the button inside the div
+            if (button) {
+                button.textContent = "0"; // Set the button's text
+            }
+        });
+    }
+
+    function handleButtonClick(event) {
+        const button = event.target;  // Get the button that was clicked
+        let currentValue = parseInt(button.textContent, 36);
+        const threshold = parseInt(toBase) - 1
+        // Increment the value until it reaches the threshold
+        if (currentValue < threshold) {
+            currentValue++;
+            button.textContent = convertToBase(currentValue, toBase);
+        }
+        else {
+            currentValue = 0;
+            button.textContent = `0`;
+        }
+    } 
 
     function convertToBase(num, base) {
         if (base > 10) {
             return num.toString(base).toUpperCase(); // Convert to base and make letters uppercase
         }
         return num.toString(); // For bases <= 10, just return the number as a string
+    }
+
+
+    function genRandomNumLblText(randomInt, fromBase, toBase) {
+        return `( ${randomInt.toString(fromBase).toUpperCase()} )
+                               ${toSubstript(parseInt(fromBase))}
+                               → ( ? ) ${toSubstript(parseInt(toBase))} `;
     }
 
     function checkInput(base) {
@@ -202,10 +200,8 @@ document.addEventListener("DOMContentLoaded", function () {
             toBase = genRandomInt(minBase, baseMax);
         }
         
-        label.textContent = `( ${genRandomInt(minVal, maxVal).toString(fromBase)
-                                                     .toUpperCase()} )
-                                ${toSubstript(parseInt(fromBase))}
-                                → ( ? ) ${toSubstript(parseInt(toBase))} `;
+        const randomInt = genRandomInt(minVal, maxVal);
+        label.textContent = genRandomNumLblText(randomInt, fromBase,toBase);
         
         
     }
@@ -227,16 +223,30 @@ document.addEventListener("DOMContentLoaded", function () {
                   .join("");
     }
 
-    function createHelpLables(count, selectedBase) {
-        let lblContainer = document.createElement("div");
-        lblContainer.classList.add("help-label-div")
-        for(let i = count - 1; i>=0; --i) {
-            const label = document.createElement("label");
-            label.setAttribute("for", "newInput");
-            label.classList.add("help-label")  
-            label.textContent = `${Math.pow(selectedBase, i)}`; 
-            lblContainer.appendChild(label);  
+    function fillButtonContainer(buttonCount, buttonContainer, addHelpLabels, handleButtonClick, toBase) {
+        for (let i = 1; i <= buttonCount; i++) {
+            const buttonWrapper = document.createElement("div");
+            buttonWrapper.classList.add("button-wrapper")
+
+            if(addHelpLabels) {
+                
+                const sBase = parseInt(toBase);
+                console.log(`Selected base: ${sBase}`);
+                console.log(`Power: ${buttonCount - i}`);
+                const helpLabel = document.createElement("label");
+                helpLabel.setAttribute("for", "newInput");
+                helpLabel.classList.add("help-label")  
+                helpLabel.textContent = 
+                `${Math.pow(sBase, buttonCount - i)}`; 
+                buttonWrapper.appendChild(helpLabel);
+            }
+
+            const button = document.createElement("button");
+            button.classList.add("dynamic-button");
+            button.textContent = `0`; 
+            button.addEventListener("click", handleButtonClick);
+            buttonWrapper.appendChild(button);
+            buttonContainer.appendChild(buttonWrapper);
         }
-        return lblContainer;
     }
 });
