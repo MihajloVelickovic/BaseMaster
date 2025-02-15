@@ -110,6 +110,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function checkInputPressedHandle() {
         checkInput(toBase);
+            const buttonContainer = document.querySelector("#buttonContainer");
             if(gamemode === "chaos") {
                 while (buttonContainer.firstChild) {
                     buttonContainer.removeChild(buttonContainer.firstChild);
@@ -120,7 +121,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function clearButtonValues() {
-        const buttonContainer = document.querySelector("buttonContainer");
+        const buttonContainer = document.querySelector("#buttonContainer");
         Array.from(buttonContainer.children).forEach(b => {
             const button = b.querySelector("button"); // Find the button inside the div
             if (button) {
@@ -160,13 +161,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function checkInput(base) {
         const label = document.getElementById("randomNum"); // Get the label displaying the random number
-        let targetNumber = label.textContent; // The number we need to check
+        let targetNumber = label.textContent; // The number we need to check 
         const buttons = document.querySelectorAll(".dynamic-button"); // Get all the buttons
         let combinedValue = "";
         
         let firstOne = false;
 
-        //console.log(`Number ${typeof(targetNumber)}, base: ${base}`)
+        console.log(`Number ${targetNumber}, base: ${base}`)
 
         targetNumber =
          parseInt(targetNumber.split(" ")[1], fromBase).toString(base)
@@ -188,7 +189,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
         combinedValue.toUpperCase();
 
-        //console.log(`Combined value: ${combinedValue}`)
+        console.log(`Combined value: ${combinedValue}`);
+        console.log(`Target num: ${targetNumber}`);
 
         if(combinedValue === targetNumber)
             alert("Correct!");
