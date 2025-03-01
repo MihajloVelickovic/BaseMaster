@@ -1,0 +1,14 @@
+.Header {
+    display: flex;
+    text-align: center;
+    flex-direction: row;
+    
+}
+
+.Header * {
+    padding: 20px;
+}
+
+.header-link-button {
+    padding: 10px;
+}
