@@ -1,33 +1,63 @@
 import { NavLink } from "react-router-dom";
 import "../styles/Home.css"
+import { JSXElementConstructor, ReactElement, ReactNode, ReactPortal, useState } from "react";
+
+
 
 function Home() {
-  return (
-    <div className="Home">
-      {/* <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header> */}
-      <label>Ovo je neki prvi label</label>
-      <label>Ovo je neki drugi</label>
-      <li><NavLink to="/Game">
-        <button className="game-button" style={{marginTop:"15px"}}>
-            Udji u game!
-        <div className="arrow-wrapper">
-            <div className="arrow"></div>
-        </div>
+  const [base, setBase] = useState(2);
+  const [playerNum, setPlayerNum] = useState(1);
+  const [gameMode, setGameMode] = useState("Classic");
+
+  const bases = Array.from({ length: 31}, (_, i) => i+2);
+  const players = Array.from({length: 4}, (_, i) => i+1);
+  const gameModes = ["Classic", "Reverse", "Chaos", "Arithmetic classic", "Arithmetic chaos"];  
+  
+  function Chooser<T extends string | number>(choosingArray: T[], state: T, setState: (value: T) => void, text: string, labelTxt: string) {
+    function onSelection(value: T) {
+      setState(value);   
+    }
+    const basesButtons = choosingArray.map((val, ind) => {
+      return (
+        <li className="choosingFont">
+          <button className="dropdown-item" onClick={() => onSelection(val)}>
+            {text} {val}
+          </button>
+        </li>
+      )
+    })
+    return (
+    <div className="choosingDiv">
+    
+      <label className="smallFont">{labelTxt}</label  >
+      <div className="dropdown choosingBtn">
+        <button className="btn btn-secondary dropdown-toggle choosingBtn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+          {text}{state}
         </button>
-        </NavLink></li>
+        <ul className="dropdown-menu">
+          {basesButtons}
+        </ul>
+      </div>
+    </div>  
+    )
+
+  }
+
+  return (
+    <div className="HomeContainer">
+
+      <label className="mainFont">Game specifics</label>
+
+      
+      {Chooser(bases, base, setBase, "Base ", "Choose Base:")}
+      {Chooser(players, playerNum, setPlayerNum, "Players: ", "Choose number of players")}
+      {Chooser(gameModes, gameMode, setGameMode, "", "Choose Game Mode:")}
+
+      <NavLink to="/Game">
+        <button className="btn btn-success game-button" style={{marginTop:"15px"}}>
+          Udji u game!
+        </button>
+      </NavLink>
     </div>
   );
 }

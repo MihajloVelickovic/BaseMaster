@@ -2,7 +2,8 @@
     display: flex;
     text-align: center;
     flex-direction: row;
-    
+    padding-left: 100px;
+    border-bottom: solid darkblue 1px;
 }
 
 .Header * {

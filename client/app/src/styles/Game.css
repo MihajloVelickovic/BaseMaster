@@ -1,5 +1,19 @@
 .Game {
+
     display: flex;
     text-align: center;
     flex-direction: column;   
+    width: fit-content;
+    height: fit-content;
+    margin: auto;
+    margin-top: 25px;
+}
+
+.BigText {
+    font-size: x-large;
+    font-weight: bold;
+}
+
+.Game * {
+    padding: 15px;
 }
