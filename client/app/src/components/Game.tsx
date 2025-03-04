@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import "../styles/Game.css";
+import { useLocation } from "react-router-dom";
 
 
 function clcBtnCount(base:bigint, maxValue:bigint) {
@@ -12,9 +13,14 @@ function clcBtnCount(base:bigint, maxValue:bigint) {
 }
 
 function Game() {
+
+  const location = useLocation();
+  const { base = 2, playerNum = 1, gameMode = "Classic" } = location.state || {};
+
+  console.log("base: "+base+" playerNum: "+playerNum+" gameMode: "+gameMode);
+
   const maxVal:bigint = BigInt(255);
-  const base:bigint = BigInt(2);
-  const numOfButtons = clcBtnCount(base, maxVal);
+  const numOfButtons = clcBtnCount(BigInt(base), maxVal);
   const [arrayOfValues, setArrayOfValues] = useState(Array.from({length: numOfButtons}, (_, i) => 0));
   const btnArrayLabels = Array.from({ length: numOfButtons}, (_, i) => Math.pow(Number(base), numOfButtons - 1 - i));
 
@@ -34,6 +40,10 @@ function Game() {
   function clearButtonHandler() {
     const newArray = Array.from({length: numOfButtons}, (_, i) => 0)
     setArrayOfValues(newArray);
+  }
+
+  function confirmButtonHandler() {
+    alert("Idk bro... Maybe it's right, maybe it's not.. That's like moral.. what is good, what is bad? Who knows?!");
   }
 
   function generateBaseButtons(btnCount: number) {
@@ -62,11 +72,14 @@ function Game() {
         <label>I guess the target number should be here </label>
         {generateBaseButtons(numOfButtons)}
       </div>
-      <button className= "clearButton" onClick={clearButtonHandler}>
+      <button className= "ClearButton" onClick={clearButtonHandler}>
         Clear
+      </button>
+      <button className="ConfirmButton" onClick={confirmButtonHandler}>
+        Confirm
       </button>
     </div>
   );
-}
+} 
 
 export default Game;

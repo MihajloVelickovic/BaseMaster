@@ -53,9 +53,9 @@ function Home() {
       {Chooser(players, playerNum, setPlayerNum, "Players: ", "Choose number of players")}
       {Chooser(gameModes, gameMode, setGameMode, "", "Choose Game Mode:")}
 
-      <NavLink to="/Game">
+      <NavLink to="/Game" state={{ base, playerNum, gameMode }}>
         <button className="btn btn-success game-button" style={{marginTop:"15px"}}>
-          Udji u game!
+          Start game buddy!
         </button>
       </NavLink>
     </div>
