@@ -14,36 +14,57 @@ function clcBtnCount(base:bigint, maxValue:bigint) {
 function Game() {
   const maxVal:bigint = BigInt(255);
   const base:bigint = BigInt(2);
-  const baseNum = base;
-  const [arrayOfValues, setArrayOfValues] = useState(Array.from({length: clcBtnCount(base, maxVal)}, (_, i) => 0));
-  const btnArrayLabels = Array.from({ length: clcBtnCount(base, maxVal)}, (_, i) => Math.pow(Number(base), i));
+  const numOfButtons = clcBtnCount(base, maxVal);
+  const [arrayOfValues, setArrayOfValues] = useState(Array.from({length: numOfButtons}, (_, i) => 0));
+  const btnArrayLabels = Array.from({ length: numOfButtons}, (_, i) => Math.pow(Number(base), numOfButtons - 1 - i));
 
-  function btnClicked(key: number) {
-    if (!arrayOfValues[key])
-      return;
-    arrayOfValues[key] = arrayOfValues[key]+1 >= base ? 0:arrayOfValues[key]+1;
-    setArrayOfValues(arrayOfValues);
+  function handleButtonClick(key: number) {
+    console.log("buttons clicked");
+    // if (!arrayOfValues[key]) {
+    //   console.log("I guess It doesn't exist..");
+    //   return;
+    // }
+
+    const newArray = [...arrayOfValues];
+    newArray[key] = newArray[key] + 1 >= base ? 0 : newArray[key] + 1;
+    console.log(newArray);
+    setArrayOfValues(newArray);
+  }
+
+  function clearButtonHandler() {
+    const newArray = Array.from({length: numOfButtons}, (_, i) => 0)
+    setArrayOfValues(newArray);
   }
 
   function generateBaseButtons(btnCount: number) {
     const buttonArray = btnArrayLabels.map( (element, ind) => {
       return (
-        <button>
-          {arrayOfValues[ind]}
-        </button>
+        <div className="ButtonAndLabel">
+          <label>
+            {element}
+          </label>  
+          <button className="BaseButton" onClick={() => handleButtonClick(ind)}>
+            {arrayOfValues[ind]}
+          </button>
+        </div>
       );
-
-    })
-  }
-
-  function handleClick() {
+    });
+    return (
+      <div className="AllButtonsAndLables">
+        {buttonArray}
+      </div>
+    );
   }
 
   return (
     <div className="Game">
       <div>
-
+        <label>I guess the target number should be here </label>
+        {generateBaseButtons(numOfButtons)}
       </div>
+      <button className= "clearButton" onClick={clearButtonHandler}>
+        Clear
+      </button>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-.Game {
+/* .Game {
 
     display: flex;
     text-align: center;
@@ -15,5 +15,87 @@
 }
 
 .Game * {
-    padding: 15px;
+    padding: 5px;
+}
+
+.ButtonAndLabel {
+    display: flex;
+    flex-direction: column;
+    width: 120px;
+    height: 120px;
+    justify-content: space-between;
+}
+
+.ButtonAndLabel button {
+    height: max-content;
+}
+
+.AllButtonsAndLables{
+    display: flex;
+    flex-direction: row;
+    padding: 0px;
+} */
+
+.Game {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center content horizontally */
+    text-align: center;
+    margin-top: 25px;
+}
+
+.BigText {
+    font-size: x-large;
+    font-weight: bold;
+}
+
+.AllButtonsAndLables {
+    display: flex;
+    flex-direction: row;
+    gap: 15px; /* Reduce gap slightly */
+    margin-top: 75px;
+}
+
+.ButtonAndLabel {
+    display: flex;
+    flex-direction: column;
+}
+
+.BaseButton {
+    width: 120px; /* Slightly smaller */
+    height: 180px; /* Adjusted to match the height */
+    background-color: green;
+    border-radius: 10px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add slight shadow */
+
+    /* background-color: transparent; */
+    border: none;
+    font-size: 32px;
+    font-weight: bold;
+    color: white;
+    cursor: pointer;
+    padding: 5px 0;
+}
+
+.ButtonAndLabel label {
+    font-size: 16px; /* Adjust label size */
+    font-weight: bold;
+    color: green;
+    margin-bottom: 5px; /* Ensure spacing above button */
+}
+
+.clearButton {
+    margin-top: 20px;
+    width: 75%;
+    height: 50px;
+    background-color: crimson;
+    color:#ffffff;
+    border-radius: 10px;
+    font-weight: bold;
+    font-size: 24px;
+    padding: 5px 0px 0px 5px;
+}
+
+.button:hover {
+    background-color: #0056b3;
 }
