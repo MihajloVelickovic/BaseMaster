@@ -133,7 +133,7 @@ document.addEventListener("DOMContentLoaded", function () {
     function handleButtonClick(event) {
         const button = event.target;  // Get the button that was clicked
         let currentValue = parseInt(button.textContent, 36);
-        const threshold = parseInt(toBase) - 1
+        const threshold = parseInt(toBase) - 1;
         // Increment the value until it reaches the threshold
         if (currentValue < threshold) {
             currentValue++;
