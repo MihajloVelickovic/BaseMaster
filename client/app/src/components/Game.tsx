@@ -75,7 +75,8 @@ function Game() {
 
   function confirmButtonHandler() {
     //alert("Idk bro... Maybe it's right, maybe it's not.. That's like moral.. what is good, what is bad? Who knows?!");
-    const result = arrayOfValues.map((val, index) => val * btnArrayLabels[index]).reduce((sum, val) => sum + val, 0);
+    const result = arrayOfValues.map((val, index) => val * btnArrayLabels[index])
+                                .reduce((sum, val) => sum + val, 0);
     if (result==numToFind){
       alert("You got the right answer!");
     }else
