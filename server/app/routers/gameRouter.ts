@@ -34,6 +34,7 @@ gameRouter.get("/createGame", async (req: any, res) => {
         randomNums, gameId
     );
 
+    console.log("sending data");
     res.json(gameInfo);
 
 });

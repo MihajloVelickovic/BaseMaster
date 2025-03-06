@@ -7,15 +7,15 @@
 
 
 // //nova stvar..
-import express from 'express';
+import express from "express";
 //import { createClient } from 'redis';
 //import {REDIS_HOST, REDIS_PASSWORD, REDIS_PORT} from './config/config.js';
-//import gameRouter from './routers/gameRouter'
+import gameRouter from './routers/gameRouter'
 
 const app = express();
 app.use(express.json());
 
-//app.use("/game", gameRouter);
+app.use("/game", gameRouter);
 
 app.listen(1738, async () => {
     console.log(`Running on port 1738`);   

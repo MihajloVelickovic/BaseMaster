@@ -2,7 +2,7 @@
   "name": "server",
   "version": "1.0.0",
   "main": "index.js",
-  "type": "module",
+  "type": "commonjs",
   "scripts": {
     "dev": "nodemon app/index.ts"
   },
@@ -11,17 +11,10 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "nanoid": "^5.1.2",
-    "neo4j-driver": "^5.27.0",
-    "nodemon": "^3.1.9",
-    "redis": "^4.7.0"
-  },
-  "devDependencies": {
+    "redis": "^4.7.0",
     "ts-node": "^10.9.2",
-    "tsx": "^4.19.3",
-    "typescript": "^5.8.2"
+    "tsx": "^4.19.3"
   }
 }
