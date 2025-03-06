@@ -46,7 +46,7 @@ function Home() {
   return (
     <div className="HomeContainer">
 
-      <label className="mainFont">Game specifics</label>
+      <label className="mainFont">Game Options</label>
 
       
       {Chooser(bases, base, setBase, "Base ", "Choose Base:")}
