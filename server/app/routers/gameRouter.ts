@@ -2,6 +2,7 @@ import {Router} from "express";
 import GameOptions from "../models/gameOptions"
 import { nanoid } from 'nanoid';
 import GameInfo from "../models/gameInfo";
+import redisClient from "../redisClient";
 
 const gameRouter = Router();
 
@@ -28,15 +29,36 @@ gameRouter.get("/createGame", async (req: any, res) => {
         Math.floor(Math.random()*maxValue)+1
     );
 
-    var gameId = nanoid(); // upisati u redis i vratiti ID
+    var gameId = `rn_${nanoid()}`; // upisati u redis i vratiti ID
     
-    const gameInfo = new GameInfo(
-        randomNums, gameId
-    );
+    try {
+        randomNums.forEach(async (num) => {
+            await redisClient.rPush(gameId, String(num));
+        });
+        res.send({message:`Game created succesfully, id:${gameId}`});
+    } catch (err) {
+        res.status(500).send('Error saving user data to Redis');
+    }
 
-    console.log("sending data");
-    res.json(gameInfo);
+    
 
+});
+
+gameRouter.get("/getCurrNum", async (req:any, res) => {
+    const {
+        gameId,
+        currNum
+    } = req.body;
+
+    try {
+        const num = await redisClient.lIndex(gameId, currNum);
+        if(num !== null)
+            res.send({currRndNum:num});
+        else
+            res.status(404).send({message:"Could not find the number"});
+    } catch (err) {
+        res.status(500).send('Error saving user data to Redis');
+    }
 });
 
 // gamemode:GameModes;

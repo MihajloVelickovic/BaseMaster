@@ -8,8 +8,7 @@
 
 // //nova stvar..
 import express from "express";
-//import { createClient } from 'redis';
-//import {REDIS_HOST, REDIS_PASSWORD, REDIS_PORT} from './config/config.js';
+import { SERVER_PORT } from "./config/config";
 import gameRouter from './routers/gameRouter'
 
 const app = express();
@@ -17,31 +16,19 @@ app.use(express.json());
 
 app.use("/game", gameRouter);
 
-app.listen(1738, async () => {
-    console.log(`Running on port 1738`);   
-})
+app.listen(SERVER_PORT, async () => {
+    console.log(`Server running on port ${SERVER_PORT}`);
+});
 
-// const client = createClient({
-//     username: 'default',
-//     password: REDIS_PASSWORD,
-//     socket: {
-//         host: REDIS_HOST,
-//         port: REDIS_PORT
-//     }
-// });
+// redisClient.connect().then(() => {
+//         console.log('Connected to Redis');
 
-// client.on('error', err => console.log('Redis Client Error', err));
-
-// await client.connect();
-
-// await client.set('foo', 'bar');
-// const result = await client.get('foo');
-// const r3 = await client.keys('*');
-// const result2 = await client.get('Programer01');
-// console.log("Writing out everything currently in the database ;3");
-// r3.forEach(async (x) => {
-//     console.log(await client.get(x));
-// })
+//         // Start the Express server after Redis is connected
+        
+//     })
+//     .catch((err) => {
+//         console.error('Failed to connect to Redis:', err.message);
+//     });
 
 
 
