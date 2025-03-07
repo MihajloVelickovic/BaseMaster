@@ -1,7 +1,7 @@
 import { NavLink } from "react-router-dom";
 import "../styles/Home.css"
 import { JSXElementConstructor, ReactElement, ReactNode, ReactPortal, useState } from "react";
-
+import axiosInstance from "../utils/axiosInstance";
 
 
 function Home() {

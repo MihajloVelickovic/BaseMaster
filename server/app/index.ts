@@ -7,6 +7,7 @@
 
 
 // //nova stvar..
+import redisClient from "./redisClient";
 import express from "express";
 import { SERVER_PORT } from "./config/config";
 import gameRouter from './routers/gameRouter'
@@ -19,6 +20,13 @@ app.use("/game", gameRouter);
 app.listen(SERVER_PORT, async () => {
     console.log(`Server running on port ${SERVER_PORT}`);
 });
+
+const r3 = await redisClient.keys('*');
+console.log("Writing out everything currently in the database ;3");
+r3.forEach(async (x) => {
+    //console.log(await redisClient.get(x));
+    console.log(x);
+})
 
 // redisClient.connect().then(() => {
 //         console.log('Connected to Redis');
