@@ -16,7 +16,6 @@ export enum DifficultyValues {
     CHILL_GUY=256,
     ELFAK_ENJOYER=512,
     BASED_MASTER=2048,
-
 }
 
 export const fromString = (value: string): Difficulties | undefined => {

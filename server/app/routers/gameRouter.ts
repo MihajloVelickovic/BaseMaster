@@ -67,14 +67,14 @@ gameRouter.post("/createGame", async (req: any, res) => {
 
 });
 
-gameRouter.get("/getCurrNum", async (req:any, res) => {
+gameRouter.post("/getCurrNum", async (req:any, res) => {
     const {
         gameId,
-        currNum
+        currRound
     } = req.body;
 
     try {
-        const num = await redisClient.lIndex(gameId, currNum);
+        const num = await redisClient.lIndex(gameId, currRound);
         if(num !== null)
             res.send({currRndNum:num});
         else

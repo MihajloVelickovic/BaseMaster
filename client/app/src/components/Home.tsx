@@ -11,16 +11,15 @@ const gameID = "gameID";
 function Home() {
   const [toBase, setToBase] = useState(2);
   const [playerNum, setPlayerNum] = useState(1);
-  const [gameMode, setGameMode] = useState("Classic");
+  const [gameMode, setGameMode] = useState(GameModes.CLASSIC.toString());
   const [difficulty, setDifficulty] = useState(Difficulties.LAYMAN.toString());
   const [gameId, setGameId] = useState(null);
 
 
-  // playerCount,
+  //           playerCount,
   //           fromBase,
   //           toBase,
   //           roundCount,
-  //           maxValue,
   //           difficulty
 
   const navigate = useNavigate();
@@ -40,11 +39,9 @@ function Home() {
     try {
         const toSend = {
           playerCount: playerNum,
-          fromBase: 10,
-          toBase: toBase,
           roundCount: roundCount,
-          maxValue: maxValue,
-          difficulty: 0
+          gameMode: gameMode,
+          difficulty: difficulty
         };
         var response = await axiosInstance.post('/game/createGame', toSend);
         console.log("response za createGame je: ", response);

@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import "../styles/Game.css";
 import { useLocation } from "react-router-dom";
-import { GameModes, Difficulties } from "../shared_modules/shared_enums";
+import { GameModes, Difficulties, DifficultyValues } from "../shared_modules/shared_enums";
+import axiosInstance from "../utils/axiosInstance";
 
 var maxVal:bigint = BigInt(255);
 var numToFind = getRandomNumber(1, Number(maxVal));
@@ -28,9 +29,31 @@ function getRandomNumber(min:number, max:number) {
 function Game() {
 
   const location = useLocation();
+  const [currRound, setCurrRound] = useState(0);
+  const [currNum, setCurrNum] = useState(100);
   var { toBase = 2, playerNum = 1, gameMode = GameModes.CLASSIC.toString(), difficulty = Difficulties.LAYMAN.toString(), gameId = "" } = location.state || {};
 
+  useEffect( () => {
+    getNumberFromServer();
+  }, [])
+
   console.log("toBase: "+toBase+" playerNum: "+playerNum+" gameMode: "+gameMode+" difficulty: "+difficulty+ " gameId: "+gameId);
+
+  const getNumberFromServer = async () => {
+    const toSend = {
+      gameId:gameId,
+      currRound:currRound
+    }
+    var response = await axiosInstance.post('/game/getCurrNum', toSend);
+    console.log("response za getCurrNum je: ", response);
+    const num = response.data['currRndNum'];        //check the name.. if changed
+    console.log("broj je: ", num);
+    setCurrRound(currRound+1);
+    setCurrNum(num);
+    console.log(currRound);
+    return num;
+
+  }
 
   switch (gameMode) {
     case "Classic":
@@ -47,12 +70,25 @@ function Game() {
       buttonBase = toBase;
   }
 
+  switch (difficulty) {
+    case Difficulties.LAYMAN.toString(): maxVal = BigInt(DifficultyValues.LAYMAN);
+      break;
+    case Difficulties.CHILL_GUY.toString(): maxVal = BigInt(DifficultyValues.CHILL_GUY);
+      break;
+    case Difficulties.ELFAK_ENJOYER.toString(): maxVal = BigInt(DifficultyValues.ELFAK_ENJOYER);
+      break;
+    case Difficulties.BASED_MASTER.toString(): maxVal = BigInt(DifficultyValues.BASED_MASTER);
+      break;
+    default:
+      maxVal = BigInt(DifficultyValues.LAYMAN);
+      console.log("something went wrong for this to show up");
+  }
+
   const numOfButtons = clcBtnCount(BigInt(buttonBase), maxVal);
   const [arrayOfValues, setArrayOfValues] = useState(Array.from({length: numOfButtons}, (_, i) => 0));
   const btnArrayLabels = Array.from({ length: numOfButtons}, (_, i) => Math.pow(Number(buttonBase), numOfButtons - 1 - i));
 
   function handleButtonClick(key: number) {
-    console.log("buttons clicked");
     // if (!arrayOfValues[key]) {
     //   console.log("I guess It doesn't exist..");
     //   return;
@@ -60,7 +96,6 @@ function Game() {
 
     const newArray = [...arrayOfValues];
     newArray[key] = newArray[key] + 1 < buttonBase ? newArray[key] + 1: 0;
-    console.log(newArray);
     setArrayOfValues(newArray);
   }
 
@@ -75,23 +110,24 @@ function Game() {
     setArrayOfValues(newArray);
   }
 
-  function confirmButtonHandler() {
+  const confirmButtonHandler = async () => {
     //alert("Idk bro... Maybe it's right, maybe it's not.. That's like moral.. what is good, what is bad? Who knows?!");
     const result = arrayOfValues.map((val, index) => val * btnArrayLabels[index])
                                 .reduce((sum, val) => sum + val, 0);
-    if (result==numToFind){
+    if (result==currNum){
       alert("You got the right answer!");
     }else
       alert("Better luck next time");
 
-    numToFind = getRandomNumber(1, Number(maxVal));
+    await getNumberFromServer();
     if (gameMode == "Chaos"){
-      toBase = getRandomNumber(2, maxBase);
+      toBase = getRandomNumber(2, maxBase);         //server will generate this as well, in due time
       buttonBase = getRandomNumber(2, maxBase);
       randomBase1 = toBase;         //this is  temporary fix...
       randomBase2 = buttonBase;
     }
     clearButtonHandler();
+    
   }
 
   function numtoBase(num:number, toBase:number) {
@@ -153,7 +189,7 @@ function Game() {
   return (
     <div className="Game">
       <div>
-        {generateTargetNumLabel(numToFind, gameMode)}
+        {generateTargetNumLabel(currNum, gameMode)}
         {generateBaseButtons(numOfButtons)}
       </div>
       <button className= "ClearButton" onClick={clearButtonHandler}>
