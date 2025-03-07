@@ -1,5 +1,6 @@
 import {Router} from "express";
 import GameOptions from "../models/gameOptions"
+import { GameModes,Difficulties, DifficultyValues, fromString } from "../shared_modules/shared_enums";
 import { nanoid } from 'nanoid';
 import GameInfo from "../models/gameInfo";
 import redisClient from "../redisClient";
@@ -8,26 +9,44 @@ const gameRouter = Router();
 
 gameRouter.post("/createGame", async (req: any, res) => {
     console.log(req.body);
-    console.log("someting");
+    //console.log("someting");
     const {
             playerCount,
             fromBase,
             toBase,
             roundCount,
-            maxValue,
             difficulty
         } = req.body;
+    
+    
     
     const gameOptions = new GameOptions({
         playerCount,
         fromBase,
         toBase,
         roundCount,
-        maxValue,
-        difficulty  
+        difficulty:fromString(difficulty)  
     });
 
     console.log(gameOptions);
+    var maxValue=0;
+
+    switch(gameOptions.difficulty) {
+        case Difficulties.LAYMAN:
+            maxValue = DifficultyValues.LAYMAN;
+            break;
+        case Difficulties.CHILL_GUY:
+            maxValue = DifficultyValues.CHILL_GUY;
+            break;
+        case Difficulties.ELFAK_ENJOYER:
+            maxValue = DifficultyValues.ELFAK_ENJOYER;
+            break;
+        case Difficulties.BASED_MASTER:
+            maxValue = DifficultyValues.BASED_MASTER;
+            break;
+        default:
+            break;
+    }
 
     var randomNums = Array.from({length:roundCount}, (_,i) => 
         Math.floor(Math.random()*maxValue)+1
