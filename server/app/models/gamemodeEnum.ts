@@ -1,5 +1,5 @@
 export enum GameModes {
-    CLASSIC,
-    REVERSE,
-    CHAOS
+    CLASSIC = "classic",
+    REVERSE = "reverse",
+    CHAOS = "chaos"
 }

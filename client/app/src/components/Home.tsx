@@ -2,16 +2,19 @@ import { NavLink, useNavigate } from "react-router-dom";
 import "../styles/Home.css"
 import { JSXElementConstructor, ReactElement, ReactNode, ReactPortal, useEffect, useState } from "react";
 import axiosInstance from "../utils/axiosInstance";   //ovde za sad ne treba
+import {GameModes, Difficulties} from "../shared_modules/shared_enums"
 
 const roundCount = 15;
 const maxValue = 255;
 const gameID = "gameID";
 
 function Home() {
-  const [base, setBase] = useState(2);
+  const [toBase, setToBase] = useState(2);
   const [playerNum, setPlayerNum] = useState(1);
   const [gameMode, setGameMode] = useState("Classic");
+  const [difficulty, setDifficulty] = useState(Difficulties.LAYMAN.toString());
   const [gameId, setGameId] = useState(null);
+
 
   // playerCount,
   //           fromBase,
@@ -23,11 +26,13 @@ function Home() {
   const navigate = useNavigate();
   const bases = Array.from({ length: 31}, (_, i) => i+2);
   const players = Array.from({length: 4}, (_, i) => i+1);
-  const gameModes = ["Classic", "Reverse", "Chaos", "Arithmetic classic", "Arithmetic chaos"];  
+  // const gameModes = ["Classic", "Reverse", "Chaos", "Arithmetic classic", "Arithmetic chaos"];  
+  const gameModes:string[] = Object.values(GameModes);
+  const difficulties:string[] = Object.values(Difficulties);
   
   useEffect(() => {
     if (gameId) {
-      navigate("/Game", { state: { base, playerNum, gameMode, gameId } });
+      navigate("/Game", { state: { toBase, playerNum, gameMode, difficulty, gameId } });
     }
   }, [gameId]);  // This effect runs when `gameId` is updated
 
@@ -36,7 +41,7 @@ function Home() {
         const toSend = {
           playerCount: playerNum,
           fromBase: 10,
-          toBase: base,
+          toBase: toBase,
           roundCount: roundCount,
           maxValue: maxValue,
           difficulty: 0
@@ -88,9 +93,10 @@ function Home() {
       <label className="mainFont">Game Options</label>
 
       
-      {Chooser(bases, base, setBase, "Base ", "Choose Base:")}
+      {Chooser(bases, toBase, setToBase, "Base ", "Choose Base:")}
       {Chooser(players, playerNum, setPlayerNum, "Players: ", "Choose number of players")}
       {Chooser(gameModes, gameMode, setGameMode, "", "Choose Game Mode:")}
+      {Chooser(difficulties, difficulty, setDifficulty, "", "Choose difficulty:")}
 
       {/* <NavLink to="/Game" state={{ base, playerNum, gameMode, gameId }} onClick={createGame}> */}
       <button className="btn btn-success game-button" style={{marginTop:"15px"}} onClick={createGame}>

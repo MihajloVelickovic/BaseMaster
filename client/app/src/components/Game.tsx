@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import "../styles/Game.css";
 import { useLocation } from "react-router-dom";
+import { GameModes, Difficulties } from "../shared_modules/shared_enums";
 
-const maxVal:bigint = BigInt(255);
+var maxVal:bigint = BigInt(255);
 var numToFind = getRandomNumber(1, Number(maxVal));
 var buttonBase = 10;
 const maxBase = 32;
@@ -27,24 +28,25 @@ function getRandomNumber(min:number, max:number) {
 function Game() {
 
   const location = useLocation();
-  var { base = 2, playerNum = 1, gameMode = "Classic", gameId = "" } = location.state || {};
+  var { toBase = 2, playerNum = 1, gameMode = GameModes.CLASSIC.toString(), difficulty = Difficulties.LAYMAN.toString(), gameId = "" } = location.state || {};
 
-  console.log("base: "+base+" playerNum: "+playerNum+" gameMode: "+gameMode+" gameId: "+gameId);
+  console.log("toBase: "+toBase+" playerNum: "+playerNum+" gameMode: "+gameMode+" difficulty: "+difficulty+ " gameId: "+gameId);
 
   switch (gameMode) {
     case "Classic":
-      buttonBase = base;
+      buttonBase = toBase;
       break;
     case "Reverse":
       buttonBase = 10;
       break;
     case "Chaos":
       buttonBase = randomBase1;
-      base = randomBase2;
+      toBase = randomBase2;
       break;
     default:
-      buttonBase = base;
+      buttonBase = toBase;
   }
+
   const numOfButtons = clcBtnCount(BigInt(buttonBase), maxVal);
   const [arrayOfValues, setArrayOfValues] = useState(Array.from({length: numOfButtons}, (_, i) => 0));
   const btnArrayLabels = Array.from({ length: numOfButtons}, (_, i) => Math.pow(Number(buttonBase), numOfButtons - 1 - i));
@@ -84,19 +86,19 @@ function Game() {
 
     numToFind = getRandomNumber(1, Number(maxVal));
     if (gameMode == "Chaos"){
-      base = getRandomNumber(2, maxBase);
+      toBase = getRandomNumber(2, maxBase);
       buttonBase = getRandomNumber(2, maxBase);
-      randomBase1 = base;         //this is  temporary fix...
+      randomBase1 = toBase;         //this is  temporary fix...
       randomBase2 = buttonBase;
     }
     clearButtonHandler();
   }
 
-  function numToBase(num:number, base:number) {
-    if (base < 2 || base > 36) {
+  function numtoBase(num:number, toBase:number) {
+    if (toBase < 2 || toBase > 36) {
       throw new Error("Base must be between 2 and 36");
     }
-    return num.toString(base).toUpperCase();
+    return num.toString(toBase).toUpperCase();
   }
 
   function generateTargetNumLabel(num: number, mode: string) {
@@ -104,22 +106,22 @@ function Game() {
     switch (mode){
       case "Classic":
         text = <label className="NumToFindLabel">
-                ({num})<label className="smallNumToFindLabel">10</label> = (?)<label className="smallNumToFindLabel">{base}</label> 
+                ({num})<label className="smallNumToFindLabel">10</label> = (?)<label className="smallNumToFindLabel">{toBase}</label> 
                </label>
         break;
       case "Reverse":
         text = <label className="NumToFindLabel">
-                ({numToBase(num, base)})<label className="smallNumToFindLabel">{base}</label> = (?)<label className="smallNumToFindLabel">10</label> 
+                ({numtoBase(num, toBase)})<label className="smallNumToFindLabel">{toBase}</label> = (?)<label className="smallNumToFindLabel">10</label> 
                </label>
         break;
       case "Chaos":
         text = <label className="NumToFindLabel">
-                ({numToBase(num, base)})<label className="smallNumToFindLabel">{base}</label> = (?)<label className="smallNumToFindLabel">{buttonBase}</label> 
+                ({numtoBase(num, toBase)})<label className="smallNumToFindLabel">{toBase}</label> = (?)<label className="smallNumToFindLabel">{buttonBase}</label> 
               </label>
         break;
       default:
         text = <label className="NumToFindLabel">
-                ({num})<label className="smallNumToFindLabel">10</label> = (?)<label className="smallNumToFindLabel">{base}</label> 
+                ({num})<label className="smallNumToFindLabel">10</label> = (?)<label className="smallNumToFindLabel">{toBase}</label> 
               </label>
     }
 
