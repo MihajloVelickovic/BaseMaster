@@ -35,7 +35,7 @@ gameRouter.get("/createGame", async (req: any, res) => {
         randomNums.forEach(async (num) => {
             await redisClient.rPush(gameId, String(num));
         });
-        res.send({message:`Game created succesfully, id:${gameId}`});
+        res.send({message:`Game created succesfully`, gameID:gameId});
     } catch (err) {
         res.status(500).send('Error saving user data to Redis');
     }
