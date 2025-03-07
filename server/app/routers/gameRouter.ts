@@ -6,7 +6,9 @@ import redisClient from "../redisClient";
 
 const gameRouter = Router();
 
-gameRouter.get("/createGame", async (req: any, res) => {
+gameRouter.post("/createGame", async (req: any, res) => {
+    console.log(req.body);
+    console.log("someting");
     const {
             playerCount,
             fromBase,
@@ -24,6 +26,8 @@ gameRouter.get("/createGame", async (req: any, res) => {
         maxValue,
         difficulty  
     });
+
+    console.log(gameOptions);
 
     var randomNums = Array.from({length:roundCount}, (_,i) => 
         Math.floor(Math.random()*maxValue)+1

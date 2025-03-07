@@ -27,9 +27,9 @@ function getRandomNumber(min:number, max:number) {
 function Game() {
 
   const location = useLocation();
-  var { base = 2, playerNum = 1, gameMode = "Classic" } = location.state || {};
+  var { base = 2, playerNum = 1, gameMode = "Classic", gameId = "" } = location.state || {};
 
-  console.log("base: "+base+" playerNum: "+playerNum+" gameMode: "+gameMode);
+  console.log("base: "+base+" playerNum: "+playerNum+" gameMode: "+gameMode+" gameId: "+gameId);
 
   switch (gameMode) {
     case "Classic":

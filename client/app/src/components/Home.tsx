@@ -1,17 +1,56 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import "../styles/Home.css"
-import { JSXElementConstructor, ReactElement, ReactNode, ReactPortal, useState } from "react";
-import axiosInstance from "../utils/axiosInstance";
+import { JSXElementConstructor, ReactElement, ReactNode, ReactPortal, useEffect, useState } from "react";
+import axiosInstance from "../utils/axiosInstance";   //ovde za sad ne treba
 
+const roundCount = 15;
+const maxValue = 255;
+const gameID = "gameID";
 
 function Home() {
   const [base, setBase] = useState(2);
   const [playerNum, setPlayerNum] = useState(1);
   const [gameMode, setGameMode] = useState("Classic");
+  const [gameId, setGameId] = useState(null);
 
+  // playerCount,
+  //           fromBase,
+  //           toBase,
+  //           roundCount,
+  //           maxValue,
+  //           difficulty
+
+  const navigate = useNavigate();
   const bases = Array.from({ length: 31}, (_, i) => i+2);
   const players = Array.from({length: 4}, (_, i) => i+1);
   const gameModes = ["Classic", "Reverse", "Chaos", "Arithmetic classic", "Arithmetic chaos"];  
+  
+  useEffect(() => {
+    if (gameId) {
+      navigate("/Game", { state: { base, playerNum, gameMode, gameId } });
+    }
+  }, [gameId]);  // This effect runs when `gameId` is updated
+
+  const createGame = async () => {
+    try {
+        const toSend = {
+          playerCount: playerNum,
+          fromBase: 10,
+          toBase: base,
+          roundCount: roundCount,
+          maxValue: maxValue,
+          difficulty: 0
+        };
+        var response = await axiosInstance.post('/game/createGame', toSend);
+        console.log("response za createGame je: ", response);
+        const gId = response.data[`${gameID}`];        //check the name.. if changed
+        console.log("gameId je: ", gId);
+        setGameId(gId);
+
+    } catch (error:any) {
+        console.error('Error creating game:', error.response ? error.response.data : error.message);
+    }
+  };
   
   function Chooser<T extends string | number>(choosingArray: T[], state: T, setState: (value: T) => void, text: string, labelTxt: string) {
     function onSelection(value: T) {
@@ -53,11 +92,11 @@ function Home() {
       {Chooser(players, playerNum, setPlayerNum, "Players: ", "Choose number of players")}
       {Chooser(gameModes, gameMode, setGameMode, "", "Choose Game Mode:")}
 
-      <NavLink to="/Game" state={{ base, playerNum, gameMode }}>
-        <button className="btn btn-success game-button" style={{marginTop:"15px"}}>
-          Start game buddy!
-        </button>
-      </NavLink>
+      {/* <NavLink to="/Game" state={{ base, playerNum, gameMode, gameId }} onClick={createGame}> */}
+      <button className="btn btn-success game-button" style={{marginTop:"15px"}} onClick={createGame}>
+        Start game buddy!
+      </button>
+      {/* </NavLink> */}
     </div>
   );
 }

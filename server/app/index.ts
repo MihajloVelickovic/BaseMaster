@@ -11,9 +11,17 @@ import redisClient from "./redisClient";
 import express from "express";
 import { SERVER_PORT } from "./config/config";
 import gameRouter from './routers/gameRouter'
+import cors from 'cors'
+
+const corsOptions = {
+    origin: 'http://localhost:3000',
+    optionsSuccessStatus: 200,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"]
+};
 
 const app = express();
 app.use(express.json());
+app.use(cors(corsOptions));
 
 app.use("/game", gameRouter);
 
