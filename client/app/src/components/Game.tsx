@@ -26,8 +26,8 @@ function getRandomNumber(min:number, max:number) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function Game() {
 
+function Game() {
   const location = useLocation();
   const [currRound, setCurrRound] = useState(0);
   const [currNum, setCurrNum] = useState(100);
