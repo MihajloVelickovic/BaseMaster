@@ -57,7 +57,7 @@ function Game() {
     // }
 
     const newArray = [...arrayOfValues];
-    newArray[key] = newArray[key] + 1 >= buttonBase ? 0 : newArray[key] + 1;
+    newArray[key] = newArray[key] + 1 < buttonBase ? newArray[key] + 1: 0;
     console.log(newArray);
     setArrayOfValues(newArray);
   }
