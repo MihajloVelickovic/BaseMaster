@@ -5,11 +5,8 @@ import { GameModes, Difficulties, DifficultyValues } from "../shared_modules/sha
 import axiosInstance from "../utils/axiosInstance";
 
 var maxVal:bigint = BigInt(255);
-var numToFind = getRandomNumber(1, Number(maxVal));
-var buttonBase = 10;
+var numToFind = getRandomNumber(1, Number(maxVal));   //this appears to be unneeded
 const maxBase = 32;
-var randomBase1 = getRandomNumber(2, 32);     //this may be a temporary fix
-var randomBase2 = getRandomNumber(2,32);
 
 function clcBtnCount(base:bigint, maxValue:bigint) {
   var count = 0, currVal=maxValue;
@@ -31,44 +28,65 @@ function Game() {
   const location = useLocation();
   const [currRound, setCurrRound] = useState(0);
   const [currNum, setCurrNum] = useState(100);
-  var { toBase = 2, playerNum = 1, gameMode = GameModes.CLASSIC.toString(), difficulty = Difficulties.LAYMAN.toString(), gameId = "" } = location.state || {};
-
+  const [toBase, setToBase] = useState(2);
+  const [fromBase, setFromBase] = useState(10);
+  var { toBasee = 2, playerNum = 1, gameMode = GameModes.CLASSIC.toString(), difficulty = Difficulties.LAYMAN.toString(), gameId = "" } = location.state || {};
+  console.log("toBasee je: ", toBasee);
   useEffect( () => {
+    switch (gameMode) {         //will go back to this later...
+      case "Classic":
+        break;
+      case "Reverse":
+        setFromBase(toBase);
+        setToBase(10);
+        break;
+      case "Chaos":
+        break;
+      default:
+    }
+    switch (difficulty) {
+      case Difficulties.LAYMAN.toString(): maxVal = BigInt(DifficultyValues.LAYMAN);
+        break;
+      case Difficulties.CHILL_GUY.toString(): maxVal = BigInt(DifficultyValues.CHILL_GUY);
+        break;
+      case Difficulties.ELFAK_ENJOYER.toString(): maxVal = BigInt(DifficultyValues.ELFAK_ENJOYER);
+        break;
+      case Difficulties.BASED_MASTER.toString(): maxVal = BigInt(DifficultyValues.BASED_MASTER);
+        break;
+      default:
+        maxVal = BigInt(DifficultyValues.LAYMAN);
+        console.log("something went wrong for this to show up");
+    }
     getNumberFromServer();
+    //clearButtonHandler();
   }, [])
 
   console.log("toBase: "+toBase+" playerNum: "+playerNum+" gameMode: "+gameMode+" difficulty: "+difficulty+ " gameId: "+gameId);
-
+  
   const getNumberFromServer = async () => {
     const toSend = {
       gameId:gameId,
       currRound:currRound
     }
     var response = await axiosInstance.post('/game/getCurrNum', toSend);
-    console.log("response za getCurrNum je: ", response);
-    const num = response.data['currRndNum'];        //check the name.. if changed
-    console.log("broj je: ", num);
+    const num:number = Number(response.data['currRndNum']);        //check the name.. if changed
+    if (gameMode == GameModes.CHAOS.toString()) {
+      setToBase(Number(response.data['toBase']));
+      setFromBase(Number(response.data['fromBase']));
+      let val = clcBtnCount(BigInt(Number(response.data['toBase'])), maxVal);
+      console.log(toBase, fromBase, val);
+      setNumOfButtons(val);
+      setArrayOfValues(Array.from({length: val}, (_, i) => 0));
+    }
+    console.log(response);
     setCurrRound(currRound+1);
     setCurrNum(num);
-    console.log(currRound);
+    console.log("Current round: ", currRound);  
+
     return num;
 
   }
 
-  switch (gameMode) {
-    case "Classic":
-      buttonBase = toBase;
-      break;
-    case "Reverse":
-      buttonBase = 10;
-      break;
-    case "Chaos":
-      buttonBase = randomBase1;
-      toBase = randomBase2;
-      break;
-    default:
-      buttonBase = toBase;
-  }
 
   switch (difficulty) {
     case Difficulties.LAYMAN.toString(): maxVal = BigInt(DifficultyValues.LAYMAN);
@@ -84,9 +102,9 @@ function Game() {
       console.log("something went wrong for this to show up");
   }
 
-  const numOfButtons = clcBtnCount(BigInt(buttonBase), maxVal);
-  const [arrayOfValues, setArrayOfValues] = useState(Array.from({length: numOfButtons}, (_, i) => 0));
-  const btnArrayLabels = Array.from({ length: numOfButtons}, (_, i) => Math.pow(Number(buttonBase), numOfButtons - 1 - i));
+  const [numOfButtons, setNumOfButtons] = useState(clcBtnCount(BigInt(toBase), maxVal));
+  const [arrayOfValues, setArrayOfValues] = useState(Array.from({length: numOfButtons}, (_, i) => 0));  
+  const btnArrayLabels = Array.from({ length: numOfButtons}, (_, i) => Math.pow(Number(toBase), numOfButtons - 1 - i));
 
   function handleButtonClick(key: number) {
     // if (!arrayOfValues[key]) {
@@ -95,7 +113,7 @@ function Game() {
     // }
 
     const newArray = [...arrayOfValues];
-    newArray[key] = newArray[key] + 1 < buttonBase ? newArray[key] + 1: 0;
+    newArray[key] = newArray[key] + 1 < toBase ? newArray[key] + 1: 0;
     setArrayOfValues(newArray);
   }
 
@@ -120,21 +138,17 @@ function Game() {
       alert("Better luck next time");
 
     await getNumberFromServer();
-    if (gameMode == "Chaos"){
-      toBase = getRandomNumber(2, maxBase);         //server will generate this as well, in due time
-      buttonBase = getRandomNumber(2, maxBase);
-      randomBase1 = toBase;         //this is  temporary fix...
-      randomBase2 = buttonBase;
-    }
-    clearButtonHandler();
+    
+    //clearButtonHandler();
     
   }
 
-  function numtoBase(num:number, toBase:number) {
-    if (toBase < 2 || toBase > 36) {
+  function numtoBase(num:number, tobase:number) {
+    if (tobase < 2 || tobase > 36) {
       throw new Error("Base must be between 2 and 36");
     }
-    return num.toString(toBase).toUpperCase();
+    let p = 69;
+    return num.toString(tobase).toUpperCase();
   }
 
   function generateTargetNumLabel(num: number, mode: string) {
@@ -142,22 +156,23 @@ function Game() {
     switch (mode){
       case "Classic":
         text = <label className="NumToFindLabel">
-                ({num})<label className="smallNumToFindLabel">10</label> = (?)<label className="smallNumToFindLabel">{toBase}</label> 
+                ({num})<label className="smallNumToFindLabel">{fromBase}</label> = (?)<label className="smallNumToFindLabel">{toBase}</label> 
                </label>
         break;
       case "Reverse":
         text = <label className="NumToFindLabel">
-                ({numtoBase(num, toBase)})<label className="smallNumToFindLabel">{toBase}</label> = (?)<label className="smallNumToFindLabel">10</label> 
+                ({numtoBase(num, fromBase)})<label className="smallNumToFindLabel">{fromBase}</label> = (?)<label className="smallNumToFindLabel">{toBase}</label> 
                </label>
         break;
       case "Chaos":
+        console.log(toBase, fromBase, num, gameMode);
         text = <label className="NumToFindLabel">
-                ({numtoBase(num, toBase)})<label className="smallNumToFindLabel">{toBase}</label> = (?)<label className="smallNumToFindLabel">{buttonBase}</label> 
+                ({numtoBase(num, fromBase)})<label className="smallNumToFindLabel">{fromBase}</label> = (?)<label className="smallNumToFindLabel">{toBase}</label> 
               </label>
         break;
       default:
         text = <label className="NumToFindLabel">
-                ({num})<label className="smallNumToFindLabel">10</label> = (?)<label className="smallNumToFindLabel">{toBase}</label> 
+                ({num})<label className="smallNumToFindLabel">{fromBase}</label> = (?)<label className="smallNumToFindLabel">{toBase}</label> 
               </label>
     }
 

@@ -31,16 +31,16 @@ function Home() {
   
   useEffect(() => {
     if (gameId) {
-      navigate("/Game", { state: { toBase, playerNum, gameMode, difficulty, gameId } });
+      navigate("/Game", { state: { toBasee:toBase, playerNum, gameMode, difficulty, gameId } });
     }
   }, [gameId]);  // This effect runs when `gameId` is updated
 
   const createGame = async () => {
     try {
         const toSend = {
+          gamemode: gameMode,
           playerCount: playerNum,
           roundCount: roundCount,
-          gameMode: gameMode,
           difficulty: difficulty
         };
         var response = await axiosInstance.post('/game/createGame', toSend);
