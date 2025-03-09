@@ -1,0 +1,64 @@
+.Lobby {
+    text-align: center;
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    padding: 30px;
+    margin-top: 40px;
+  }
+  
+  .LobbyContainer {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    padding: 25px;
+    height: fit-content;
+    /* width: fit-content; */
+    width: 550px;
+    
+    margin: auto;
+    margin-top: 30px;  
+    font-size: large;
+  
+    border: solid darkblue 1px;
+  
+    border-radius: 25px;
+    background-color:aliceblue;
+    /* background-image:url( "../../pictures/background_img_01.jpg"); */
+  
+  }
+  
+  .LobbyContainer * {
+    padding: 15px;
+  }
+
+  .LobbyStats {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .LobbyStats div {
+    font-size: large;
+    font-weight: bold;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .mainLobbyText {
+    font-size: xx-large;
+    font-weight: bolder;
+    color: blue;
+    border-bottom: solid black 1px;
+  }
+
+  .LobbyStats label {
+    margin-right: solid black 1px;
+  }
+
+  /* won't work because of bootstrap button  */
+  .startGameButton {           
+    font-size: xx-large;
+    font-weight: bolder;
+  }
+  

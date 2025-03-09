@@ -10,6 +10,11 @@ function Header() {
                 Home
             </button>
         </Link>
+        <Link to="/Lobby">
+            <button className="btn btn-primary header-link-button">
+                Lobby
+            </button>
+        </Link>
         <Link to="/Game">
             <button className="btn btn-primary header-link-button">
                 Game

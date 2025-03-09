@@ -4,7 +4,7 @@ import { JSXElementConstructor, ReactElement, ReactNode, ReactPortal, useEffect,
 import axiosInstance from "../utils/axiosInstance";   //ovde za sad ne treba
 import {GameModes, Difficulties} from "../shared_modules/shared_enums"
 
-const roundCount = 15;
+export const roundCount = 15;
 const maxValue = 255;
 const gameID = "gameID";
 
@@ -31,7 +31,7 @@ function Home() {
   
   useEffect(() => {
     if (gameId) {
-      navigate("/Game", { state: { toBasee:toBase, playerNum, gameMode, difficulty, gameId } });
+      navigate("/Lobby", { state: { toBasee:toBase, playerNum, gameMode, difficulty, gameId } });
     }
   }, [gameId]);  // This effect runs when `gameId` is updated
 
@@ -54,14 +54,16 @@ function Home() {
     }
   };
   
-  function Chooser<T extends string | number>(choosingArray: T[], state: T, setState: (value: T) => void, text: string, labelTxt: string) {
+  function Chooser<T extends string | number>(choosingArray: T[], state: T, setState: (value: T) => void, text: string, labelTxt: string, disabled: boolean = false) {
     function onSelection(value: T) {
-      setState(value);   
+      if (!disabled) {
+        setState(value);
+      }
     }
     const basesButtons = choosingArray.map((val, ind) => {
       return (
         <li className="choosingFont">
-          <button className="dropdown-item" onClick={() => onSelection(val)}>
+          <button className="dropdown-item" onClick={() => onSelection(val)} disabled={disabled}>
             {text} {val}
           </button>
         </li>
@@ -72,7 +74,9 @@ function Home() {
     
       <label className="smallFont">{labelTxt}</label  >
       <div className="dropdown choosingBtn">
-        <button className="btn btn-secondary dropdown-toggle choosingBtn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <button className="btn btn-secondary dropdown-toggle choosingBtn" type="button" data-bs-toggle="dropdown" aria-expanded="false"
+                          disabled={disabled} // Disable when needed
+                          style={{ backgroundColor: disabled ? "#d3d3d3" : "", cursor: disabled ? "not-allowed" : "" }}>
           {text}{state}
         </button>
         <ul className="dropdown-menu">
@@ -90,7 +94,7 @@ function Home() {
       <label className="mainFont">Game Options</label>
 
       
-      {Chooser(bases, toBase, setToBase, "Base ", "Choose Base:")}
+      {Chooser(bases, toBase, setToBase, "Base ", "Choose Base:", gameMode === GameModes.CHAOS)}
       {Chooser(players, playerNum, setPlayerNum, "Players: ", "Choose number of players")}
       {Chooser(gameModes, gameMode, setGameMode, "", "Choose Game Mode:")}
       {Chooser(difficulties, difficulty, setDifficulty, "", "Choose difficulty:")}

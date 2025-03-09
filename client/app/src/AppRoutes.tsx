@@ -3,11 +3,13 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Home from './components/Home';
 import Game from './components/Game';
 import Header from './components/Header';
+import Lobby from './components/Lobby';
 import "./styles/AppRoutes.css";
 
 const routes = [
     { path: "/", element: <Home /> },
-    { path: "/Game", element: <Game />}
+    { path: "/Game", element: <Game />},
+    { path: "/Lobby", element: <Lobby />}
     // { path: "/login", element: <LoginSignupPage /> },
     // { path: "/register/:token", element: <Register /> },
 ];
