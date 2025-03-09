@@ -8,7 +8,8 @@ export default class GameOptions {
     roundCount:number;
     difficulty:Difficulties;
 
-    constructor({ playerCount, fromBase, toBase, roundCount, difficulty }) {
+    constructor({gamemode, playerCount, roundCount, difficulty }) {
+        this.gamemode = gamemode;
         this.playerCount = playerCount;
         this.roundCount = roundCount;
         this.difficulty = difficulty;
