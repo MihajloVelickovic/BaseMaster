@@ -1,10 +1,11 @@
 import {Router} from "express";
 import GameOptions from "../models/gameOptions"
-import { GameModes,Difficulties, DifficultyValues, fromStringDiff, fromStringGM, IdPrefixes, BaseValues, maxValueFromDifficulty }
- from "../shared_modules/shared_enums";
+import { GameModes,Difficulties, DifficultyValues,
+fromStringDiff, fromStringGM, IdPrefixes, BaseValues, maxValueFromDifficulty }
+from "../shared_modules/shared_enums";
 import { nanoid } from 'nanoid';
 import GameInfo from "../models/gameInfo";
-import {redisClient, pubSubClient} from "../redisClient";
+import {redisClient, publisher} from "../redisClient";
 
 const gameRouter = Router();
 
@@ -105,7 +106,8 @@ gameRouter.post("/getCurrNum", async (req:any, res) => {
         if(scoreboard === null)
             res.status(404).send({message:"Could not find the scoreboard"});
 
-        pubSubClient.publish(gameId, JSON.stringify(scoreboard));
+        console.log("sending data to subscriber");
+        publisher.publish(gameId, JSON.stringify(scoreboard));
 
         if(gamemode !== GameModes.CHAOS)
             res.send({currRndNum:num});

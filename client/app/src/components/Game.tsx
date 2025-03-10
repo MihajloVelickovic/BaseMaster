@@ -8,7 +8,7 @@ var maxVal:bigint = BigInt(255);
 var numToFind = getRandomNumber(1, Number(maxVal));   //this appears to be unneeded
 const maxBase = 32;
 const playerID = "a";
-const ws = new WebSocket("ws://localhost:1738");
+
 
 
 function clcBtnCount(base:bigint, maxValue:bigint) {
@@ -38,6 +38,7 @@ function Game() {
   var { toBasee = 2, playerNum = 1, gameMode = GameModes.CLASSIC.toString(), difficulty = Difficulties.LAYMAN.toString(), gameId = "" } = location.state || {};
   console.log("toBasee je: ", toBasee);
   useEffect( () => {
+    const ws = new WebSocket("ws://localhost:1738");
     switch (gameMode) {         //will go back to this later...
       case "Classic":
         break;
@@ -67,11 +68,13 @@ function Game() {
     getNumberFromServer(false);
 
     ws.onopen = () => {
+      
       ws.send(JSON.stringify({ type: "joinLobby", gameId, playerID }));
   };
 
   ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
+      console.log(data);
       if (data.type === "scoreUpdate") setScoreboard(data.scores);
   };
 

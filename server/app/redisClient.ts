@@ -10,11 +10,27 @@ const redisClient = createClient({
   }
 });
 
-const pubSubClient = redisClient.duplicate();
+const publisher = createClient({
+  username: 'default',
+  password: REDIS_PASSWORD,
+  socket: {
+    host: REDIS_HOST,
+    port: Number(REDIS_PORT)
+  }
+});
+const subscriber = createClient({
+  username: 'default',
+  password: REDIS_PASSWORD,
+  socket: {
+    host: REDIS_HOST,
+    port: Number(REDIS_PORT)
+  }
+});
 
 (async () => {
   await redisClient.connect();
-  await pubSubClient.connect();
+  await publisher.connect();
+  await subscriber.connect();
 })();
 
-export  {redisClient, pubSubClient };
+export  {redisClient, publisher, subscriber};

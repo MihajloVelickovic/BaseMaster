@@ -7,7 +7,7 @@
 
 
 // //nova stvar..
-import {redisClient, pubSubClient} from "./redisClient";
+import {redisClient, publisher, subscriber} from "./redisClient";
 import express from "express";
 import { SERVER_PORT } from "./config/config";
 import gameRouter from './routers/gameRouter'
@@ -37,7 +37,7 @@ wss.on("connection", (ws) => {
     ws.on("message", (data) => {
         try {
             const { type, gameId, playerId } = JSON.parse(data);
-
+            console.log(data);
             if (type === "joinLobby") {
                 if (!CLIENTS.has(gameId)) {
                     CLIENTS.set(gameId, new Set());
@@ -60,8 +60,9 @@ wss.on("connection", (ws) => {
 });
 
 
-await pubSubClient.pSubscribe(`${IdPrefixes.PLAYER_POINTS}_*`, async (message, channel) => {
-    const lobbyId = channel.replace(`${IdPrefixes.PLAYER_POINTS}_`, ""); // Extract lobbyId
+subscriber.pSubscribe(`*`, async (message, channel) => { // Listen to all channels
+
+    const lobbyId = channel; // Use the full channel name as gameId
 
     if (CLIENTS.has(lobbyId)) {
         CLIENTS.get(lobbyId).forEach(client => {
@@ -74,23 +75,7 @@ await pubSubClient.pSubscribe(`${IdPrefixes.PLAYER_POINTS}_*`, async (message, c
         });
     }
 });
-console.log(" Subscribed to SCOREBOARD_* updates");
 
-pubSubClient.on("pmessage", (pattern, channel, message) => {
-    const lobbyId = channel.replace(`${IdPrefixes.PLAYER_POINTS}_`, ""); // Extract lobbyId
-
-    console.log(message);
-    if (CLIENTS.has(lobbyId)) {
-        CLIENTS.get(lobbyId).forEach(client => {
-            if (client.readyState === 1) {
-                client.send(JSON.stringify({
-                    type: "scoreUpdate",
-                    scores: JSON.parse(message)
-                }));
-            }
-        });
-    }
-});
 
 app.use("/game", gameRouter);
 
