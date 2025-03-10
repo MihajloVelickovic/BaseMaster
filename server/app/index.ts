@@ -4,8 +4,6 @@
 
 // // app.use(express.json());
 
-
-
 // //nova stvar..
 import {redisClient, publisher, subscriber} from "./redisClient";
 import express from "express";
@@ -70,6 +68,21 @@ subscriber.pSubscribe(`*`, async (message, channel) => { // Listen to all channe
                 client.send(JSON.stringify({
                     type: "scoreUpdate",
                     scores: JSON.parse(message)
+                }));
+            }
+        });
+    }
+});
+
+subscriber.pSubscribe(`${IdPrefixes.GAME_STARTED}_*`, async (message, channel) => {
+    const lobbyId = channel.replace("gameStart_", ""); // Extract game ID
+
+    if (CLIENTS.has(lobbyId)) {
+        CLIENTS.get(lobbyId).forEach(client => {
+            if (client.readyState === 1) {
+                client.send(JSON.stringify({
+                    type: "gameStart",
+                    message: "Game has started!",
                 }));
             }
         });

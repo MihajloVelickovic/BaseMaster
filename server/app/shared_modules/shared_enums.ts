@@ -24,13 +24,24 @@ export enum IdPrefixes {
     ORDER_POINTS = "op",
     FROM_BASE = "fb",
     TO_BASE = "tb",
-    GAME_END = "ge"
+    GAME_END = "ge",
+    GAME_STARTED = "GAME STARTED"
 }
 
 export enum BaseValues {
     MIN_BASE = 2,
     MAX_BASE = 32
 }
+
+export enum GameStates {
+    LOBBY = "Lobby",
+    STARTED = "Started"
+}
+
+export const fromStringState = (value: string): GameStates | undefined => {
+    return (Object.values(GameStates) as string[]).includes(value) 
+            ? (value as GameStates) : undefined;
+};
 
 export const fromStringDiff = (value: string): Difficulties | undefined => {
     return (Object.values(Difficulties) as string[]).includes(value) ? (value as Difficulties) : undefined;

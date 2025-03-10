@@ -1,11 +1,14 @@
 import {Router} from "express";
 import GameOptions from "../models/gameOptions"
 import { GameModes,Difficulties, DifficultyValues,
-fromStringDiff, fromStringGM, IdPrefixes, BaseValues, maxValueFromDifficulty }
+fromStringDiff, fromStringGM, IdPrefixes, BaseValues, maxValueFromDifficulty, 
+GameStates,
+fromStringState}
 from "../shared_modules/shared_enums";
 import { nanoid } from 'nanoid';
 import GameInfo from "../models/gameInfo";
 import {redisClient, publisher} from "../redisClient";
+import { json } from "stream/consumers";
 
 const gameRouter = Router();
 
@@ -52,7 +55,11 @@ gameRouter.post("/createGame", async (req: any, res) => {
         if(gameOptions.gamemode === GameModes.CHAOS)
             await addChaosBaseArrays(roundCount,gameId);
         
-        await redisClient.set(gameId, playerCount); // set max player count
+        var gameData = {difficulty:gameOptions.difficulty, maxPlayers:playerCount,
+            currPlayerCount: 1, gameState: GameStates.LOBBY
+        }
+
+        await redisClient.set(gameId, JSON.stringify(gameData)); // set max player count
         
         await redisClient.zAdd(`${IdPrefixes.PLAYER_POINTS}_${gameId}`, 
             { score: 0, value: hostId });
@@ -131,16 +138,59 @@ gameRouter.post("/joinLobby", async (req:any, res) => {
     const maxPlayerCount = await redisClient.get(gameId);
 
     if(currPlayerCount === null)
-        res.status(404).send({message: "Requested lobby does not exsist"});
+        return res.status(404).send({message: "Requested lobby does not exsist"});
     if(maxPlayerCount === null)
-        res.status(404).send({message: "Requested game does not exsist"});
+        return res.status(404).send({message: "Requested game does not exsist"});
     if(Number(currPlayerCount) > Number(maxPlayerCount))
-        res.status(404).send({message: "Lobby is full"});
+        return res.status(404).send({message: "Lobby is full"});
 
-   
+    try {
+        await redisClient.zAdd(`${IdPrefixes.PLAYER_POINTS}_${gameId}`, 
+            { score: 0, value: playerId });
+
+        return res.send({message:"Success", gameId:gameId});
+    }
+    catch(err:any) {
+        return res.status(404).send({message: err.message});
+    }
 
     
     //if(lobbyData)
+});
+
+gameRouter.get("/getLobbies", async (req:any, res) => {
+    
+});
+
+gameRouter.post("/setGameState", async (req:any, res) => {
+    const {
+        gameId,
+        gameState
+    } = req.body;
+
+    try {
+        const gameData = await redisClient.get(gameId);
+
+        if(gameData === null)
+            return res.status(404).send({message:"Could not fin the game"});
+
+        const parcedData = JSON.parse(gameData);
+
+        parcedData.gameState = fromStringState(gameState);
+
+        await redisClient.set(gameId, JSON.stringify(parcedData));
+
+        publisher.publish(
+        `${IdPrefixes.GAME_STARTED}_${gameId}`,
+         JSON.stringify({message:"GAME STARTED"}));
+
+        console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+
+    }
+    catch(err:any) {
+        return res.status(404).send({message: err.message});
+    }
+
 });
 
 // gamemode:GameModes;

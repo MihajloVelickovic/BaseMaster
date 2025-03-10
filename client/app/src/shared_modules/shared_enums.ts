@@ -24,13 +24,24 @@ export enum IdPrefixes {
     ORDER_POINTS = "op",
     FROM_BASE = "fb",
     TO_BASE = "tb",
-    GAME_END = "ge"
+    GAME_END = "ge",
+    GAME_STARTED = "GAME STARTED"
 }
 
 export enum BaseValues {
     MIN_BASE = 2,
     MAX_BASE = 32
 }
+
+export enum GameStates {
+    LOBBY = "Lobby",
+    STARTED = "Started"
+}
+
+export const fromStringState = (value: string): GameStates | undefined => {
+    return (Object.values(GameStates) as string[]).includes(value) 
+            ? (value as GameStates) : undefined;
+};
 
 export const fromStringDiff = (value: string): Difficulties | undefined => {
     return (Object.values(Difficulties) as string[]).includes(value) ? (value as Difficulties) : undefined;
@@ -39,3 +50,24 @@ export const fromStringDiff = (value: string): Difficulties | undefined => {
 export const fromStringGM = (value: string): GameModes | undefined => {
     return (Object.values(GameModes) as string[]).includes(value) ? (value as GameModes) : undefined;
 };
+
+export function maxValueFromDifficulty(diff:Difficulties) {
+    var maxValue:number;
+    switch(diff) {
+        case Difficulties.LAYMAN:
+            maxValue = DifficultyValues.LAYMAN;
+            break;
+        case Difficulties.CHILL_GUY:
+            maxValue = DifficultyValues.CHILL_GUY;
+            break;
+        case Difficulties.ELFAK_ENJOYER:
+            maxValue = DifficultyValues.ELFAK_ENJOYER;
+            break;
+        case Difficulties.BASED_MASTER:
+            maxValue = DifficultyValues.BASED_MASTER;
+            break;
+        default:
+            maxValue=-1;
+    }
+    return maxValue;
+}
