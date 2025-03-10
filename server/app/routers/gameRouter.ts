@@ -61,6 +61,9 @@ gameRouter.post("/createGame", async (req: any, res) => {
 
         await redisClient.set(gameId, JSON.stringify(gameData)); // set max player count
         
+        
+        await redisClient.sAdd(IdPrefixes.LOBBIES, gameId);
+
         await redisClient.zAdd(`${IdPrefixes.PLAYER_POINTS}_${gameId}`, 
             { score: 0, value: hostId });
 
@@ -159,7 +162,18 @@ gameRouter.post("/joinLobby", async (req:any, res) => {
 });
 
 gameRouter.get("/getLobbies", async (req:any, res) => {
-    
+    try {
+        const lobbies = redisClient.sMembers(IdPrefixes.LOBBIES);
+
+        if(lobbies === null)
+            return res.status(404).send({message:"Could not fin any lobbies!"});
+
+        return res.send({lobbies});
+    } catch (err) {
+        res.status(500).send('Error saving user data to Redis');
+    }
+
+
 });
 
 gameRouter.post("/setGameState", async (req:any, res) => {
@@ -179,6 +193,8 @@ gameRouter.post("/setGameState", async (req:any, res) => {
         parcedData.gameState = fromStringState(gameState);
 
         await redisClient.set(gameId, JSON.stringify(parcedData));
+
+        await redisClient.sRem(IdPrefixes.LOBBIES, gameId); // remove the data
 
         publisher.publish(
         `${IdPrefixes.GAME_STARTED}_${gameId}`,
