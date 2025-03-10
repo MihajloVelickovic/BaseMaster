@@ -138,10 +138,14 @@ gameRouter.post("/joinLobby", async (req:any, res) => {
     const currPlayerCount = 
     await redisClient.zCard(`${IdPrefixes.PLAYER_POINTS}_${gameId}`);
 
-    const maxPlayerCount = await redisClient.get(gameId);
+    const gameData = await redisClient.get(gameId);
 
-    if(currPlayerCount === null)
+    if(gameData === null)
         return res.status(404).send({message: "Requested lobby does not exsist"});
+
+    const maxPlayerCount = JSON.parse(gameData).maxPlayers;
+
+    
     if(maxPlayerCount === null)
         return res.status(404).send({message: "Requested game does not exsist"});
     if(Number(currPlayerCount) > Number(maxPlayerCount))
@@ -172,8 +176,6 @@ gameRouter.get("/getLobbies", async (req:any, res) => {
     } catch (err) {
         res.status(500).send('Error saving user data to Redis');
     }
-
-
 });
 
 gameRouter.post("/setGameState", async (req:any, res) => {
@@ -198,23 +200,17 @@ gameRouter.post("/setGameState", async (req:any, res) => {
 
         publisher.publish(
         `${IdPrefixes.GAME_STARTED}_${gameId}`,
-         JSON.stringify({message:"GAME STARTED"}));
+         JSON.stringify({message:"GAME STARTED"}));      
 
-        console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+        console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");   
 
+        return res.status(200).send({message:"Set state to: "});
     }
     catch(err:any) {
         return res.status(404).send({message: err.message});
     }
 
 });
-
-// gamemode:GameModes;
-//     playerCount:number;
-//     fromBase:number;
-//     toBase:number;
-//     roundCount:number;
-//     difficulty:difficulty;
 
 async function addChaosBaseArrays(roundCount:number, gameId:String) {
     console.log("Entering chaos bases creation....");
