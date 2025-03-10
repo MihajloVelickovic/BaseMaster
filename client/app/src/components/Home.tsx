@@ -7,6 +7,7 @@ import {GameModes, Difficulties} from "../shared_modules/shared_enums"
 export const roundCount = 15;
 const maxValue = 255;
 const gameID = "gameID";
+const playerID = "a";
 
 function Home() {
   const [toBase, setToBase] = useState(2);
@@ -41,7 +42,8 @@ function Home() {
           gamemode: gameMode,
           playerCount: playerNum,
           roundCount: roundCount,
-          difficulty: difficulty
+          difficulty: difficulty,
+          hostId:playerID
         };
         var response = await axiosInstance.post('/game/createGame', toSend);
         console.log("response za createGame je: ", response);

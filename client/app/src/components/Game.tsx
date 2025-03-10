@@ -7,7 +7,7 @@ import axiosInstance from "../utils/axiosInstance";
 var maxVal:bigint = BigInt(255);
 var numToFind = getRandomNumber(1, Number(maxVal));   //this appears to be unneeded
 const maxBase = 32;
-
+const playerID = "a";
 function clcBtnCount(base:bigint, maxValue:bigint) {
   var count = 0, currVal=maxValue;
   while(currVal > 0) {
@@ -58,16 +58,20 @@ function Game() {
         maxVal = BigInt(DifficultyValues.LAYMAN);
         console.log("something went wrong for this to show up");
     }
-    getNumberFromServer();
+    
+
+    getNumberFromServer(false);
     //clearButtonHandler();
   }, [])
 
   console.log("toBase: "+toBase+" playerNum: "+playerNum+" gameMode: "+gameMode+" difficulty: "+difficulty+ " gameId: "+gameId);
   
-  const getNumberFromServer = async () => {
+  const getNumberFromServer = async (correct:boolean) => {
     const toSend = {
       gameId:gameId,
-      currRound:currRound
+      currRound:currRound,
+      playerId: playerID,
+      correct: correct
     }
     var response = await axiosInstance.post('/game/getCurrNum', toSend);
     const num:number = Number(response.data['currRndNum']);        //check the name.. if changed
@@ -79,6 +83,7 @@ function Game() {
       setNumOfButtons(val);
       setArrayOfValues(Array.from({length: val}, (_, i) => 0));
     }
+    //console.log(response.data["scoreboard"])
     console.log(response);
     setCurrRound(currRound+1);
     setCurrNum(num);
@@ -138,7 +143,7 @@ function Game() {
     }else
       alert("Better luck next time");
 
-    await getNumberFromServer();
+    await getNumberFromServer(result==currNum);
     
     //clearButtonHandler();
     

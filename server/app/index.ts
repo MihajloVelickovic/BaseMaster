@@ -27,8 +27,8 @@ const app = express();
 app.use(express.json());
 app.use(cors(corsOptions));
 
-const server = http.createServer(app);
-const wss = new WebSocketServer({ server });
+// const server = http.createServer(app);
+// const wss = new WebSocketServer({ server });
 
 app.use("/game", gameRouter);
 

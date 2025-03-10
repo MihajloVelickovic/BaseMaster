@@ -53,7 +53,8 @@ gameRouter.post("/createGame", async (req: any, res) => {
         
         await redisClient.set(gameId, playerCount); // set max player count
         
-        //await redisClient.zAdd(gameId, )
+        await redisClient.zAdd(`${IdPrefixes.PLAYER_POINTS}_${gameId}`, 
+            { score: 0, value: hostId });
 
         res.send({message:`Game created succesfully`, gameID:gameId});
     } catch (err) {
@@ -65,9 +66,12 @@ gameRouter.post("/createGame", async (req: any, res) => {
 });
 
 gameRouter.post("/getCurrNum", async (req:any, res) => {
+    
     const {
         gameId,
-        currRound
+        currRound,
+        playerId,
+        correct
     } = req.body;
 
     try {
@@ -77,7 +81,14 @@ gameRouter.post("/getCurrNum", async (req:any, res) => {
         var fromBase ,toBase;
 
         const gamemode = fromStringGM(String(gameId).split("_")[0]);
-
+        
+        const scoreboardID = `${IdPrefixes.PLAYER_POINTS}_${gameId}`;
+        
+        await redisClient.zIncrBy(scoreboardID, correct ? 100 : 0, playerId );
+        
+        const scoreboard = await 
+        redisClient.zRangeWithScores(scoreboardID, 0, -1);
+   
         if(gamemode === GameModes.CHAOS) {
             fromBase = await redisClient.
                         lIndex(`${IdPrefixes.FROM_BASE}_${gameId}`,currRound);
@@ -93,9 +104,9 @@ gameRouter.post("/getCurrNum", async (req:any, res) => {
             res.status(404).send({message:"Could not find the toBase"});
 
         if(gamemode !== GameModes.CHAOS)
-            res.send({currRndNum:num});
+            res.send({currRndNum:num, scoreboard:scoreboard});
         else
-            res.send({currRndNum:num, fromBase:fromBase, toBase:toBase});
+            res.send({currRndNum:num, fromBase:fromBase, toBase:toBase, scoreboard:scoreboard});
     } catch (err) {
         res.status(500).send('Error saving user data to Redis');
     }
@@ -120,8 +131,7 @@ gameRouter.post("/joinLobby", async (req:any, res) => {
     if(Number(currPlayerCount) > Number(maxPlayerCount))
         res.status(404).send({message: "Lobby is full"});
 
-    await redisClient.zAdd(
-        `${IdPrefixes.PLAYER_POINTS}_${gameId}`,{ score: 0, value: playerId});
+   
 
     
     //if(lobbyData)
