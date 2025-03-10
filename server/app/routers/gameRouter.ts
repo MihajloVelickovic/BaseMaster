@@ -1,6 +1,6 @@
 import {Router} from "express";
 import GameOptions from "../models/gameOptions"
-import { GameModes,Difficulties, DifficultyValues, fromStringDiff, fromStringGM, IdPrefixes, BaseValues }
+import { GameModes,Difficulties, DifficultyValues, fromStringDiff, fromStringGM, IdPrefixes, BaseValues, maxValueFromDifficulty }
  from "../shared_modules/shared_enums";
 import { nanoid } from 'nanoid';
 import GameInfo from "../models/gameInfo";
@@ -15,43 +15,29 @@ gameRouter.post("/createGame", async (req: any, res) => {
             gamemode,
             playerCount,
             roundCount,
-            difficulty
+            difficulty,
+            hostId
         } = req.body;
-    
-    
-    
+          
     const gameOptions = new GameOptions({
         gamemode:fromStringGM(gamemode),
         playerCount,
         roundCount,
-        difficulty:fromStringDiff(difficulty)  
+        difficulty:fromStringDiff(difficulty),
+        hostId  
     });
 
     
-    var maxValue=0;
+    var maxValue = maxValueFromDifficulty(gameOptions.difficulty);
 
-    switch(gameOptions.difficulty) {
-        case Difficulties.LAYMAN:
-            maxValue = DifficultyValues.LAYMAN;
-            break;
-        case Difficulties.CHILL_GUY:
-            maxValue = DifficultyValues.CHILL_GUY;
-            break;
-        case Difficulties.ELFAK_ENJOYER:
-            maxValue = DifficultyValues.ELFAK_ENJOYER;
-            break;
-        case Difficulties.BASED_MASTER:
-            maxValue = DifficultyValues.BASED_MASTER;
-            break;
-        default:
-            break;
-    }
+    if(maxValue === -1)
+        res.status(400).send({message: "Could not process difficulty"});
 
     var randomNums = Array.from({length:roundCount}, (_,i) => 
         Math.floor(Math.random()*maxValue)+1
     );
 
-  
+    
     var gameId = `${gamemode}_${nanoid()}`; // upisati u redis i vratiti ID
     
     console.log(gameOptions.gamemode);
@@ -62,29 +48,12 @@ gameRouter.post("/createGame", async (req: any, res) => {
                                      String(num));
         });
 
-        if(gameOptions.gamemode === GameModes.CHAOS) {
-            console.log("Entering chaos bases creation....");
-            const randomBases = Array.from({ length: roundCount }, () => [
-                Math.floor(Math.random() * (BaseValues.MAX_BASE -
-                     BaseValues.MIN_BASE + 1)) + BaseValues.MIN_BASE,
-                Math.floor(Math.random() * (BaseValues.MAX_BASE -
-                            BaseValues.MIN_BASE + 1)) + BaseValues.MIN_BASE
-            ]);
-            
-            for (const [fromBase, toBase] of randomBases) {  // Use for...of here
-                console.log("FromBase:", fromBase);
-                
-                await redisClient.rPush(
-                    `${IdPrefixes.FROM_BASE}_${gameId}`, String(fromBase)
-                );
-                
-                console.log("ToBase:", toBase);
-                
-                await redisClient.rPush(
-                    `${IdPrefixes.TO_BASE}_${gameId}`, String(toBase)
-                );
-            }
-        }
+        if(gameOptions.gamemode === GameModes.CHAOS)
+            await addChaosBaseArrays(roundCount,gameId);
+        
+        await redisClient.set(gameId, playerCount); // set max player count
+        
+        //await redisClient.zAdd(gameId, )
 
         res.send({message:`Game created succesfully`, gameID:gameId});
     } catch (err) {
@@ -132,11 +101,62 @@ gameRouter.post("/getCurrNum", async (req:any, res) => {
     }
 });
 
+
+gameRouter.post("/joinLobby", async (req:any, res) => {
+    const {
+        gameId,
+        playerId
+    } = req.body;
+
+    const currPlayerCount = 
+    await redisClient.zCard(`${IdPrefixes.PLAYER_POINTS}_${gameId}`);
+
+    const maxPlayerCount = await redisClient.get(gameId);
+
+    if(currPlayerCount === null)
+        res.status(404).send({message: "Requested lobby does not exsist"});
+    if(maxPlayerCount === null)
+        res.status(404).send({message: "Requested game does not exsist"});
+    if(Number(currPlayerCount) > Number(maxPlayerCount))
+        res.status(404).send({message: "Lobby is full"});
+
+    await redisClient.zAdd(
+        `${IdPrefixes.PLAYER_POINTS}_${gameId}`,{ score: 0, value: playerId});
+
+    
+    //if(lobbyData)
+});
+
 // gamemode:GameModes;
 //     playerCount:number;
 //     fromBase:number;
 //     toBase:number;
 //     roundCount:number;
 //     difficulty:difficulty;
+
+async function addChaosBaseArrays(roundCount:number, gameId:String) {
+    console.log("Entering chaos bases creation....");
+    const randomBases = Array.from({ length: roundCount }, () => [
+        Math.floor(Math.random() * (BaseValues.MAX_BASE -
+                BaseValues.MIN_BASE + 1)) + BaseValues.MIN_BASE,
+        Math.floor(Math.random() * (BaseValues.MAX_BASE -
+                    BaseValues.MIN_BASE + 1)) + BaseValues.MIN_BASE
+    ]);
+    
+    for (const [fromBase, toBase] of randomBases) {  // Use for...of here
+        console.log("FromBase:", fromBase);
+        
+        await redisClient.rPush(
+            `${IdPrefixes.FROM_BASE}_${gameId}`, String(fromBase)
+        );
+        
+        console.log("ToBase:", toBase);
+        
+        await redisClient.rPush(
+            `${IdPrefixes.TO_BASE}_${gameId}`, String(toBase)
+        );
+    }
+}
+
 
 export default gameRouter;

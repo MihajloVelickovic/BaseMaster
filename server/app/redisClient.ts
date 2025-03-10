@@ -10,8 +10,11 @@ const redisClient = createClient({
   }
 });
 
-redisClient.connect()
-  .then(() => console.log('Redis client connected successfully'))
-  .catch((err) => console.error('Error connecting to Redis:', err));
+const pubSubClient = redisClient.duplicate();
 
-export default redisClient;
+(async () => {
+  await redisClient.connect();
+  await pubSubClient.connect();
+})();
+
+export  default redisClient;

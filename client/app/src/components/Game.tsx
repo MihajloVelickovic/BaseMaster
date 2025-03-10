@@ -30,6 +30,7 @@ function Game() {
   const [currNum, setCurrNum] = useState(100);
   const [toBase, setToBase] = useState(2);
   const [fromBase, setFromBase] = useState(10);
+
   var { toBasee = 2, playerNum = 1, gameMode = GameModes.CLASSIC.toString(), difficulty = Difficulties.LAYMAN.toString(), gameId = "" } = location.state || {};
   console.log("toBasee je: ", toBasee);
   useEffect( () => {

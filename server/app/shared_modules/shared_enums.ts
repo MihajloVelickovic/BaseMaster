@@ -39,3 +39,24 @@ export const fromStringDiff = (value: string): Difficulties | undefined => {
 export const fromStringGM = (value: string): GameModes | undefined => {
     return (Object.values(GameModes) as string[]).includes(value) ? (value as GameModes) : undefined;
 };
+
+export function maxValueFromDifficulty(diff:Difficulties) {
+    var maxValue:number;
+    switch(diff) {
+        case Difficulties.LAYMAN:
+            maxValue = DifficultyValues.LAYMAN;
+            break;
+        case Difficulties.CHILL_GUY:
+            maxValue = DifficultyValues.CHILL_GUY;
+            break;
+        case Difficulties.ELFAK_ENJOYER:
+            maxValue = DifficultyValues.ELFAK_ENJOYER;
+            break;
+        case Difficulties.BASED_MASTER:
+            maxValue = DifficultyValues.BASED_MASTER;
+            break;
+        default:
+            maxValue=-1;
+    }
+    return maxValue;
+}
