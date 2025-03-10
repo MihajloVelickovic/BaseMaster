@@ -33,7 +33,7 @@ function Game() {
   const [currNum, setCurrNum] = useState(100);
   const [toBase, setToBase] = useState(2);
   const [fromBase, setFromBase] = useState(10);
-  const [scoreboard, setScoreboard] = useState([]);
+  const [scoreboard, setScoreboard] = useState<{ value: string, score: number }[]>([]);
 
   var { toBasee = 2, playerNum = 1, gameMode = GameModes.CLASSIC.toString(), difficulty = Difficulties.LAYMAN.toString(), gameId = "" } = location.state || {};
   console.log("toBasee je: ", toBasee);
@@ -108,7 +108,7 @@ function Game() {
     setCurrNum(num);
     console.log("Current round: ", currRound);  
 
-     return num;
+      return num;
 
   }
 
@@ -204,6 +204,7 @@ function Game() {
     return (
       text
     );
+ 
   }
 
   function generateBaseButtons(btnCount: number) {
@@ -238,7 +239,18 @@ function Game() {
       <button className="ConfirmButton" onClick={confirmButtonHandler}>
         Confirm
       </button>
+
+      <div className="Scoreboard">
+      <h2>Scoreboard</h2>
+      <ul>
+        {scoreboard.map((player, index) => (
+          <li key={index}>{player.value}: {player.score} pts</li>
+        ))}
+      </ul>
     </div>
+
+    </div>
+    
   );
 } 
 
