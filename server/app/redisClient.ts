@@ -17,4 +17,4 @@ const pubSubClient = redisClient.duplicate();
   await pubSubClient.connect();
 })();
 
-export  default redisClient;
+export  {redisClient, pubSubClient };

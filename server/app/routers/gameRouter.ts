@@ -4,7 +4,7 @@ import { GameModes,Difficulties, DifficultyValues, fromStringDiff, fromStringGM,
  from "../shared_modules/shared_enums";
 import { nanoid } from 'nanoid';
 import GameInfo from "../models/gameInfo";
-import redisClient from "../redisClient";
+import {redisClient, pubSubClient} from "../redisClient";
 
 const gameRouter = Router();
 
@@ -102,11 +102,15 @@ gameRouter.post("/getCurrNum", async (req:any, res) => {
             res.status(404).send({message:"Could not find the fromBase"});
         if(toBase === null && gamemode === GameModes.CHAOS)
             res.status(404).send({message:"Could not find the toBase"});
+        if(scoreboard === null)
+            res.status(404).send({message:"Could not find the scoreboard"});
+
+        pubSubClient.publish(gameId, JSON.stringify(scoreboard));
 
         if(gamemode !== GameModes.CHAOS)
-            res.send({currRndNum:num, scoreboard:scoreboard});
+            res.send({currRndNum:num});
         else
-            res.send({currRndNum:num, fromBase:fromBase, toBase:toBase, scoreboard:scoreboard});
+            res.send({currRndNum:num, fromBase:fromBase, toBase:toBase});
     } catch (err) {
         res.status(500).send('Error saving user data to Redis');
     }

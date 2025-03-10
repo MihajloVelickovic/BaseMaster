@@ -7,13 +7,14 @@
 
 
 // //nova stvar..
-import redisClient from "./redisClient";
+import {redisClient, pubSubClient} from "./redisClient";
 import express from "express";
 import { SERVER_PORT } from "./config/config";
 import gameRouter from './routers/gameRouter'
 import cors from "cors";
 import {WebSocketServer} from "ws"
 import http from "http";
+import { IdPrefixes } from "./shared_modules/shared_enums";
 
 const CLIENTS = new Map(); // Maps WebSocket clients to lobbies
 
@@ -27,8 +28,68 @@ const app = express();
 app.use(express.json());
 app.use(cors(corsOptions));
 
-// const server = http.createServer(app);
-// const wss = new WebSocketServer({ server });
+const server = http.createServer(app);
+const wss = new WebSocketServer({ server });
+
+wss.on("connection", (ws) => {
+    let currentLobby = null;
+
+    ws.on("message", (data) => {
+        try {
+            const { type, gameId, playerId } = JSON.parse(data);
+
+            if (type === "joinLobby") {
+                if (!CLIENTS.has(gameId)) {
+                    CLIENTS.set(gameId, new Set());
+                }
+                CLIENTS.get(gameId).add(ws);
+                currentLobby = gameId;
+                console.log(`Player ${playerId} joined lobby ${gameId}`);
+            }
+        } catch (err) {
+            console.error("Error parsing message:", err);
+        }
+    });
+
+    ws.on("close", () => {
+        if (currentLobby && CLIENTS.has(currentLobby)) {
+            CLIENTS.get(currentLobby).delete(ws);
+            console.log(` Client disconnected from lobby ${currentLobby}`);
+        }
+    });
+});
+
+
+await pubSubClient.pSubscribe(`${IdPrefixes.PLAYER_POINTS}_*`, async (message, channel) => {
+    const lobbyId = channel.replace(`${IdPrefixes.PLAYER_POINTS}_`, ""); // Extract lobbyId
+
+    if (CLIENTS.has(lobbyId)) {
+        CLIENTS.get(lobbyId).forEach(client => {
+            if (client.readyState === 1) {
+                client.send(JSON.stringify({
+                    type: "scoreUpdate",
+                    scores: JSON.parse(message)
+                }));
+            }
+        });
+    }
+});
+console.log(" Subscribed to SCOREBOARD_* updates");
+
+pubSubClient.on("pmessage", (pattern, channel, message) => {
+    const lobbyId = channel.replace(`${IdPrefixes.PLAYER_POINTS}_`, ""); // Extract lobbyId
+
+    if (CLIENTS.has(lobbyId)) {
+        CLIENTS.get(lobbyId).forEach(client => {
+            if (client.readyState === 1) {
+                client.send(JSON.stringify({
+                    type: "scoreUpdate",
+                    scores: JSON.parse(message)
+                }));
+            }
+        });
+    }
+});
 
 app.use("/game", gameRouter);
 
