@@ -79,6 +79,7 @@ console.log(" Subscribed to SCOREBOARD_* updates");
 pubSubClient.on("pmessage", (pattern, channel, message) => {
     const lobbyId = channel.replace(`${IdPrefixes.PLAYER_POINTS}_`, ""); // Extract lobbyId
 
+    console.log(message);
     if (CLIENTS.has(lobbyId)) {
         CLIENTS.get(lobbyId).forEach(client => {
             if (client.readyState === 1) {
@@ -94,7 +95,7 @@ pubSubClient.on("pmessage", (pattern, channel, message) => {
 app.use("/game", gameRouter);
 
 
-app.listen(SERVER_PORT, async () => {
+server.listen(SERVER_PORT, async () => {
     console.log(`Server running on port ${SERVER_PORT}`);
 });
 

@@ -8,6 +8,9 @@ var maxVal:bigint = BigInt(255);
 var numToFind = getRandomNumber(1, Number(maxVal));   //this appears to be unneeded
 const maxBase = 32;
 const playerID = "a";
+const ws = new WebSocket("ws://localhost:1738");
+
+
 function clcBtnCount(base:bigint, maxValue:bigint) {
   var count = 0, currVal=maxValue;
   while(currVal > 0) {
@@ -30,6 +33,7 @@ function Game() {
   const [currNum, setCurrNum] = useState(100);
   const [toBase, setToBase] = useState(2);
   const [fromBase, setFromBase] = useState(10);
+  const [scoreboard, setScoreboard] = useState([]);
 
   var { toBasee = 2, playerNum = 1, gameMode = GameModes.CLASSIC.toString(), difficulty = Difficulties.LAYMAN.toString(), gameId = "" } = location.state || {};
   console.log("toBasee je: ", toBasee);
@@ -61,7 +65,19 @@ function Game() {
     
 
     getNumberFromServer(false);
+
+    ws.onopen = () => {
+      ws.send(JSON.stringify({ type: "joinLobby", gameId, playerID }));
+  };
+
+  ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === "scoreUpdate") setScoreboard(data.scores);
+  };
+
+  return () => ws.close(); // Cleanup WebSocket on unmount
     //clearButtonHandler();
+    
   }, [])
 
   console.log("toBase: "+toBase+" playerNum: "+playerNum+" gameMode: "+gameMode+" difficulty: "+difficulty+ " gameId: "+gameId);
@@ -89,7 +105,7 @@ function Game() {
     setCurrNum(num);
     console.log("Current round: ", currRound);  
 
-    return num;
+     return num;
 
   }
 
