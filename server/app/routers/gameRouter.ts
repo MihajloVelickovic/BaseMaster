@@ -20,7 +20,8 @@ gameRouter.post("/createGame", async (req: any, res) => {
             playerCount,
             roundCount,
             difficulty,
-            hostId
+            hostId,
+            toBase
         } = req.body;
           
     const gameOptions = new GameOptions({
@@ -56,7 +57,7 @@ gameRouter.post("/createGame", async (req: any, res) => {
             await addChaosBaseArrays(roundCount,gameId);
         
         var gameData = {difficulty:gameOptions.difficulty, maxPlayers:playerCount,
-            currPlayerCount: 1, gameState: GameStates.LOBBY
+            currPlayerCount: 1, gameState: GameStates.LOBBY, base: toBase
         }
 
         await redisClient.set(gameId, JSON.stringify(gameData)); // set max player count
@@ -135,15 +136,18 @@ gameRouter.post("/joinLobby", async (req:any, res) => {
         playerId
     } = req.body;
 
+    const scoreboardID = `${IdPrefixes.PLAYER_POINTS}_${gameId}`;
+
     const currPlayerCount = 
-    await redisClient.zCard(`${IdPrefixes.PLAYER_POINTS}_${gameId}`);
+    await redisClient.zCard(scoreboardID);
 
     const gameData = await redisClient.get(gameId);
 
     if(gameData === null)
         return res.status(404).send({message: "Requested lobby does not exsist"});
 
-    const maxPlayerCount = JSON.parse(gameData).maxPlayers;
+    const parcedData = JSON.parse(gameData);
+    const maxPlayerCount = parcedData.maxPlayers;
 
     
     if(maxPlayerCount === null)
@@ -152,10 +156,14 @@ gameRouter.post("/joinLobby", async (req:any, res) => {
         return res.status(404).send({message: "Lobby is full"});
 
     try {
+        parcedData.currPlayerCount = Number(parcedData.currPlayerCount)+1;
+
+        await redisClient.set(scoreboardID, parcedData);
+
         await redisClient.zAdd(`${IdPrefixes.PLAYER_POINTS}_${gameId}`, 
             { score: 0, value: playerId });
 
-        return res.send({message:"Success", gameId:gameId});
+        return res.send({message:"Success", gameId:gameId, gameData:parcedData});
     }
     catch(err:any) {
         return res.status(404).send({message: err.message});
