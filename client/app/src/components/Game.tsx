@@ -78,6 +78,8 @@ function Game() {
       if (data.type === "scoreUpdate") setScoreboard(data.scores);
   };
 
+  updateGameState("GAME STARTED");
+
   return () => ws.close(); // Cleanup WebSocket on unmount
     //clearButtonHandler();
     
@@ -85,6 +87,15 @@ function Game() {
 
   console.log("toBase: "+toBase+" playerNum: "+playerNum+" gameMode: "+gameMode+" difficulty: "+difficulty+ " gameId: "+gameId);
   
+  const updateGameState = async (newState: string) => {
+    try {
+      await axiosInstance.post('/game/setGameState', { gameId, gameState: newState });
+      console.log("Game state updated:", newState);
+    } catch (error: any) {
+      console.error("Error updating game state:", error.response?.data || error.message);
+    }
+  };
+
   const getNumberFromServer = async (correct:boolean) => {
     const toSend = {
       gameId:gameId,
