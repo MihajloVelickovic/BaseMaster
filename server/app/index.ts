@@ -1,20 +1,13 @@
-// // import express from "express";
-// import { createClient } from 'redis';       //i ovo je dodato
-// // const app = express();
-
-// // app.use(express.json());
-
-// //nova stvar..
-import {redisClient, publisher, subscriber} from "./redisClient";
+import { redisClient, publisher, subscriber } from "./redisClient";
 import express from "express";
 import { SERVER_PORT } from "./config/config";
 import gameRouter from './routers/gameRouter'
 import cors from "cors";
-import {WebSocketServer} from "ws"
+import { WebSocketServer } from "ws"
 import http from "http";
 import { IdPrefixes } from "./shared_modules/shared_enums";
 
-const CLIENTS = new Map(); // Maps WebSocket clients to lobbies
+const wsClients = new Map(); // Maps WebSocket clients to lobbies
 
 const corsOptions = {
     origin: 'http://localhost:3000',
@@ -32,15 +25,15 @@ const wss = new WebSocketServer({ server });
 wss.on("connection", (ws) => {
     let currentLobby = null;
 
-    ws.on("message", (data) => {
+    ws.on("message", (data: any) => {
         try {
             const { type, gameId, playerID } = JSON.parse(data);
             console.log("data je: ", JSON.parse(data));
             if (type === "joinLobby") {
-                if (!CLIENTS.has(gameId)) {
-                    CLIENTS.set(gameId, new Set());
+                if (!wsClients.has(gameId)) {
+                    wsClients.set(gameId, new Set());
                 }
-                CLIENTS.get(gameId).add(ws);
+                wsClients.get(gameId).add(ws);
                 currentLobby = gameId;
                 console.log(`Player ${playerID} joined lobby ${gameId}`);
             }
@@ -54,20 +47,19 @@ wss.on("connection", (ws) => {
     });
 
     ws.on("close", () => {
-        if (currentLobby && CLIENTS.has(currentLobby)) {
-            CLIENTS.get(currentLobby).delete(ws);
+        if (currentLobby && wsClients.has(currentLobby)) {
+            wsClients.get(currentLobby).delete(ws);
             console.log(` Client disconnected from lobby ${currentLobby}`);
         }
     });
 });
 
-
 subscriber.pSubscribe(`*`, async (message, channel) => { // Listen to all channels
 
     const lobbyId = channel; // Use the full channel name as gameId
 
-    if (CLIENTS.has(lobbyId)) {
-        CLIENTS.get(lobbyId).forEach(client => {
+    if (wsClients.has(lobbyId)) {
+        wsClients.get(lobbyId).forEach(client => {
             if (client.readyState === 1) {
                 client.send(JSON.stringify({
                     type: "scoreUpdate",
@@ -81,8 +73,8 @@ subscriber.pSubscribe(`*`, async (message, channel) => { // Listen to all channe
 subscriber.pSubscribe(`${IdPrefixes.GAME_STARTED}_*`, async (message, channel) => {
     const lobbyId = channel.replace("gameStart_", ""); // Extract game ID
 
-    if (CLIENTS.has(lobbyId)) {
-        CLIENTS.get(lobbyId).forEach(client => {
+    if (wsClients.has(lobbyId)) {
+        wsClients.get(lobbyId).forEach(client => {
             if (client.readyState === 1) {
                 client.send(JSON.stringify({
                     type: "gameStart",
@@ -93,14 +85,11 @@ subscriber.pSubscribe(`${IdPrefixes.GAME_STARTED}_*`, async (message, channel) =
     }
 });
 
-
 app.use("/game", gameRouter);
-
 
 server.listen(SERVER_PORT, async () => {
     console.log(`Server running on port ${SERVER_PORT}`);
 });
-
 
 // const r3 = await redisClient.keys('*');
 // console.log("Writing out everything currently in the database ;3");

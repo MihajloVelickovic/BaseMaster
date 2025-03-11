@@ -10,8 +10,6 @@ const envFilePath = process.platform.startsWith("win") ?
                     path.join(__dirname, "../config.env") : 
                     path.join(__dirname, "../.env");
 
-//console.log("file path: " + envFilePath);
-
 dotenv.config({ path: envFilePath });
 
 export const SERVER_PORT = Number(process.env.SERVER_PORT);
