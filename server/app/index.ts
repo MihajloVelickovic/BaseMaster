@@ -34,16 +34,20 @@ wss.on("connection", (ws) => {
 
     ws.on("message", (data) => {
         try {
-            const { type, gameId, playerId } = JSON.parse(data);
-            console.log(data);
+            const { type, gameId, playerID } = JSON.parse(data);
+            console.log("data je: ", JSON.parse(data));
             if (type === "joinLobby") {
                 if (!CLIENTS.has(gameId)) {
                     CLIENTS.set(gameId, new Set());
                 }
                 CLIENTS.get(gameId).add(ws);
                 currentLobby = gameId;
-                console.log(`Player ${playerId} joined lobby ${gameId}`);
+                console.log(`Player ${playerID} joined lobby ${gameId}`);
             }
+            // if (type === "startGame") {
+            //     console.log(`Game ${gameId} is starting!`);
+            //     publisher.publish(`${IdPrefixes.GAME_STARTED}_${gameId}`, JSON.stringify({ gameId }));
+            // }
         } catch (err) {
             console.error("Error parsing message:", err);
         }

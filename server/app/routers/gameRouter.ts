@@ -131,10 +131,12 @@ gameRouter.post("/getCurrNum", async (req:any, res) => {
 
 
 gameRouter.post("/joinLobby", async (req:any, res) => {
+    console.log("join Lobby is here");
     const {
         gameId,
         playerId
     } = req.body;
+
 
     const scoreboardID = `${IdPrefixes.PLAYER_POINTS}_${gameId}`;
 
@@ -146,7 +148,8 @@ gameRouter.post("/joinLobby", async (req:any, res) => {
     if(gameData === null)
         return res.status(404).send({message: "Requested lobby does not exsist"});
 
-    const parcedData = JSON.parse(gameData);
+    var parcedData = JSON.parse(gameData);
+    console.log(parcedData);
     const maxPlayerCount = parcedData.maxPlayers;
 
     
@@ -156,12 +159,15 @@ gameRouter.post("/joinLobby", async (req:any, res) => {
         return res.status(404).send({message: "Lobby is full"});
 
     try {
-        parcedData.currPlayerCount = Number(parcedData.currPlayerCount)+1;
+        console.log("in try");
+        parcedData.currPlayerCount = (Number(parcedData.currPlayerCount)+1).toString();
+        console.log("a lit bit deeper");
+        await redisClient.set(gameId, JSON.stringify(parcedData));
 
-        await redisClient.set(scoreboardID, parcedData);
-
-        await redisClient.zAdd(`${IdPrefixes.PLAYER_POINTS}_${gameId}`, 
+        await redisClient.zAdd(scoreboardID, 
             { score: 0, value: playerId });
+
+        console.log("Success", gameId, parcedData);
 
         return res.send({message:"Success", gameId:gameId, gameData:parcedData});
     }
@@ -175,8 +181,8 @@ gameRouter.post("/joinLobby", async (req:any, res) => {
 
 gameRouter.get("/getLobbies", async (req:any, res) => {
     try {
-        const lobbies = redisClient.sMembers(IdPrefixes.LOBBIES);
-
+        const lobbies = await redisClient.sMembers(IdPrefixes.LOBBIES);
+        console.log("lobbies: ", lobbies);
         if(lobbies === null)
             return res.status(404).send({message:"Could not fin any lobbies!"});
 

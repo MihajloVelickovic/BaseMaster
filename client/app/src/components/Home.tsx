@@ -7,7 +7,8 @@ import {GameModes, Difficulties} from "../shared_modules/shared_enums"
 export const roundCount = 15;
 const maxValue = 255;
 const gameID = "gameID";
-const playerID = "a";
+const playerID = Math.floor(Math.random()*10000).toString();
+console.log(playerID);
 
 function Home() {
   const [toBase, setToBase] = useState(2);
@@ -16,12 +17,9 @@ function Home() {
   const [difficulty, setDifficulty] = useState(Difficulties.LAYMAN.toString());
   const [gameId, setGameId] = useState(null);
 
-
-  //           playerCount,
-  //           fromBase,
-  //           toBase,
-  //           roundCount,
-  //           difficulty
+  const [browsingLobbies, setBrowsingLobbies] = useState(false);
+  const [lobbies, setLobbies] = useState([]);
+  const [playerId, setPlayerId] = useState(playerID);
 
   const navigate = useNavigate();
   const bases = Array.from({ length: 31}, (_, i) => i+2);
@@ -32,7 +30,7 @@ function Home() {
   
   useEffect(() => {
     if (gameId) {
-      navigate("/Lobby", { state: { toBasee:toBase, playerNum, gameMode, difficulty, gameId } });
+      navigate("/Lobby", { state: { toBasee:toBase, playerNum, gameMode, difficulty, gameId, playerID: playerId } });
     }
   }, [gameId]);  // This effect runs when `gameId` is updated
 
@@ -43,7 +41,8 @@ function Home() {
           playerCount: playerNum,
           roundCount: roundCount,
           difficulty: difficulty,
-          hostId:playerID
+          hostId:playerId,
+          toBase:toBase
         };
         var response = await axiosInstance.post('/game/createGame', toSend);
         console.log("response za createGame je: ", response);
@@ -53,6 +52,32 @@ function Home() {
 
     } catch (error:any) {
         console.error('Error creating game:', error.response ? error.response.data : error.message);
+    }
+  };
+
+  const fetchLobbies = async () => {
+    try {
+      console.log("fetching lobbies...");
+      const response = await axiosInstance.get('/game/getLobbies');
+      console.log("response: ", response);
+      setLobbies(response.data['lobbies']);
+    } catch (error:any) {
+      console.error('Error fetching lobbies: ', error.response ? error.response.data : error.message);
+    }
+  };
+
+  const joinLobby = async (selectedGameId: string) => { 
+    try {
+      const response = await axiosInstance.post('/game/joinLobby', { gameId: selectedGameId, playerId: playerID });
+      console.log(response);
+      const { messsage, gameId, gameData } = response.data;
+      const toBasee:number = Number(gameData.toBase);
+      const playerNumm:number = gameData.maxPlayers;
+      const gameModee:string = gameId.split('_')[0];
+      const difficultyy:string = gameData.difficulty;  
+      navigate("/Lobby", { state: { toBase:toBasee, playerNum:playerNumm, gameMode:gameModee, difficulty:difficultyy, gameId: selectedGameId } });
+    } catch (error:any) {
+      console.error('Error joining lobby:', error.response ? error.response.data : error.message);
     }
   };
   
@@ -91,21 +116,57 @@ function Home() {
   }
 
   return (
-    <div className="HomeContainer">
+    // <div className="HomeContainer">
 
-      <label className="mainFont">Game Options</label>
+    //   <label className="mainFont">Game Options</label>
 
       
-      {Chooser(bases, toBase, setToBase, "Base ", "Choose Base:", gameMode === GameModes.CHAOS)}
-      {Chooser(players, playerNum, setPlayerNum, "Players: ", "Choose number of players")}
-      {Chooser(gameModes, gameMode, setGameMode, "", "Choose Game Mode:")}
-      {Chooser(difficulties, difficulty, setDifficulty, "", "Choose difficulty:")}
+    //   {Chooser(bases, toBase, setToBase, "Base ", "Choose Base:", gameMode === GameModes.CHAOS)}
+    //   {Chooser(players, playerNum, setPlayerNum, "Players: ", "Choose number of players")}
+    //   {Chooser(gameModes, gameMode, setGameMode, "", "Choose Game Mode:")}
+    //   {Chooser(difficulties, difficulty, setDifficulty, "", "Choose difficulty:")}
 
-      {/* <NavLink to="/Game" state={{ base, playerNum, gameMode, gameId }} onClick={createGame}> */}
-      <button className="btn btn-success game-button" style={{marginTop:"15px"}} onClick={createGame}>
-        Start game buddy!
-      </button>
-      {/* </NavLink> */}
+    //   {/* <NavLink to="/Game" state={{ base, playerNum, gameMode, gameId }} onClick={createGame}> */}
+    //   <button className="btn btn-success game-button" style={{marginTop:"15px"}} onClick={createGame}>
+    //     Start game buddy!
+    //   </button>
+    //   {/* </NavLink> */}
+    // </div>
+
+    <div className="HomeContainer">
+      <div className="button-group">
+        <button className={`btn ${!browsingLobbies ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setBrowsingLobbies(false)}>
+          Create Game
+        </button>
+        <button className={`btn ${browsingLobbies ? 'btn-primary' : 'btn-secondary'}`} onClick={() => { setBrowsingLobbies(true); fetchLobbies(); }}>
+          Browse Lobbies
+        </button>
+      </div>
+      
+      {!browsingLobbies ? (
+        <>
+          <label className="mainFont">Game Options</label>
+          {Chooser(bases, toBase, setToBase, "Base ", "Choose Base:", gameMode === GameModes.CHAOS)}
+          {Chooser(players, playerNum, setPlayerNum, "Players: ", "Choose number of players")}
+          {Chooser(gameModes, gameMode, setGameMode, "", "Choose Game Mode:")}
+          {Chooser(difficulties, difficulty, setDifficulty, "", "Choose difficulty:")}
+          <button className="btn btn-success game-button" onClick={createGame}>Start game buddy!</button>
+        </>
+      ) : (
+        <>
+          <label className="mainFont">Available Lobbies</label>
+          <div className="lobby-list">
+            {lobbies.length > 0 ? lobbies.map((lobby) => (
+              // <li key={lobby.gameId} className="lobby-item" onClick={() => joinLobby(lobby.gameId)}>
+              //   Game ID: {lobby.gameId}, Players: {lobby.currentPlayers}/{lobby.maximumPlayers}
+              // </li>
+              <button key={lobby} className="btn btn-secondary lobby-item" style={{margin: "15px"}} onClick={() => joinLobby(lobby)}>
+                Game ID: {lobby}, Players: 69/420
+              </button>
+            )) : <p>No available lobbies.</p>}
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { GameModes, Difficulties } from "../shared_modules/shared_enums";
+import { GameModes, Difficulties, GameStates } from "../shared_modules/shared_enums";
 import "../styles/Lobby.css";
 import { roundCount } from "./Home";
 import axiosInstance from "../utils/axiosInstance";
@@ -8,19 +8,46 @@ import { useEffect, useState } from "react";
 
 export default function Lobby () {
     const location = useLocation();
-    var { toBasee = 2, playerNum = 1, gameMode = GameModes.CLASSIC.toString(), difficulty = Difficulties.LAYMAN.toString(), gameId = "" } = location.state || {};
+    var { toBasee = 2, playerNum = 1, gameMode = GameModes.CLASSIC.toString(), difficulty = Difficulties.LAYMAN.toString(), gameId = "", playerID = 'a' } = location.state || {};
+    console.log(playerID, 'ovo je player id');
     const navigate = useNavigate();
     const [startGameFlag, setStartGameFlag] = useState(false);
 
     useEffect(() => {
+        const ws = new WebSocket("ws://localhost:1738");
         if (startGameFlag) {
-          navigate("/Game", { state: { toBasee:toBasee, playerNum, gameMode, difficulty, gameId } });
+            navigate("/Game", { state: { toBasee:toBasee, playerNum, gameMode, difficulty, gameId } });
         }
+
+        ws.onopen = () => {
+            
+            ws.send(JSON.stringify({ type: "joinLobby", gameId, playerID }));
+        };
+        
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            console.log(data);
+            setStartGameFlag(true);
+        };
+        
+        return () => ws.close(); // Cleanup WebSocket on unmount
+
     }, [startGameFlag]);  // This effect runs when `gameId` is updated
 
-    function handleStartGame() {
+    // function handleStartGame() {
+    //     setStartGameFlag(true);
+    // }
+
+    const handleStartGame = async () => {
+        var response = await axiosInstance.post('/game/setGameState', {gameId, gameState:GameStates.STARTED});
+        console.log(response);
+        // const ws = new WebSocket("ws://localhost:1738");
+        // ws.onopen = () => {
+        //     ws.send(JSON.stringify({ type: "startGame", gameId }));
+        // };
         setStartGameFlag(true);
     }
+    
 
     function showLobbyStats() {
         return (
