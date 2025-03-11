@@ -130,7 +130,7 @@ gameRouter.post("/getCurrNum", async (req:any, res) => {
 });
 
 
-gameRouter.post("/joinLobby", async (req:any, res) => {
+gameRouter.post("/joinLobby", async (req:any, res:any) => {
     console.log("join Lobby is here");
     const {
         gameId,
@@ -179,7 +179,7 @@ gameRouter.post("/joinLobby", async (req:any, res) => {
     //if(lobbyData)
 });
 
-gameRouter.get("/getLobbies", async (req:any, res) => {
+gameRouter.get("/getLobbies", async (req:any, res:any) => {
     try {
         const lobbies = await redisClient.sMembers(IdPrefixes.LOBBIES);
         console.log("lobbies: ", lobbies);
@@ -192,7 +192,7 @@ gameRouter.get("/getLobbies", async (req:any, res) => {
     }
 });
 
-gameRouter.post("/setGameState", async (req:any, res) => {
+gameRouter.post("/setGameState", async (req:any, res:any) => {
     const {
         gameId,
         gameState
