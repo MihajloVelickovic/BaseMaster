@@ -19,7 +19,7 @@ function Home() {
 
   const [browsingLobbies, setBrowsingLobbies] = useState(false);
   const [lobbies, setLobbies] = useState([]);
-  const [playerId, setPlayerId] = useState(playerID);
+  // const [playerId, setPlayerId] = useState(playerID);
 
   const navigate = useNavigate();
   const bases = Array.from({ length: 31}, (_, i) => i+2);
@@ -30,7 +30,7 @@ function Home() {
   
   useEffect(() => {
     if (gameId) {
-      navigate("/Lobby", { state: { toBasee:toBase, playerNum, gameMode, difficulty, gameId, playerID: playerId } });
+      navigate("/Lobby", { state: { toBasee:toBase, playerNum, gameMode, difficulty, gameId, playerID } });
     }
   }, [gameId]);  // This effect runs when `gameId` is updated
 
@@ -41,7 +41,7 @@ function Home() {
           playerCount: playerNum,
           roundCount: roundCount,
           difficulty: difficulty,
-          hostId:playerId,
+          hostId:playerID,
           toBase:toBase
         };
         var response = await axiosInstance.post('/game/createGame', toSend);
@@ -75,7 +75,7 @@ function Home() {
       const playerNumm:number = gameData.maxPlayers;
       const gameModee:string = gameId.split('_')[0];
       const difficultyy:string = gameData.difficulty;  
-      navigate("/Lobby", { state: { toBase:toBasee, playerNum:playerNumm, gameMode:gameModee, difficulty:difficultyy, gameId: selectedGameId } });
+      navigate("/Lobby", { state: { toBase:toBasee, playerNum:playerNumm, gameMode:gameModee, difficulty:difficultyy, gameId: selectedGameId, playerID } });
     } catch (error:any) {
       console.error('Error joining lobby:', error.response ? error.response.data : error.message);
     }

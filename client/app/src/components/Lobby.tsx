@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 
 export default function Lobby () {
     const location = useLocation();
-    var { toBasee = 2, playerNum = 1, gameMode = GameModes.CLASSIC.toString(), difficulty = Difficulties.LAYMAN.toString(), gameId = "", playerID = 'a' } = location.state || {};
+    var { toBasee = 2, playerNum = 1, gameMode = GameModes.CLASSIC.toString(), difficulty = Difficulties.LAYMAN.toString(), gameId = "", playerID} = location.state || {};
     console.log(playerID, 'ovo je player id');
     const navigate = useNavigate();
     const [startGameFlag, setStartGameFlag] = useState(false);
@@ -16,7 +16,7 @@ export default function Lobby () {
     useEffect(() => {
         const ws = new WebSocket("ws://localhost:1738");
         if (startGameFlag) {
-            navigate("/Game", { state: { toBasee:toBasee, playerNum, gameMode, difficulty, gameId } });
+            navigate("/Game", { state: { toBasee:toBasee, playerNum, gameMode, difficulty, gameId, playerID } });
         }
 
         ws.onopen = () => {

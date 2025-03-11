@@ -7,8 +7,6 @@ import axiosInstance from "../utils/axiosInstance";
 var maxVal:bigint = BigInt(255);
 var numToFind = getRandomNumber(1, Number(maxVal));   //this appears to be unneeded
 const maxBase = 32;
-const playerID = "a";
-
 
 
 function clcBtnCount(base:bigint, maxValue:bigint) {
@@ -35,7 +33,7 @@ function Game() {
   const [fromBase, setFromBase] = useState(10);
   const [scoreboard, setScoreboard] = useState<{ value: string, score: number }[]>([]);
 
-  var { toBasee = 2, playerNum = 1, gameMode = GameModes.CLASSIC.toString(), difficulty = Difficulties.LAYMAN.toString(), gameId = "" } = location.state || {};
+  var { toBasee = 2, playerNum = 1, gameMode = GameModes.CLASSIC.toString(), difficulty = Difficulties.LAYMAN.toString(), gameId = "", playerID = "" } = location.state || {};
   console.log("toBasee je: ", toBasee);
   useEffect( () => {
     const ws = new WebSocket("ws://localhost:1738");
@@ -65,7 +63,7 @@ function Game() {
     }
     
 
-    getNumberFromServer(false);
+    
 
     ws.onopen = () => {
       
@@ -75,11 +73,13 @@ function Game() {
   ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
       console.log(data);
-      if (data.type === "scoreUpdate") setScoreboard(data.scores);
+      if (data.type === "scoreUpdate") {
+        setScoreboard(data.scores.sort((a: { value: string; score: number }, b: { value: string; score: number }) => b.score - a.score));
+    }
   };
 
   updateGameState("GAME STARTED");
-
+  getNumberFromServer(false);
   return () => ws.close(); // Cleanup WebSocket on unmount
     //clearButtonHandler();
     
