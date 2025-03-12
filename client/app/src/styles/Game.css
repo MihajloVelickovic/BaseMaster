@@ -42,6 +42,8 @@
     align-items: center; /* Center content horizontally */
     text-align: center;
     margin-top: 25px;
+    width: 80%;
+    margin-left: 10%;
 }
 
 .BigText {
@@ -54,23 +56,31 @@
     flex-direction: row;
     gap: 15px; /* Reduce gap slightly */
     margin-top: 50px;
+    justify-content: center; /* Center buttons */
+    align-items: stretch; /* Ensure all items stretch equally */
+    gap: 15px; /* Space between buttons */
+    width: 80%;
 }
 
 .ButtonAndLabel {
     display: flex;
     flex-direction: column;
+    align-items: center;
+    flex: 1; /* Makes each button container take equal space */
+    width: 100%;
 }
 
 .BaseButton {
-    width: 120px; /* Slightly smaller */
-    height: 200px; /* Adjusted to match the height */
+    /*width: 120px; /* Slightly smaller */
+    width: 100%;
+    height: 30vh; /* Adjusted to match the height */
     background-color: #009900;
     border-radius: 10px;
     box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add slight shadow */
 
     /* background-color: transparent; */
     border: none;
-    font-size: 44px;
+    font-size: 8vh;
     font-weight: bold;
     font-family: 'JetBrains Mono', monospace;
     color: white;
@@ -83,10 +93,10 @@
 }
 
 .ButtonAndLabel label {
-    font-size: 16px; /* Adjust label size */
+    font-size: 3vh; 
     font-weight: bold;
     color: #009900;
-    margin-bottom: 5px; /* Ensure spacing above button */
+    margin-bottom: 5px; 
 }
 
 .ClearButton {
@@ -94,11 +104,13 @@
     margin-top: 20px;
     width: 100%;
     height: 50px;
+    width: 75%;
+    height: 6vh;
     background-color: crimson;
     color:#ffffff;
     border-radius: 10px;
     font-weight: bold;
-    font-size: 24px;
+    font-size: 3vh;
     padding: 5px 0px 0px 5px;
 }
 
@@ -110,8 +122,8 @@
     font-family: 'JetBrains Mono', monospace;
     margin-top: 20px;
     width: 15%;
-    height: 64px;
-    background-color: #009900;
+    height: 8vh;
+    background-color: #007700;
     color:#ffffff;
     border-radius: 10px;
     font-weight: bold;
@@ -127,36 +139,50 @@
     font-family: 'JetBrains Mono', monospace;
     font-weight: bold;
     color: #009900;
-    font-size: 50px;
+    font-size: 7vh;
+    width: 100%;
 }
 
 .smallNumToFindLabel {
-    font-size: large;
+    font-size: 4vh;
 }
 
 .ConfirmButton:hover {
-    background-color: #007700;
+    background-color: #006600;
+}
+
+.GameScreen {
+    display: flex;
+    flex-direction: row; /* Places Game and Scoreboard side by side */
+    justify-content: center; /* Centers content */ 
+    gap: 5vw; /* Space between Game and Scoreboard */
+    width: 100%;
+    height: 100%;
 }
 
 .Scoreboard {
+    flex-grow: 1;
+    background: linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.5));
     margin-top: 20px;
-    padding: 15px;
-    background: #222; /* Dark theme background */
+    /*padding: 15px;*/
+    /*background: white; /* Dark theme background */
     border-radius: 10px;
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
-    color: white;
+    color: #009900;
     text-align: center;
     width: 300px;
-    max-width: 90%;
-    margin-left: auto;
-    margin-right: auto;
-    font-family: "Arial", sans-serif;
+    width: 20%;
+    max-width: 20%;
+    margin-right: 1vw;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 4vh;
   }
   
   .Scoreboard h2 {
-    font-size: 1.5rem;
+    font-size: 4vh;
+    font-weight: bold;
     margin-bottom: 10px;
-    color: white; /* Gold color */
+    color: #009900; /* Gold color */
     border-bottom: 2px solid #009900;
     display: inline-block;
     padding-bottom: 5px;
@@ -166,15 +192,21 @@
     list-style: none;
     padding: 0;
     margin: 0;
+    height: 100%;
   }
   
   .Scoreboard li {
     padding: 10px;
-    font-size: 1.2rem;
+    font-size: 3vh;
     background: white;
-    color:black;
+    color:#009900;
     margin: 5px 0;
     border-radius: 8px;
     transition: all 0.3s ease-in-out;
+  }
+
+  .BelowHeader {
+    width: 100%;
+    height: 100%;
   }
   

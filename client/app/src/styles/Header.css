@@ -4,6 +4,7 @@
     flex-direction: row;
     padding-left: 100px;
     border-bottom: solid darkblue 1px;
+    background: #009900;
 }
 
 .Header * {

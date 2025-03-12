@@ -239,10 +239,12 @@ function Game() {
   }
 
   return (
+    <div className="GameScreen">
     <div className="Game">
-      <div>
-        {generateTargetNumLabel(currNum, gameMode)}
-        {generateBaseButtons(numOfButtons)}
+      
+      {generateTargetNumLabel(currNum, gameMode)}
+      {generateBaseButtons(numOfButtons)}
+      
       <button className= "ClearButton" onClick={clearButtonHandler}>
         Clear
       </button>
@@ -251,18 +253,17 @@ function Game() {
       <button className="ConfirmButton" onClick={confirmButtonHandler}>
         Confirm
       </button>
-
-      <div className="Scoreboard">
-      <h2>Scoreboard</h2>
-      <ul>
-        {scoreboard.map((player, index) => (
-          <li key={index}>{player.value}: {player.score} pts</li>
-        ))}
-      </ul>
-    </div>
-
-    </div>
     
+    </div>    
+        <div className="Scoreboard">
+        <h2>Scoreboard</h2>
+        <ul>
+          {scoreboard.map((player, index) => (
+            <li key={index}>{player.value}: {player.score} pts</li>
+          ))}
+        </ul>
+        </div>
+    </div>
   );
 } 
 

@@ -48,7 +48,6 @@ gameRouter.post("/createGame", async (req: any, res) => {
     console.log(gameOptions.gamemode);
 
     try {
-
         //save random numbers
         await redisClient.rPush(`${IdPrefixes.RANDOM_NUMBERS}_${gameId}`,
                                 randomNums.map(String)
@@ -62,8 +61,7 @@ gameRouter.post("/createGame", async (req: any, res) => {
         }
 
         await redisClient.set(gameId, JSON.stringify(gameData)); // set max player count
-        
-        
+             
         await redisClient.sAdd(IdPrefixes.LOBBIES, gameId);
 
         await redisClient.zAdd(`${IdPrefixes.PLAYER_POINTS}_${gameId}`, 
@@ -78,8 +76,7 @@ gameRouter.post("/createGame", async (req: any, res) => {
 
 });
 
-gameRouter.post("/getCurrNum", async (req:any, res) => {
-    
+gameRouter.post("/getCurrNum", async (req:any, res) => {  
     const {
         gameId,
         currRound,
@@ -138,7 +135,6 @@ gameRouter.post("/joinLobby", async (req:any, res:any) => {
         playerId
     } = req.body;
 
-
     const scoreboardID = `${IdPrefixes.PLAYER_POINTS}_${gameId}`;
 
     const currPlayerCount = 
@@ -152,21 +148,19 @@ gameRouter.post("/joinLobby", async (req:any, res:any) => {
     var parcedData = JSON.parse(gameData);
     console.log(parcedData);
     const maxPlayerCount = parcedData.maxPlayers;
-
-    
+ 
     if(maxPlayerCount === null)
         return res.status(404).send({message: "Requested game does not exsist"});
     if(Number(currPlayerCount) > Number(maxPlayerCount))
         return res.status(404).send({message: "Lobby is full"});
 
-    try {
-        console.log("in try");
-        parcedData.currPlayerCount = (Number(parcedData.currPlayerCount)+1).toString();
-        console.log("a lit bit deeper");
+    try {        
+        parcedData.currPlayerCount = 
+        (Number(parcedData.currPlayerCount)+1).toString();
+        
         await redisClient.set(gameId, JSON.stringify(parcedData));
 
-        await redisClient.zAdd(scoreboardID, 
-            { score: 0, value: playerId });
+        await redisClient.zAdd(scoreboardID, { score: 0, value: playerId });
 
         console.log("Success", gameId, parcedData);
 
@@ -174,10 +168,7 @@ gameRouter.post("/joinLobby", async (req:any, res:any) => {
     }
     catch(err:any) {
         return res.status(404).send({message: err.message});
-    }
-
-    
-    //if(lobbyData)
+    }    
 });
 
 gameRouter.get("/getLobbies", async (req:any, res:any) => {
