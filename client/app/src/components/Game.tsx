@@ -192,23 +192,23 @@ function Game() {
     switch (mode){
       case "Classic":
         text = <label className="NumToFindLabel">
-                ({num})<label className="smallNumToFindLabel">{fromBase}</label> = (?)<label className="smallNumToFindLabel">{toBase}</label> 
+                ({num})<label className="smallNumToFindLabel">{fromBase}</label> → (?)<label className="smallNumToFindLabel">{toBase}</label> 
                </label>
         break;
       case "Reverse":
         text = <label className="NumToFindLabel">
-                ({numtoBase(num, fromBase)})<label className="smallNumToFindLabel">{fromBase}</label> = (?)<label className="smallNumToFindLabel">{toBase}</label> 
+                ({numtoBase(num, fromBase)})<label className="smallNumToFindLabel">{fromBase}</label> → (?)<label className="smallNumToFindLabel">{toBase}</label> 
                </label>
         break;
       case "Chaos":
         console.log(toBase, fromBase, num, gameMode);
         text = <label className="NumToFindLabel">
-                ({numtoBase(num, fromBase)})<label className="smallNumToFindLabel">{fromBase}</label> = (?)<label className="smallNumToFindLabel">{toBase}</label> 
+                ({numtoBase(num, fromBase)})<label className="smallNumToFindLabel">{fromBase}</label> → (?)<label className="smallNumToFindLabel">{toBase}</label> 
               </label>
         break;
       default:
         text = <label className="NumToFindLabel">
-                ({num})<label className="smallNumToFindLabel">{fromBase}</label> = (?)<label className="smallNumToFindLabel">{toBase}</label> 
+                ({num})<label className="smallNumToFindLabel">{fromBase}</label> → (?)<label className="smallNumToFindLabel">{toBase}</label> 
               </label>
     }
 

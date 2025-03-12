@@ -101,7 +101,7 @@ gameRouter.post("/getCurrNum", async (req:any, res) => {
         
         const scoreboard = await 
         redisClient.zRangeWithScores(scoreboardID, 0, -1);
-   
+        
         if(gamemode === GameModes.CHAOS) {
             fromBase = await redisClient.
                         lIndex(`${IdPrefixes.FROM_BASE}_${gameId}`,currRound);
@@ -239,25 +239,10 @@ async function addChaosBaseArrays(roundCount:number, gameId:String) {
                 BaseValues.MIN_BASE + 1)) + BaseValues.MIN_BASE      
     );
     
-
     await redisClient.rPush(`${IdPrefixes.FROM_BASE}_${gameId}`,
                              fromBases.map(String));
     await redisClient.rPush(`${IdPrefixes.TO_BASE}_${gameId}`,
                              toBases.map(String));
-
-    // for (const [fromBase, toBase] of randomBases) {  // Use for...of here
-    //     console.log("FromBase:", fromBase);
-        
-    //     await redisClient.rPush(
-    //         `${IdPrefixes.FROM_BASE}_${gameId}`, String(fromBase)
-    //     );
-        
-    //     console.log("ToBase:", toBase);
-        
-    //     await redisClient.rPush(
-    //         `${IdPrefixes.TO_BASE}_${gameId}`, String(toBase)
-    //     );
-    // }
 }
 
 

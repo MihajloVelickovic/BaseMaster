@@ -53,7 +53,7 @@
     display: flex;
     flex-direction: row;
     gap: 15px; /* Reduce gap slightly */
-    margin-top: 75px;
+    margin-top: 50px;
 }
 
 .ButtonAndLabel {
@@ -63,28 +63,34 @@
 
 .BaseButton {
     width: 120px; /* Slightly smaller */
-    height: 180px; /* Adjusted to match the height */
-    background-color: green;
+    height: 200px; /* Adjusted to match the height */
+    background-color: #009900;
     border-radius: 10px;
     box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add slight shadow */
 
     /* background-color: transparent; */
     border: none;
-    font-size: 32px;
+    font-size: 44px;
     font-weight: bold;
+    font-family: 'JetBrains Mono', monospace;
     color: white;
     cursor: pointer;
     padding: 5px 0;
 }
 
+.BaseButton:hover {
+    background-color: #007700; /* Darker green on hover */
+}
+
 .ButtonAndLabel label {
     font-size: 16px; /* Adjust label size */
     font-weight: bold;
-    color: green;
+    color: #009900;
     margin-bottom: 5px; /* Ensure spacing above button */
 }
 
 .ClearButton {
+    font-family: 'JetBrains Mono', monospace;
     margin-top: 20px;
     width: 60%;
     height: 50px;
@@ -96,15 +102,20 @@
     padding: 5px 0px 0px 5px;
 }
 
+.ClearButton:hover {
+    background-color: #b22222; /* Darker shade of crimson */
+}
+
 .ConfirmButton {
+    font-family: 'JetBrains Mono', monospace;
     margin-top: 20px;
     width: 15%;
-    height: 50px;
-    background-color: darkgreen;
+    height: 64px;
+    background-color: #009900;
     color:#ffffff;
     border-radius: 10px;
     font-weight: bold;
-    font-size: 24px;
+    font-size: 32px;
     padding: 5px 0px 0px 5px;
 }
 
@@ -113,12 +124,18 @@
 }
 
 .NumToFindLabel {
-    color: darkgreen;
-    font-size: xx-large;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: bold;
+    color: #009900;
+    font-size: 50px;
 }
 
 .smallNumToFindLabel {
     font-size: large;
+}
+
+.ConfirmButton:hover {
+    background-color: #007700;
 }
 
 .Scoreboard {
@@ -140,7 +157,7 @@
     font-size: 1.5rem;
     margin-bottom: 10px;
     color: white; /* Gold color */
-    border-bottom: 2px solid darkgreen;
+    border-bottom: 2px solid #009900;
     display: inline-block;
     padding-bottom: 5px;
   }
