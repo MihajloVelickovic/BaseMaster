@@ -68,6 +68,7 @@
     align-items: center;
     flex: 1; /* Makes each button container take equal space */
     width: 100%;
+    max-width: 20%;
 }
 
 .BaseButton {
@@ -77,7 +78,6 @@
     background-color: #009900;
     border-radius: 10px;
     box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add slight shadow */
-
     /* background-color: transparent; */
     border: none;
     font-size: 8vh;
