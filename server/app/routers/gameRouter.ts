@@ -48,10 +48,11 @@ gameRouter.post("/createGame", async (req: any, res) => {
     console.log(gameOptions.gamemode);
 
     try {
-        randomNums.forEach(async (num) => {
-            await redisClient.rPush(`${IdPrefixes.RANDOM_NUMBERS}_${gameId}`,
-                                     String(num));
-        });
+
+        //save random numbers
+        await redisClient.rPush(`${IdPrefixes.RANDOM_NUMBERS}_${gameId}`,
+                                randomNums.map(String)
+        );
 
         if(gameOptions.gamemode === GameModes.CHAOS)
             await addChaosBaseArrays(roundCount,gameId);
@@ -228,26 +229,35 @@ gameRouter.post("/setGameState", async (req:any, res:any) => {
 
 async function addChaosBaseArrays(roundCount:number, gameId:String) {
     console.log("Entering chaos bases creation....");
-    const randomBases = Array.from({ length: roundCount }, () => [
+    const fromBases = Array.from({ length: roundCount }, () => 
         Math.floor(Math.random() * (BaseValues.MAX_BASE -
-                BaseValues.MIN_BASE + 1)) + BaseValues.MIN_BASE,
+             BaseValues.MIN_BASE + 1)) + BaseValues.MIN_BASE
+    );
+
+    const toBases = Array.from({ length: roundCount }, () => 
         Math.floor(Math.random() * (BaseValues.MAX_BASE -
-                    BaseValues.MIN_BASE + 1)) + BaseValues.MIN_BASE
-    ]);
+                BaseValues.MIN_BASE + 1)) + BaseValues.MIN_BASE      
+    );
     
-    for (const [fromBase, toBase] of randomBases) {  // Use for...of here
-        console.log("FromBase:", fromBase);
+
+    await redisClient.rPush(`${IdPrefixes.FROM_BASE}_${gameId}`,
+                             fromBases.map(String));
+    await redisClient.rPush(`${IdPrefixes.TO_BASE}_${gameId}`,
+                             toBases.map(String));
+
+    // for (const [fromBase, toBase] of randomBases) {  // Use for...of here
+    //     console.log("FromBase:", fromBase);
         
-        await redisClient.rPush(
-            `${IdPrefixes.FROM_BASE}_${gameId}`, String(fromBase)
-        );
+    //     await redisClient.rPush(
+    //         `${IdPrefixes.FROM_BASE}_${gameId}`, String(fromBase)
+    //     );
         
-        console.log("ToBase:", toBase);
+    //     console.log("ToBase:", toBase);
         
-        await redisClient.rPush(
-            `${IdPrefixes.TO_BASE}_${gameId}`, String(toBase)
-        );
-    }
+    //     await redisClient.rPush(
+    //         `${IdPrefixes.TO_BASE}_${gameId}`, String(toBase)
+    //     );
+    // }
 }
 
 
