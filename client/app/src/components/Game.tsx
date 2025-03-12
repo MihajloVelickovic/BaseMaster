@@ -243,10 +243,11 @@ function Game() {
       <div>
         {generateTargetNumLabel(currNum, gameMode)}
         {generateBaseButtons(numOfButtons)}
-      </div>
       <button className= "ClearButton" onClick={clearButtonHandler}>
         Clear
       </button>
+      </div>
+      
       <button className="ConfirmButton" onClick={confirmButtonHandler}>
         Confirm
       </button>

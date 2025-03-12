@@ -92,7 +92,7 @@
 .ClearButton {
     font-family: 'JetBrains Mono', monospace;
     margin-top: 20px;
-    width: 60%;
+    width: 100%;
     height: 50px;
     background-color: crimson;
     color:#ffffff;
