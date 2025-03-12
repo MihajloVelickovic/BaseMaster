@@ -59,3 +59,10 @@
   justify-self: right;
   justify-content: right;
 }
+
+.dropdown-menu {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* Creates two columns */
+  max-height: 140px;
+  overflow-y: auto;
+}
