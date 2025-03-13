@@ -229,9 +229,9 @@ gameRouter.post("/setGameState", async (req:any, res:any) => {
 
         await redisClient.set(gameId, JSON.stringify(parcedData));
 
-        await redisClient.zRem(IdPrefixes.LOBBIES_CURR_PLAYERS, gameId); // remove the data
+        await redisClient.hDel(IdPrefixes.LOBBIES_CURR_PLAYERS, gameId); // remove the data
 
-        await redisClient.zRem(IdPrefixes.LOBBIES_MAX_PLAYERS, gameId);
+        await redisClient.hDel(IdPrefixes.LOBBIES_MAX_PLAYERS, gameId);
 
         publisher.publish(
         `${IdPrefixes.GAME_STARTED}_${gameId}`,

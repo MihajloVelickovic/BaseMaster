@@ -85,6 +85,39 @@ function Home() {
       console.error('Error joining lobby:', error.response ? error.response.data : error.message);
     }
   };
+
+  function showLobbies() {
+    return (
+      // <div className="lobby-list">
+      //       {lobbies.length > 0 ? lobbies.map((lobby) => (
+      //         // <li key={lobby.gameId} className="lobby-item" onClick={() => joinLobby(lobby.gameId)}>
+      //         //   Game ID: {lobby.gameId}, Players: {lobby.currentPlayers}/{lobby.maximumPlayers}
+      //         // </li>
+              
+      //         <button key={lobby[0]} className="btn btn-info lobby-item" style={{margin: "15px"}} onClick={() => joinLobby(lobby[0])}>
+      //           Game id: {lobby[0].slice(-5)}, Players: {lobby[1]}/{lobby[2]}
+      //         </button>
+      //       )) : <p>No available lobbies.</p>}
+      //     </div>
+      <div className="lobby-list">
+      {lobbies.length > 0 ? (
+        <>
+          {lobbies.map((lobby) => (
+            
+              <button className=" lobby-item" onClick={() => joinLobby(lobby[0])}>
+                <span className="game-id">Game: {lobby[0].slice(-5)}</span>
+                <span className="players">Players: {lobby[1]}/{lobby[2]}</span>
+              </button>
+            
+          ))}
+      </>
+      ) : (
+        <p className="no-lobbies">No available lobbies.</p>
+      )}
+    </div>
+
+    );
+  }
   
   function Chooser<T extends string | number>(choosingArray: T[], state: T, setState: (value: T) => void, text: string, labelTxt: string, disabled: boolean = false) {
     function onSelection(value: T) {
@@ -144,17 +177,7 @@ function Home() {
       ) : (
         <>
           <label className="mainFont">Available Lobbies</label>
-          <div className="lobby-list">
-            {lobbies.length > 0 ? lobbies.map((lobby) => (
-              // <li key={lobby.gameId} className="lobby-item" onClick={() => joinLobby(lobby.gameId)}>
-              //   Game ID: {lobby.gameId}, Players: {lobby.currentPlayers}/{lobby.maximumPlayers}
-              // </li>
-              
-              <button key={lobby[0]} className="btn btn-secondary lobby-item" style={{margin: "15px"}} onClick={() => joinLobby(lobby[0])}>
-                Game id: {lobby[0].slice(-5)}, Players: {lobby[1]}/{lobby[2]}
-              </button>
-            )) : <p>No available lobbies.</p>}
-          </div>
+          {showLobbies()}
         </>
       )}
     </div>
