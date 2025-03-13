@@ -102,11 +102,16 @@ function Home() {
       <div className="lobby-list">
       {lobbies.length > 0 ? (
         <>
+          <div className="lobbyColumnNames">
+            <div className="lobbyColumnNameItem">Game</div>
+            <div className="lobbyColumnNameItem">Players</div>  
+          </div>
+          
           {lobbies.map((lobby) => (
-            
+
               <button className=" lobby-item" onClick={() => joinLobby(lobby[0])}>
-                <span className="game-id">Game: {lobby[0].slice(-5)}</span>
-                <span className="players">Players: {lobby[1]}/{lobby[2]}</span>
+                <span className="game-id">{lobby[0].slice(-5)}</span>
+                <span className="players">{lobby[1]}/{lobby[2]}</span>
               </button>
             
           ))}
