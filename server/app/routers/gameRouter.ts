@@ -205,7 +205,7 @@ gameRouter.get("/getLobbies", async (req:any, res:any) => {
 
         console.log("lobbies: ", mergedLobbyData);
        
-        return res.send({lobbies: lobbies_curr_players});
+        return res.send({lobbies: mergedLobbyData});
     } catch (err) {
         res.status(500).send('Error saving user data to Redis');
     }

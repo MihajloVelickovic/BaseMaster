@@ -18,7 +18,8 @@ function Home() {
   const [gameId, setGameId] = useState(null);
 
   const [browsingLobbies, setBrowsingLobbies] = useState(false);
-  const [lobbies, setLobbies] = useState([]);
+  const [lobbies, setLobbies] = useState<[string, number, number][]>([]);
+
   // const [playerId, setPlayerId] = useState(playerID);
 
   const navigate = useNavigate();
@@ -61,6 +62,10 @@ function Home() {
       const response = await axiosInstance.get('/game/getLobbies');
       console.log("response: ", response);
       setLobbies(response.data['lobbies']);
+
+      var n = response.data['lobbies'][0].slice(-5);
+
+
     } catch (error:any) {
       console.error('Error fetching lobbies: ', error.response ? error.response.data : error.message);
     }
@@ -116,22 +121,6 @@ function Home() {
   }
 
   return (
-    // <div className="HomeContainer">
-
-    //   <label className="mainFont">Game Options</label>
-
-      
-    //   {Chooser(bases, toBase, setToBase, "Base ", "Choose Base:", gameMode === GameModes.CHAOS)}
-    //   {Chooser(players, playerNum, setPlayerNum, "Players: ", "Choose number of players")}
-    //   {Chooser(gameModes, gameMode, setGameMode, "", "Choose Game Mode:")}
-    //   {Chooser(difficulties, difficulty, setDifficulty, "", "Choose difficulty:")}
-
-    //   {/* <NavLink to="/Game" state={{ base, playerNum, gameMode, gameId }} onClick={createGame}> */}
-    //   <button className="btn btn-success game-button" style={{marginTop:"15px"}} onClick={createGame}>
-    //     Start game buddy!
-    //   </button>
-    //   {/* </NavLink> */}
-    // </div>
 
     <div className="HomeContainer">
       <div className="button-group">
@@ -160,8 +149,9 @@ function Home() {
               // <li key={lobby.gameId} className="lobby-item" onClick={() => joinLobby(lobby.gameId)}>
               //   Game ID: {lobby.gameId}, Players: {lobby.currentPlayers}/{lobby.maximumPlayers}
               // </li>
-              <button key={lobby} className="btn btn-secondary lobby-item" style={{margin: "15px"}} onClick={() => joinLobby(lobby)}>
-                Game ID: {lobby}, Players: 69/420
+              
+              <button key={lobby[0]} className="btn btn-secondary lobby-item" style={{margin: "15px"}} onClick={() => joinLobby(lobby[0])}>
+                Game id: {lobby[0].slice(-5)}, Players: {lobby[1]}/{lobby[2]}
               </button>
             )) : <p>No available lobbies.</p>}
           </div>
