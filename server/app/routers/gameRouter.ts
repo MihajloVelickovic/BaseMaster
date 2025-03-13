@@ -62,10 +62,13 @@ gameRouter.post("/createGame", async (req: any, res) => {
 
         await redisClient.set(gameId, JSON.stringify(gameData)); // set max player count
              
-        await redisClient.sAdd(IdPrefixes.LOBBIES, gameId); //[gameid,curr,max]
+        await redisClient.hSet(IdPrefixes.LOBBIES_CURR_PLAYERS, gameId,  1); //[gameid,curr,max]
+
+        await redisClient.hSet(IdPrefixes.LOBBIES_MAX_PLAYERS, gameId, playerCount);
+        
 
         await redisClient.zAdd(`${IdPrefixes.PLAYER_POINTS}_${gameId}`, 
-            { score: 0, value: hostId });
+                                { score: 0, value: hostId });
 
         res.send({message:`Game created succesfully`, gameID:gameId});
     } catch (err) {
@@ -139,8 +142,7 @@ gameRouter.post("/joinLobby", async (req:any, res:any) => {
 
     const scoreboardID = `${IdPrefixes.PLAYER_POINTS}_${gameId}`;
 
-    const currPlayerCount = 
-    await redisClient.zCard(scoreboardID);
+    const currPlayerCount = await redisClient.zCard(scoreboardID);
 
     const gameData = await redisClient.get(gameId);
 
@@ -175,12 +177,35 @@ gameRouter.post("/joinLobby", async (req:any, res:any) => {
 
 gameRouter.get("/getLobbies", async (req:any, res:any) => {
     try {
-        const lobbies = await redisClient.sMembers(IdPrefixes.LOBBIES);
-        console.log("lobbies: ", lobbies);
-        if(lobbies === null)
+        const lobbies_curr_players = 
+        await redisClient.hGetAll(IdPrefixes.LOBBIES_CURR_PLAYERS);
+        
+        const lobbies_max_players = 
+        await redisClient.hGetAll(IdPrefixes.LOBBIES_MAX_PLAYERS);
+
+        if(lobbies_curr_players === null)
             return res.status(404).send({message:"Could not fin any lobbies!"});
                                                 //Fin???? adventure time????
-        return res.send({lobbies});
+        if(lobbies_max_players === null)
+            return res.status(404).send({message:"Could not fin any lobbies!"});
+                                                //Fin???? adventure time????
+
+        const parsedLobbies_curr_players = Object.fromEntries(
+        Object.entries(lobbies_curr_players).map(([key, value]) => [key, value])
+        );
+        const parsedLobbies_max_players = Object.fromEntries(
+        Object.entries(lobbies_max_players).map(([key, value]) => [key, value])
+        );
+        var mergedLobbyData:any = []
+
+        for (const [gameId, currPlayers] of Object.entries(parsedLobbies_curr_players)) {
+            mergedLobbyData.push([gameId,currPlayers,
+            parsedLobbies_max_players[String(gameId)]]);
+        }
+
+        console.log("lobbies: ", mergedLobbyData);
+       
+        return res.send({lobbies: lobbies_curr_players});
     } catch (err) {
         res.status(500).send('Error saving user data to Redis');
     }
@@ -204,7 +229,9 @@ gameRouter.post("/setGameState", async (req:any, res:any) => {
 
         await redisClient.set(gameId, JSON.stringify(parcedData));
 
-        await redisClient.sRem(IdPrefixes.LOBBIES, gameId); // remove the data
+        await redisClient.zRem(IdPrefixes.LOBBIES_CURR_PLAYERS, gameId); // remove the data
+
+        await redisClient.zRem(IdPrefixes.LOBBIES_MAX_PLAYERS, gameId);
 
         publisher.publish(
         `${IdPrefixes.GAME_STARTED}_${gameId}`,

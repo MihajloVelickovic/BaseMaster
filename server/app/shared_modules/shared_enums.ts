@@ -26,7 +26,8 @@ export enum IdPrefixes {
     TO_BASE = "tb",
     GAME_END = "ge",
     GAME_STARTED = "GAME STARTED",
-    LOBBIES = "LOBBIES"
+    LOBBIES_CURR_PLAYERS = "LOBBIES_CURR",
+    LOBBIES_MAX_PLAYERS = "LOBBIES_MAX",
 }
 
 export enum BaseValues {
