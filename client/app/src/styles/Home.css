@@ -14,7 +14,7 @@
   padding: 25px;
   height: fit-content;
   /* width: fit-content; */
-  width: 550px;
+  width: 570px;
   
   margin: auto;
   margin-top: 30px;  
@@ -33,29 +33,35 @@
 }
 
 .HomeContainer .smallFont {
-  font-size: medium;
+  font-size: 2vh;
   justify-content: left;
+  font-weight: bold;
 }
 
 .HomeContainer .mainFont {
-  font-size: xx-large;
+  font-size: 4vh;
   font-weight: bolder;
+  font-family: 'JetBrains Mono', monospace;
 }
 
 .choosingFont {
-  font-size: medium;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 2vh;
   padding: 0px;
   margin: 0px;
 }
 
 .choosingDiv {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 3vh;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
 }
 
 .choosingBtn {
-  width: 200px;
+  width: 150px;
+  font-size: 2vh;
   justify-self: right;
   justify-content: right;
 }
@@ -84,13 +90,14 @@
   flex-direction: row;
   justify-content: space-around;
   width: 100%;
-  height: 7vh;
+  height: 6vh;
   padding: 1px;
   font-size: 3vh;
   text-align: center;
   border-radius: 10px;
   transition: all 0.3s ease-in-out;
   font-weight: bold;
+  padding: 0px;
 }
 
 .lobbyColumnNames {
@@ -105,7 +112,7 @@
   font-size: 4vh;
   font-weight: bold;
   font-family: 'JetBrains Mono', monospace;
-
+  padding: 0px;
 }
 
 .lobbyColumnNameItem {
@@ -127,10 +134,17 @@
   font-family: 'JetBrains Mono', monospace;
   color: #ffffe8;
   font-size: 2.8vh;
+  padding: 8px;
 }
 
 .players {
   opacity: 0.8;
+  font-weight: bold;
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  color: #ffffe8;
+  font-size: 2.8vh;
+  padding: 8px;
 }
 
 .no-lobbies {
@@ -139,3 +153,30 @@
   color: gray;
 }
 
+.createLobbyButton {
+  height: 6vh;
+  background:#32E537;
+  color: #ffffe8;
+  font-weight: bolder;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 2.5vh;
+  border-radius: 10px;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add slight shadow */
+}
+
+.createLobbyButton:hover {
+  background: #32D336;
+}
+
+
+.lobbyOptionDiv {
+  display: flex;
+  flex-direction: row;
+}
+
+.lobbyOptionButton {
+  flex: 1; /* Makes each button container take equal space */
+  max-width: 50%;
+  font-weight: bolder;
+  font-family: 'JetBrains Mono', monospace;
+}

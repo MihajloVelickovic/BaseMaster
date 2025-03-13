@@ -76,7 +76,7 @@ export default function Lobby () {
         <div className="LobbyContainer ">
             <label className="mainLobbyText"> Ovo je lobby! </label>            
             {showLobbyStats()}
-            <button className="btn btn-success" onClick={handleStartGame}>
+            <button className="startGameButton" onClick={handleStartGame}>
                 Start Game!
             </button>
         </div>

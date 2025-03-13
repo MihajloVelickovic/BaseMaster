@@ -142,9 +142,9 @@ function Home() {
     return (
     <div className="choosingDiv">
     
-      <label className="smallFont">{labelTxt}</label  >
+      <label className="smallFont">{labelTxt}</label>
       <div className="dropdown choosingBtn">
-        <button className="btn btn-secondary dropdown-toggle choosingBtn" type="button" data-bs-toggle="dropdown" aria-expanded="false"
+        <button key={text || state} className="btn btn-secondary dropdown-toggle choosingBtn" type="button" data-bs-toggle="dropdown" aria-expanded="false"
                           disabled={disabled} // Disable when needed
                           style={{ backgroundColor: disabled ? "#d3d3d3" : "", cursor: disabled ? "not-allowed" : "" }}>
           {text}{state}
@@ -161,11 +161,11 @@ function Home() {
   return (
 
     <div className="HomeContainer">
-      <div className="button-group">
-        <button className={`btn ${!browsingLobbies ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setBrowsingLobbies(false)}>
+      <div className="lobbyOptionDiv">
+        <button className={`btn ${!browsingLobbies ? 'btn-primary' : 'btn-secondary'} lobbyOptionButton`} onClick={() => setBrowsingLobbies(false)}>
           Create Game
         </button>
-        <button className={`btn ${browsingLobbies ? 'btn-primary' : 'btn-secondary'}`} onClick={() => { setBrowsingLobbies(true); fetchLobbies(); }}>
+        <button className={`btn ${browsingLobbies ? 'btn-primary' : 'btn-secondary '} lobbyOptionButton`} onClick={() => { setBrowsingLobbies(true); fetchLobbies(); }}>
           Browse Lobbies
         </button>
       </div>
@@ -174,10 +174,10 @@ function Home() {
         <>
           <label className="mainFont">Game Options</label>
           {Chooser(bases, toBase, setToBase, "Base ", "Choose Base:", gameMode === GameModes.CHAOS)}
-          {Chooser(players, playerNum, setPlayerNum, "Players: ", "Choose number of players")}
+          {Chooser(players, playerNum, setPlayerNum, "Players: ", "Choose number of players:")}
           {Chooser(gameModes, gameMode, setGameMode, "", "Choose Game Mode:")}
           {Chooser(difficulties, difficulty, setDifficulty, "", "Choose difficulty:")}
-          <button className="btn btn-success game-button" onClick={createGame}>Start game buddy!</button>
+          <button className="createLobbyButton" onClick={createGame}>Create Lobby</button>
         </>
       ) : (
         <>

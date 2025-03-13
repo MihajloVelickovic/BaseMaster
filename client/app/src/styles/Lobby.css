@@ -8,6 +8,8 @@
   }
   
   .LobbyContainer {
+    font-weight: bolder;
+    font-family: 'JetBrains Mono', monospace;
     text-align: center;
     display: flex;
     flex-direction: column;
@@ -18,10 +20,9 @@
     
     margin: auto;
     margin-top: 30px;  
-    font-size: large;
+    font-size: 7vh;
   
-    border: solid darkblue 1px;
-  
+    border: solid #010050 1px;
     border-radius: 25px;
     background-color:aliceblue;
     /* background-image:url( "../../pictures/background_img_01.jpg"); */
@@ -38,7 +39,7 @@
   }
 
   .LobbyStats div {
-    font-size: large;
+    font-size: 2vh;
     font-weight: bold;
     display: flex;
     flex-direction: row;
@@ -46,10 +47,10 @@
   }
 
   .mainLobbyText {
-    font-size: xx-large;
+    font-size: 4vh;
     font-weight: bolder;
-    color: blue;
-    border-bottom: solid black 1px;
+    color: #1E6ACD;
+    border-bottom: solid #010050 3px;
   }
 
   .LobbyStats label {
@@ -60,5 +61,20 @@
   .startGameButton {           
     font-size: xx-large;
     font-weight: bolder;
+  }
+
+  .startGameButton {
+    height: 5.5vh;
+    background:#32E537;
+    color: #ffffe8;
+    font-weight: bolder;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2vh;
+    border-radius: 10px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add slight shadow */
+  }
+
+  .startGameButton:hover {
+    background: #32D336;
   }
   
