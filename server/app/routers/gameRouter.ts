@@ -64,9 +64,8 @@ gameRouter.post("/createGame", async (req: any, res) => {
              
         await redisClient.hSet(IdPrefixes.LOBBIES_CURR_PLAYERS, gameId,  1); //[gameid,curr,max]
 
-        await redisClient.hSet(IdPrefixes.LOBBIES_MAX_PLAYERS, gameId, playerCount);
+        await redisClient.hSet(IdPrefixes.LOBBIES_MAX_PLAYERS, gameId, playerCount);               
         
-
         await redisClient.zAdd(`${IdPrefixes.PLAYER_POINTS}_${gameId}`, 
                                 { score: 0, value: hostId });
 
@@ -227,6 +226,8 @@ gameRouter.post("/setGameState", async (req:any, res:any) => {
 
         parcedData.gameState = fromStringState(gameState);
 
+        //await redisClient.set(`${IdPrefixes.GAME_END}_${gameId}`, Number(parcedData.currPlayerCount);
+
         await redisClient.set(gameId, JSON.stringify(parcedData));
 
         await redisClient.hDel(IdPrefixes.LOBBIES_CURR_PLAYERS, gameId); // remove the data
@@ -244,6 +245,15 @@ gameRouter.post("/setGameState", async (req:any, res:any) => {
     catch(err:any) {
         return res.status(404).send({message: err.message});
     }
+
+});
+
+gameRouter.post("/playerComplete", async (req:any, res:any) => {
+    const {
+        gamId,
+        playerId
+    } = req.body;
+
 
 });
 
