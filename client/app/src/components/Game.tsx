@@ -74,7 +74,7 @@ function Game() {
       const data = JSON.parse(event.data);
       console.log(data);
       if (data.type === "scoreUpdate") {
-        setScoreboard(data.scores.sort((a: { value: string; score: number }, b: { value: string; score: number }) => b.score - a.score));
+        setScoreboard(data.scores);
     }
   };
 

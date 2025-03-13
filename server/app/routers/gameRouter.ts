@@ -62,7 +62,7 @@ gameRouter.post("/createGame", async (req: any, res) => {
 
         await redisClient.set(gameId, JSON.stringify(gameData)); // set max player count
              
-        await redisClient.sAdd(IdPrefixes.LOBBIES, gameId);
+        await redisClient.sAdd(IdPrefixes.LOBBIES, gameId); //[gameid,curr,max]
 
         await redisClient.zAdd(`${IdPrefixes.PLAYER_POINTS}_${gameId}`, 
             { score: 0, value: hostId });
@@ -99,6 +99,8 @@ gameRouter.post("/getCurrNum", async (req:any, res) => {
         const scoreboard = await 
         redisClient.zRangeWithScores(scoreboardID, 0, -1);
         
+        scoreboard.reverse();
+
         if(gamemode === GameModes.CHAOS) {
             fromBase = await redisClient.
                         lIndex(`${IdPrefixes.FROM_BASE}_${gameId}`,currRound);
@@ -177,7 +179,7 @@ gameRouter.get("/getLobbies", async (req:any, res:any) => {
         console.log("lobbies: ", lobbies);
         if(lobbies === null)
             return res.status(404).send({message:"Could not fin any lobbies!"});
-
+                                                //Fin???? adventure time????
         return res.send({lobbies});
     } catch (err) {
         res.status(500).send('Error saving user data to Redis');
