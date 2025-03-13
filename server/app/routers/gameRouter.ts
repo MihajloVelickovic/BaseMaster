@@ -142,21 +142,19 @@ gameRouter.post("/joinLobby", async (req:any, res:any) => {
 
     const scoreboardID = `${IdPrefixes.PLAYER_POINTS}_${gameId}`;
 
-    const currPlayerCount = await redisClient.zCard(scoreboardID);
+    const lobbyData = await redisClient.hGet(IdPrefixes.LOBBIES_CURR_PLAYERS, gameId);
 
     const gameData = await redisClient.get(gameId);
 
     if(gameData === null)
         return res.status(404).send({message: "Requested lobby does not exsist"});
-
+    if(lobbyData === null)
+        return res.status(404).send({message: "Requested game does not exsist"});
     var parcedData = JSON.parse(gameData);
     console.log(parcedData);
     const maxPlayerCount = parcedData.maxPlayers;
- 
-    if(maxPlayerCount === null)
-        return res.status(404).send({message: "Requested game does not exsist"});
-    if(Number(currPlayerCount) > Number(maxPlayerCount))
-        return res.status(404).send({message: "Lobby is full"});
+    if(Number(lobbyData) >= Number(maxPlayerCount))
+        return res.status(404).send({message: "Lobby is full"});  
 
     try {        
         parcedData.currPlayerCount = 
@@ -165,6 +163,8 @@ gameRouter.post("/joinLobby", async (req:any, res:any) => {
         await redisClient.set(gameId, JSON.stringify(parcedData));
 
         await redisClient.zAdd(scoreboardID, { score: 0, value: playerId });
+
+        await redisClient.hIncrBy(IdPrefixes.LOBBIES_CURR_PLAYERS,gameId,1);
 
         console.log("Success", gameId, parcedData);
 
