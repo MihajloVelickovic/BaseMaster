@@ -20,10 +20,10 @@
   margin-top: 30px;  
   font-size: large;
 
-  border: solid darkblue 1px;
+  border: solid #010050 1px;
 
   border-radius: 25px;
-  background-color:aliceblue;
+  background-color:#FFFFF2;
   /* background-image:url( "../../pictures/background_img_01.jpg"); */
 
 }
@@ -33,7 +33,7 @@
 }
 
 .HomeContainer .smallFont {
-  font-size: 2vh;
+  font-size: 1.3rem;
   justify-content: left;
   font-weight: bold;
 }
@@ -46,7 +46,7 @@
 
 .choosingFont {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 2vh;
+  font-size: 2rem;
   padding: 0px;
   margin: 0px;
 }
@@ -154,12 +154,13 @@
 }
 
 .createLobbyButton {
-  height: 6vh;
+  height: 4rem;
   background:#32E537;
+  /* justify-content: center; */
   color: #ffffe8;
   font-weight: bolder;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 2.5vh;
+  font-size: 1.5rem;
   border-radius: 10px;
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add slight shadow */
 }
