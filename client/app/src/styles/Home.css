@@ -33,8 +33,8 @@
 }
 
 .HomeContainer .smallFont {
-  font-size: 1.3rem;
-  justify-content: left;
+  font-size: 1.4rem;
+  text-align: left;
   font-weight: bold;
 }
 
@@ -44,33 +44,45 @@
   font-family: 'JetBrains Mono', monospace;
 }
 
+.choosingLabel {
+  width: fit-content;
+  padding-right: 5px; /* Custom value */
+  padding-top: inherit;
+  padding-bottom: inherit;
+  padding-left: inherit;
+}
+
 .choosingFont {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 2rem;
+  font-size: 1.2rem;
   padding: 0px;
   margin: 0px;
 }
 
 .choosingDiv {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 3vh;
+  font-size: 3rem;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
 }
 
 .choosingBtn {
-  width: 150px;
-  font-size: 2vh;
+  width: 170px;
+  font-size: 0.5rem;
   justify-self: right;
   justify-content: right;
+  padding-right: 0px;
+  padding-left: 0px;
 }
 
 .dropdown-menu {
   display: grid;
-  grid-template-columns: repeat(2, 1fr); /* Creates two columns */
-  max-height: 140px;
-  overflow-y: auto;
+  grid-template-columns: repeat(2, 1fr); /* Two columns */
+  grid-auto-rows: auto; /* Adjusts row height based on content */
+  max-height: calc(4 * 42px); /* Only allows 2 rows (4 elements max) */
+  overflow-y: auto; /* Scroll appears if more than 4 elements */
+  width: 170px;
 }
 
 .lobby-list {

@@ -142,7 +142,7 @@ function Home() {
     return (
     <div className="choosingDiv">
     
-      <label className="smallFont">{labelTxt}</label>
+      <label className="smallFont choosingLabel">{labelTxt}</label>
       <div className="dropdown choosingBtn">
         <button key={text || state} className="btn btn-secondary dropdown-toggle choosingBtn" type="button" data-bs-toggle="dropdown" aria-expanded="false"
                           disabled={disabled} // Disable when needed
@@ -174,7 +174,7 @@ function Home() {
         <>
           <label className="mainFont">Game Options</label>
           {Chooser(bases, toBase, setToBase, "Base ", "Choose Base:", gameMode === GameModes.CHAOS)}
-          {Chooser(players, playerNum, setPlayerNum, "Players: ", "Choose number of players:")}
+          {Chooser(players, playerNum, setPlayerNum, "Players: ", "Choose player count:")}
           {Chooser(gameModes, gameMode, setGameMode, "", "Choose Game Mode:")}
           {Chooser(difficulties, difficulty, setDifficulty, "", "Choose difficulty:")}
           <button className="createLobbyButton" onClick={createGame}>Create Lobby</button>
