@@ -7,7 +7,7 @@ import axiosInstance from "../utils/axiosInstance";
 var maxVal:bigint = BigInt(255);
 var numToFind = getRandomNumber(1, Number(maxVal));   //this appears to be unneeded
 const maxBase = 32;
-
+const roundCount = 15;
 
 function clcBtnCount(base:bigint, maxValue:bigint) {
   var count = 0, currVal=maxValue;
@@ -31,6 +31,7 @@ function Game() {
   const [currNum, setCurrNum] = useState(100);
   const [toBase, setToBase] = useState(2);
   const [fromBase, setFromBase] = useState(10);
+  const [isConfirmDisabled, setIsConfirmDisabled] = useState(false);
   const [scoreboard, setScoreboard] = useState<{ value: string, score: number }[]>([]);
 
   var { toBasee = 2, playerNum = 1, gameMode = GameModes.CLASSIC.toString(), difficulty = Difficulties.LAYMAN.toString(), gameId = "", playerID = "" } = location.state || {};
@@ -103,24 +104,34 @@ function Game() {
       playerId: playerID,
       correct: correct
     }
-    var response = await axiosInstance.post('/game/getCurrNum', toSend);
-    const num:number = Number(response.data['currRndNum']);        //check the name.. if changed
-    if (gameMode == GameModes.CHAOS.toString()) {
-      setToBase(Number(response.data['toBase']));
-      setFromBase(Number(response.data['fromBase']));
-      let val = clcBtnCount(BigInt(Number(response.data['toBase'])), maxVal);
-      console.log(toBase, fromBase, val);
-      setNumOfButtons(val);
-      setArrayOfValues(Array.from({length: val}, (_, i) => 0));
+    try {
+      var response = await axiosInstance.post('/game/getCurrNum', toSend);
+      const num:number = Number(response.data['currRndNum']);        //check the name.. if changed
+      if (gameMode == GameModes.CHAOS.toString()) {
+        setToBase(Number(response.data['toBase']));
+        setFromBase(Number(response.data['fromBase']));
+        let val = clcBtnCount(BigInt(Number(response.data['toBase'])), maxVal);
+        console.log(toBase, fromBase, val);
+        setNumOfButtons(val);
+        setArrayOfValues(Array.from({length: val}, (_, i) => 0));
+      }
+      //console.log(response.data["scoreboard"])
+      console.log(response);
+      setCurrRound(currRound+1);
+      setCurrNum(num);
+      console.log("Current round: ", currRound);
+      return num;  
     }
-    //console.log(response.data["scoreboard"])
-    console.log(response);
-    setCurrRound(currRound+1);
-    setCurrNum(num);
-    console.log("Current round: ", currRound);  
+    catch(error:any) {
+      console.error("Error fetching new number:", error.response?.data || error.message);
 
-      return num;
-
+      // If round limit is reached, disable confirm button
+      if (error.response?.status === 400) {  // Adjust based on server response
+          alert("Max rounds reached! No more numbers will be generated.");
+          setIsConfirmDisabled(true);
+      }
+      return currNum;
+    }
   }
 
 
@@ -248,7 +259,7 @@ function Game() {
       <button className= "ClearButton" onClick={clearButtonHandler}>
         Clear
       </button>
-      <button className="ConfirmButton" onClick={confirmButtonHandler}>
+      <button className="ConfirmButton" onClick={confirmButtonHandler} disabled={isConfirmDisabled}>
         Confirm
       </button>
     
