@@ -4,7 +4,7 @@ import { JSXElementConstructor, ReactElement, ReactNode, ReactPortal, useEffect,
 import axiosInstance from "../utils/axiosInstance";   //ovde za sad ne treba
 import {GameModes, Difficulties} from "../shared_modules/shared_enums"
 
-export const roundCount = 15;
+//export const roundCount = 15;
 const maxValue = 255;
 const gameID = "gameID";
 const playerID = Math.floor(Math.random()*10000).toString();
@@ -19,6 +19,9 @@ function Home() {
 
   const [browsingLobbies, setBrowsingLobbies] = useState(false);
   const [lobbies, setLobbies] = useState<[string, number, number][]>([]);
+  const [advancedOptions, setAdvancedOptions] = useState(false);
+  const [lobbyName, setLobbyName] = useState("");
+  const [roundCount, setRoundCount] = useState(Number(15));
 
   // const [playerId, setPlayerId] = useState(playerID);
 
@@ -31,7 +34,7 @@ function Home() {
   
   useEffect(() => {
     if (gameId) {
-      navigate("/Lobby", { state: { toBasee:toBase, playerNum, gameMode, difficulty, gameId, playerID } });
+      navigate("/Lobby", { state: { toBasee:toBase, playerNum, gameMode, difficulty, gameId, playerID, roundCount, lobbyName } });
     }
   }, [gameId]);  // This effect runs when `gameId` is updated
 
@@ -158,6 +161,10 @@ function Home() {
 
   }
 
+  function handleAdvanceOptions(){
+    setAdvancedOptions(!advancedOptions);
+  }
+
   return (
 
     <div className="HomeContainer">
@@ -177,6 +184,21 @@ function Home() {
           {Chooser(players, playerNum, setPlayerNum, "Players: ", "Choose player count:")}
           {Chooser(gameModes, gameMode, setGameMode, "", "Choose Game Mode:")}
           {Chooser(difficulties, difficulty, setDifficulty, "", "Choose difficulty:")}
+          <button onClick={handleAdvanceOptions}>
+            <i className="bi bi-arrow-up"></i>Advanced options
+          </button>
+          {advancedOptions && 
+          <>
+            <label> 
+              Round count: 
+              <input value={roundCount} onChange={e => setRoundCount(Number(e.target.value))} type="number"/>
+            </label> 
+            <label> 
+                Lobby name: 
+            <input value={lobbyName} onChange={e => setLobbyName(e.target.value.toString())}/>
+          </label> 
+          </>
+          }
           <button className="createLobbyButton" onClick={createGame}>Create Lobby</button>
         </>
       ) : (

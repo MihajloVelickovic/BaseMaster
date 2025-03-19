@@ -1,14 +1,14 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { GameModes, Difficulties, GameStates } from "../shared_modules/shared_enums";
 import "../styles/Lobby.css";
-import { roundCount } from "./Home";
+//import { roundCount } from "./Home";
 import axiosInstance from "../utils/axiosInstance";
 import { useEffect, useState } from "react";
 
 
 export default function Lobby () {
     const location = useLocation();
-    var { toBasee = 2, playerNum = 1, gameMode = GameModes.CLASSIC.toString(), difficulty = Difficulties.LAYMAN.toString(), gameId = "", playerID} = location.state || {};
+    var { toBasee = 2, playerNum = 1, gameMode = GameModes.CLASSIC.toString(), difficulty = Difficulties.LAYMAN.toString(), gameId = "", playerID, roundCount = 15, lobbyName} = location.state || {};
     console.log(playerID, 'ovo je player id');
     const navigate = useNavigate();
     const [startGameFlag, setStartGameFlag] = useState(false);
@@ -39,7 +39,7 @@ export default function Lobby () {
     // }
 
     const handleStartGame = async () => {
-        var response = await axiosInstance.post('/game/setGameState', {gameId, gameState:GameStates.STARTED});
+        var response = await axiosInstance.post('/game/setGameState', {gameId, gameState:GameStates.STARTED});      //ovde treba da se posalje i lobby name i roundCount
         console.log(response);
         // const ws = new WebSocket("ws://localhost:1738");
         // ws.onopen = () => {
