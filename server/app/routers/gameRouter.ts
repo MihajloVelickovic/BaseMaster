@@ -250,8 +250,16 @@ gameRouter.post("/setGameState", async (req:any, res:any) => {
 
 gameRouter.post("/playerComplete", async (req:any, res:any) => {
     const {
-        gamId: gameId
+        playerId: playerId,
+        gameId: gameId,
+        correct: correct
     } = req.body;
+
+    const scoreboardID = `${IdPrefixes.PLAYER_POINTS}_${gameId}`;    
+    await redisClient.zIncrBy(scoreboardID, correct ? 100 : 0, playerId );
+    const scoreboard = await redisClient.zRangeWithScores(scoreboardID, 0, -1);
+    scoreboard.reverse();
+    publisher.publish(gameId, JSON.stringify(scoreboard));
 
     const remainingPlayers = 
     await redisClient.decr(`${IdPrefixes.GAME_END}_${gameId}`);

@@ -37,6 +37,14 @@ wss.on("connection", (ws) => {
                 currentLobby = gameId;
                 console.log(`Player ${playerID} joined lobby ${gameId}`);
             }
+            else if (type === "scoreUpdate") {
+                if (!wsClients.has(gameId)) {
+                    wsClients.set(gameId, new Set());
+                }
+                wsClients.get(gameId).add(ws);
+                currentLobby = gameId;
+                console.log(`Player ${playerID} joined lobby ${gameId}`);
+            }
             // if (type === "startGame") {
             //     console.log(`Game ${gameId} is starting!`);
             //     publisher.publish(`${IdPrefixes.GAME_STARTED}_${gameId}`, JSON.stringify({ gameId }));

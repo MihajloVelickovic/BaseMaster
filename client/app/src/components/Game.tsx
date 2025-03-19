@@ -69,13 +69,14 @@ function Game() {
 
     ws.onopen = () => {
       
-      ws.send(JSON.stringify({ type: "joinLobby", gameId, playerID }));
+      ws.send(JSON.stringify({ type: "scoreUpdate", gameId, playerID }));
   };
 
   ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
       console.log(data);
       if (data.type === "scoreUpdate") {
+        console.log("the type is that..");
         setScoreboard(data.scores);
     }
   };
@@ -108,6 +109,8 @@ function Game() {
     if (currRound >= roundCount){
       setFinished(true);
       console.log("in", currRound);
+      var response = await axiosInstance.post('/game/playerComplete',  {playerId: playerID, gameId: gameId, correct:correct});
+      console.log(response);
       return -1;      //idk, it's unneeded
     }
     console.log("out", currRound);
