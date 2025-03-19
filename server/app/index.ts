@@ -71,14 +71,29 @@ subscriber.pSubscribe(`*`, async (message, channel) => { // Listen to all channe
 });
 
 subscriber.pSubscribe(`${IdPrefixes.GAME_STARTED}_*`, async (message, channel) => {
-    const lobbyId = channel.replace("gameStart_", ""); // Extract game ID
+    const lobbyId = channel.replace(`${IdPrefixes.GAME_STARTED}_`, ""); // Extract game ID
 
     if (wsClients.has(lobbyId)) {
         wsClients.get(lobbyId).forEach(client => {
             if (client.readyState === 1) {
                 client.send(JSON.stringify({
-                    type: "gameStart",
+                    type: `${IdPrefixes.GAME_STARTED}`,
                     message: "Game has started!",
+                }));
+            }
+        });
+    }
+});
+
+subscriber.pSubscribe(`${IdPrefixes.ALL_PLAYERS_COMPLETE}_*`, async (message, channel) => {
+    const lobbyId = channel.replace(`${IdPrefixes.ALL_PLAYERS_COMPLETE}_`, ""); // Extract game ID
+
+    if (wsClients.has(lobbyId)) {
+        wsClients.get(lobbyId).forEach(client => {
+            if (client.readyState === 1) {
+                client.send(JSON.stringify({
+                    type: `${IdPrefixes.ALL_PLAYERS_COMPLETE}`,
+                    message: "Game has ended!",
                 }));
             }
         });

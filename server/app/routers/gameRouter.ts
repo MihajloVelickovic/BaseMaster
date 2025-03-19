@@ -9,6 +9,7 @@ import { nanoid } from 'nanoid';
 import GameInfo from "../models/gameInfo";
 import {redisClient, publisher} from "../redisClient";
 import { json } from "stream/consumers";
+import { receiveMessageOnPort } from "worker_threads";
 
 const gameRouter = Router();
 
@@ -39,7 +40,7 @@ gameRouter.post("/createGame", async (req: any, res) => {
         res.status(400).send({message: "Could not process difficulty"});
 
     var randomNums = Array.from({length:roundCount}, (_,i) => 
-        Math.floor(Math.random()*maxValue)+1
+        Math.floor(Math.random()*maxValue) + 1
     );
 
     
@@ -57,7 +58,8 @@ gameRouter.post("/createGame", async (req: any, res) => {
             await addChaosBaseArrays(roundCount,gameId);
         
         var gameData = {difficulty:gameOptions.difficulty, maxPlayers:playerCount,
-            currPlayerCount: 1, gameState: GameStates.LOBBY, base: toBase
+            currPlayerCount: 1, gameState: GameStates.LOBBY, base: toBase,
+            gamemode:gameOptions.gamemode
         }
 
         await redisClient.set(gameId, JSON.stringify(gameData)); // set max player count
@@ -67,15 +69,12 @@ gameRouter.post("/createGame", async (req: any, res) => {
         await redisClient.hSet(IdPrefixes.LOBBIES_MAX_PLAYERS, gameId, playerCount);               
         
         await redisClient.zAdd(`${IdPrefixes.PLAYER_POINTS}_${gameId}`, 
-                                { score: 0, value: hostId });
+                                { score: 0, value: hostId });                              
 
         res.send({message:`Game created succesfully`, gameID:gameId});
     } catch (err) {
         res.status(500).send('Error saving user data to Redis');
     }
-
-    
-
 });
 
 gameRouter.post("/getCurrNum", async (req:any, res) => {  
@@ -226,7 +225,8 @@ gameRouter.post("/setGameState", async (req:any, res:any) => {
 
         parcedData.gameState = fromStringState(gameState);
 
-        //await redisClient.set(`${IdPrefixes.GAME_END}_${gameId}`, Number(parcedData.currPlayerCount);
+        await redisClient.set(`${IdPrefixes.GAME_END}_${gameId}`,
+                               Number(parcedData.currPlayerCount));
 
         await redisClient.set(gameId, JSON.stringify(parcedData));
 
@@ -250,10 +250,25 @@ gameRouter.post("/setGameState", async (req:any, res:any) => {
 
 gameRouter.post("/playerComplete", async (req:any, res:any) => {
     const {
-        gamId,
-        playerId
+        gamId: gameId
     } = req.body;
 
+    const remainingPlayers = 
+    await redisClient.decr(`${IdPrefixes.GAME_END}_${gameId}`);
+
+    if(remainingPlayers === 0 ) {
+        try {
+            await CleanupGameContext(gameId);
+
+            publisher.publish(`${IdPrefixes.ALL_PLAYERS_COMPLETE}_${gameId}`,
+                               "Game Over");
+        }
+        catch(err:any) {
+            res.send({message: `Error with cleanup: ${err}`})
+        }
+    }
+    else
+        res.send({message:"Player status saved"});
 
 });
 
@@ -275,5 +290,16 @@ async function addChaosBaseArrays(roundCount:number, gameId:String) {
                              toBases.map(String));
 }
 
+async function CleanupGameContext(gameId:string) {
+    await redisClient.del(gameId);
+    await redisClient.del(`${IdPrefixes.RANDOM_NUMBERS}_${gameId}`);
+    await redisClient.del(`${IdPrefixes.PLAYER_POINTS}_${gameId}`);
+    await redisClient.del(`${IdPrefixes.GAME_END}_${gameId}`);
+
+    if(gameId.split("_")[0] === GameModes.CHAOS) {
+        await redisClient.del(`${IdPrefixes.FROM_BASE}_${gameId}`);
+        await redisClient.del(`${IdPrefixes.TO_BASE}_${gameId}`);
+    }
+}
 
 export default gameRouter;
