@@ -33,6 +33,7 @@ function Game() {
   const [fromBase, setFromBase] = useState(10);
   const [isConfirmDisabled, setIsConfirmDisabled] = useState(false);
   const [scoreboard, setScoreboard] = useState<{ value: string, score: number }[]>([]);
+  const [finished, setFinished] = useState(false);
 
   var { toBasee = 2, playerNum = 1, gameMode = GameModes.CLASSIC.toString(), difficulty = Difficulties.LAYMAN.toString(), gameId = "", playerID = "" } = location.state || {};
   console.log("toBasee je: ", toBasee);
@@ -104,6 +105,12 @@ function Game() {
       playerId: playerID,
       correct: correct
     }
+    if (currRound >= roundCount){
+      setFinished(true);
+      console.log("in", currRound);
+      return -1;      //idk, it's unneeded
+    }
+    console.log("out", currRound);
     try {
       var response = await axiosInstance.post('/game/getCurrNum', toSend);
       const num:number = Number(response.data['currRndNum']);        //check the name.. if changed
@@ -117,7 +124,7 @@ function Game() {
       }
       //console.log(response.data["scoreboard"])
       console.log(response);
-      setCurrRound(currRound+1);
+      setCurrRound(currRound+5);                                  //CHANGE THIS BACK TO +1 WHEN DONE
       setCurrNum(num);
       console.log("Current round: ", currRound);
       return num;  
@@ -250,20 +257,22 @@ function Game() {
   }
 
   return (
+    <>
     <div className="GameScreen">
+    {!finished && 
     <div className="Game">
       
-      {generateTargetNumLabel(currNum, gameMode)}
-      {generateBaseButtons(numOfButtons)}
-      
-      <button className= "ClearButton" onClick={clearButtonHandler}>
-        Clear
-      </button>
-      <button className="ConfirmButton" onClick={confirmButtonHandler} disabled={isConfirmDisabled}>
-        Confirm
-      </button>
+    {generateTargetNumLabel(currNum, gameMode)}
+    {generateBaseButtons(numOfButtons)}
     
-    </div>    
+    <button className= "ClearButton" onClick={clearButtonHandler}>
+      Clear
+    </button>
+    <button className="ConfirmButton" onClick={confirmButtonHandler} disabled={isConfirmDisabled}>
+      Confirm
+    </button>
+  
+  </div>}
         <div className="Scoreboard">
         <h2>Scoreboard</h2>
         <ul>
@@ -272,7 +281,22 @@ function Game() {
           ))}
         </ul>
         </div>
+
+
     </div>
+    {finished && 
+      <div className="finishedGameButtons">
+        <button className="finishedGameButton">
+          Back to Home
+        </button>
+        <button className="finishedGameButton">
+          Back to Lobby
+        </button>
+        <button className="finishedGameButton">
+          Save score!
+        </button>
+      </div>}
+    </>
   );
 } 
 
