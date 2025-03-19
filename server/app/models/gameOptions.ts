@@ -6,12 +6,14 @@ export default class GameOptions {
     roundCount:number;
     difficulty:Difficulties;
     hostId:string;
+    lobbyName:string;
 
-    constructor({gamemode, playerCount, roundCount, difficulty, hostId }) {
+    constructor({gamemode, playerCount, roundCount, difficulty, hostId, lobbyName}) {
         this.gamemode = gamemode;
         this.playerCount = playerCount;
         this.roundCount = roundCount;
         this.difficulty = difficulty;
         this.hostId = hostId;
+        this.lobbyName = lobbyName;
     }
 }

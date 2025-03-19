@@ -18,7 +18,7 @@ function Home() {
   const [gameId, setGameId] = useState(null);
 
   const [browsingLobbies, setBrowsingLobbies] = useState(false);
-  const [lobbies, setLobbies] = useState<[string, number, number][]>([]);
+  const [lobbies, setLobbies] = useState<[string, number, number, string][]>([]);
   const [advancedOptions, setAdvancedOptions] = useState(false);
   const [lobbyName, setLobbyName] = useState("");
   const [roundCount, setRoundCount] = useState(Number(15));
@@ -43,10 +43,11 @@ function Home() {
         const toSend = {
           gamemode: gameMode,
           playerCount: playerNum,
-          roundCount: roundCount,
+          roundCount: Math.max(1, Math.min(roundCount, 128)),
           difficulty: difficulty,
           hostId:playerID,
-          toBase:toBase
+          toBase:toBase,
+          lobbyName: lobbyName?.trim() ? lobbyName : "NONE"
         };
         var response = await axiosInstance.post('/game/createGame', toSend);
         console.log("response za createGame je: ", response);
@@ -113,7 +114,7 @@ function Home() {
           {lobbies.map((lobby) => (
 
               <button className=" lobby-item" onClick={() => joinLobby(lobby[0])}>
-                <span className="game-id">{lobby[0].slice(-5)}</span>
+                <span className="game-id">{lobby[3] !== "NONE" ? lobby[3]:lobby[0].slice(-5)}</span>
                 <span className="players">{lobby[1]}/{lobby[2]}</span>
               </button>
             
@@ -127,6 +128,27 @@ function Home() {
     );
   }
   
+  const renderAdvancedOptions = () => {
+    return (
+      <>
+        <div className="choosingDiv centerAlignItems">
+          <label className="smallFont choosingLabel"> 
+            Round count: 
+          </label> 
+          <input className="advancedOptionsInput inputFont" value={roundCount}
+          onChange={e => setRoundCount(Number(e.target.value))} type="number"/>
+        </div>
+        <div className="choosingDiv centerAlignItems">
+          <label className="smallFont choosingLabel"> 
+            Lobby name:            
+          </label>
+          <input className="advancedOptionsInput inputFont" 
+          value={lobbyName} onChange={e => setLobbyName(e.target.value.toString())}/> 
+          </div>
+      </>
+    );
+  }
+
   function Chooser<T extends string | number>(choosingArray: T[], state: T, setState: (value: T) => void, text: string, labelTxt: string, disabled: boolean = false) {
     function onSelection(value: T) {
       if (!disabled) {
@@ -184,21 +206,10 @@ function Home() {
           {Chooser(players, playerNum, setPlayerNum, "Players: ", "Choose player count:")}
           {Chooser(gameModes, gameMode, setGameMode, "", "Choose Game Mode:")}
           {Chooser(difficulties, difficulty, setDifficulty, "", "Choose difficulty:")}
-          <button onClick={handleAdvanceOptions}>
-            <i className="bi bi-arrow-up"></i>Advanced options
+          <button className="advancedOptions" onClick={handleAdvanceOptions}>
+            {advancedOptions ? "\u02C4":"\u02C5"}
           </button>
-          {advancedOptions && 
-          <>
-            <label> 
-              Round count: 
-              <input value={roundCount} onChange={e => setRoundCount(Number(e.target.value))} type="number"/>
-            </label> 
-            <label> 
-                Lobby name: 
-            <input value={lobbyName} onChange={e => setLobbyName(e.target.value.toString())}/>
-          </label> 
-          </>
-          }
+          {advancedOptions && renderAdvancedOptions()}
           <button className="createLobbyButton" onClick={createGame}>Create Lobby</button>
         </>
       ) : (

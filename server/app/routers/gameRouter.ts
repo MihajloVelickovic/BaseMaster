@@ -22,7 +22,8 @@ gameRouter.post("/createGame", async (req: any, res) => {
             roundCount,
             difficulty,
             hostId,
-            toBase
+            toBase,
+            lobbyName
         } = req.body;
           
     const gameOptions = new GameOptions({
@@ -30,7 +31,8 @@ gameRouter.post("/createGame", async (req: any, res) => {
         playerCount,
         roundCount,
         difficulty:fromStringDiff(difficulty),
-        hostId  
+        hostId,
+        lobbyName  
     });
 
     
@@ -68,6 +70,10 @@ gameRouter.post("/createGame", async (req: any, res) => {
 
         await redisClient.hSet(IdPrefixes.LOBBIES_MAX_PLAYERS, gameId, playerCount);               
         
+        if(gameOptions.lobbyName !== "NONE")
+            await redisClient.hSet(IdPrefixes.LOBBIES_NAMES, gameId,
+                                   gameOptions.lobbyName);
+
         await redisClient.zAdd(`${IdPrefixes.PLAYER_POINTS}_${gameId}`, 
                                 { score: 0, value: hostId });                              
 
@@ -181,24 +187,30 @@ gameRouter.get("/getLobbies", async (req:any, res:any) => {
         const lobbies_max_players = 
         await redisClient.hGetAll(IdPrefixes.LOBBIES_MAX_PLAYERS);
 
+        const lobbies_names = await redisClient.hGetAll(IdPrefixes.LOBBIES_NAMES);
+
         if(lobbies_curr_players === null)
             return res.status(404).send({message:"Could not fin any lobbies!"});
                                                 //Fin???? adventure time????
         if(lobbies_max_players === null)
             return res.status(404).send({message:"Could not fin any lobbies!"});
                                                 //Fin???? adventure time????
-
+        if(lobbies_names === null)
+            return res.status(404).send({message:"Could not fin any lobbies!"});                                  
         const parsedLobbies_curr_players = Object.fromEntries(
         Object.entries(lobbies_curr_players).map(([key, value]) => [key, value])
         );
         const parsedLobbies_max_players = Object.fromEntries(
         Object.entries(lobbies_max_players).map(([key, value]) => [key, value])
         );
+        const parsedLobbies_names = Object.fromEntries(
+            Object.entries(lobbies_names).map(([key, value]) => [key, value])
+        );
         var mergedLobbyData:any = []
 
         for (const [gameId, currPlayers] of Object.entries(parsedLobbies_curr_players)) {
             mergedLobbyData.push([gameId,currPlayers,
-            parsedLobbies_max_players[String(gameId)]]);
+            parsedLobbies_max_players[String(gameId)], parsedLobbies_names[gameId] ?? "NONE"]);
         }
 
         console.log("lobbies: ", mergedLobbyData);

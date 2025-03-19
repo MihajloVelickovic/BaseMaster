@@ -28,8 +28,9 @@ export enum IdPrefixes {
     GAME_STARTED = "GAME STARTED",
     LOBBY_CURR_PLAYERS = "cpc",
     LOBBY_MAX_PLAYERS = "mpc"
-
 }
+
+
 
 export enum BaseValues {
     MIN_BASE = 2,

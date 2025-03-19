@@ -8,7 +8,7 @@
   }
   
   .LobbyContainer {
-    font-weight: bolder;
+    font-weight: bold;
     font-family: 'JetBrains Mono', monospace;
     text-align: center;
     display: flex;
@@ -48,13 +48,14 @@
 
   .mainLobbyText {
     font-size: 4vh;
-    font-weight: bolder;
+    font-weight: 900;
+    text-shadow: 1px 0 #1E6ACD, -1px 0 #1E6ACD, 0 1px #1E6ACD, 0 -1px #1E6ACD;
     color: #1E6ACD;
     border-bottom: solid #010050 3px;
   }
 
   .LobbyStats label {
-    margin-right: solid black 1px;
+    margin-right: solid #010050 1px;
   }
 
   /* won't work because of bootstrap button  */
