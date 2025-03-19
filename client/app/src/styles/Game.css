@@ -209,4 +209,31 @@
     width: 100%;
     height: 100%;
   }
+
+  .finishedGameButtons {
+    display: flex;
+    flex-direction: row;
+    margin-top: 50px;
+    align-items: center;
+    justify-content: center;
+    padding: 5px;
+    gap: 30px;
+  }
+
+  .finishedGameButton {
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 20px;
+    width: 12%;
+    height: 8vh;
+    background-color: #007700;
+    color:#ffffff;
+    border-radius: 10px;
+    font-weight: bold;
+    font-size: 26px;
+    padding: 5px 0px 0px 5px;
+  }
+
+  .finishedGameButton:hover {
+    background-color: #006600;
+}
   
