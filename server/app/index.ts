@@ -62,15 +62,15 @@ wss.on("connection", (ws) => {
     });
 });
 
-subscriber.pSubscribe(`*`, async (message, channel) => { // Listen to all channels
+subscriber.pSubscribe(`${IdPrefixes.SCOREBOARD_UPDATE}_*`, async (message, channel) => { // Listen to all channels
 
-    const lobbyId = channel; // Use the full channel name as gameId
+    const lobbyId = channel.replace(`${IdPrefixes.SCOREBOARD_UPDATE}_`, "");
 
     if (wsClients.has(lobbyId)) {
         wsClients.get(lobbyId).forEach(client => {
             if (client.readyState === 1) {
                 client.send(JSON.stringify({
-                    type: "scoreUpdate",
+                    type: IdPrefixes.SCOREBOARD_UPDATE,
                     scores: JSON.parse(message)
                 }));
             }

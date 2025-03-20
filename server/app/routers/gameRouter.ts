@@ -13,7 +13,7 @@ import { receiveMessageOnPort } from "worker_threads";
 
 const gameRouter = Router();
 
-gameRouter.post("/createGame", async (req: any, res) => {
+gameRouter.post("/createGame", async (req: any, res:any) => {
     console.log(req.body);
     //console.log("someting");
     const {
@@ -35,11 +35,18 @@ gameRouter.post("/createGame", async (req: any, res) => {
         lobbyName  
     });
 
-    
+
+    if(playerCount <= 0)
+        return res.status(400).send({message: "Invalid player count"});
+    if(roundCount <= 0)
+        return res.status(400).send({message: "Invalid round count"});
+    if(difficulty === undefined)
+        return res.status(400).send({message: "Invalid difficulty option"});
+
     var maxValue = maxValueFromDifficulty(gameOptions.difficulty);
 
     if(maxValue === -1)
-        res.status(400).send({message: "Could not process difficulty"});
+        return res.status(400).send({message: "Could not process difficulty"});
 
     var randomNums = Array.from({length:roundCount}, (_,i) => 
         Math.floor(Math.random()*maxValue) + 1
@@ -125,14 +132,15 @@ gameRouter.post("/getCurrNum", async (req:any, res:any) => {
             return res.status(404).send({message:"Could not find the scoreboard"});
 
         console.log("sending data to subscriber");
-        publisher.publish(gameId, JSON.stringify(scoreboard));
+        publisher.publish(`${IdPrefixes.SCOREBOARD_UPDATE}_${gameId}`,
+                           JSON.stringify(scoreboard));
 
         if(gamemode !== GameModes.CHAOS)
             return res.send({currRndNum:num});
         else
             return res.send({currRndNum:num, fromBase:fromBase, toBase:toBase});
     } catch (err) {
-        res.status(500).send('Error saving user data to Redis');
+        return res.status(500).send('Error saving user data to Redis');
     }
 });
 
@@ -155,7 +163,7 @@ gameRouter.post("/joinLobby", async (req:any, res:any) => {
     if(lobbyData === null)
         return res.status(404).send({message: "Requested game does not exsist"});
     var parcedData = JSON.parse(gameData);
-    console.log(parcedData);
+    
     const maxPlayerCount = parcedData.maxPlayers;
     if(Number(lobbyData) >= Number(maxPlayerCount))
         return res.status(404).send({message: "Lobby is full"});  
@@ -196,7 +204,8 @@ gameRouter.get("/getLobbies", async (req:any, res:any) => {
             return res.status(404).send({message:"Could not fin any lobbies!"});
                                                 //Fin???? adventure time????
         if(lobbies_names === null)
-            return res.status(404).send({message:"Could not fin any lobbies!"});                                  
+            return res.status(404).send({message:"Could not fin any lobbies!"});
+
         const parsedLobbies_curr_players = Object.fromEntries(
         Object.entries(lobbies_curr_players).map(([key, value]) => [key, value])
         );
@@ -212,8 +221,6 @@ gameRouter.get("/getLobbies", async (req:any, res:any) => {
             mergedLobbyData.push([gameId,currPlayers,
             parsedLobbies_max_players[String(gameId)], parsedLobbies_names[gameId] ?? "NONE"]);
         }
-
-        console.log("lobbies: ", mergedLobbyData);
        
         return res.send({lobbies: mergedLobbyData});
     } catch (err) {
@@ -284,11 +291,11 @@ gameRouter.post("/playerComplete", async (req:any, res:any) => {
                                "Game Over");
         }
         catch(err:any) {
-            res.send({message: `Error with cleanup: ${err}`})
+            return res.send({message: `Error with cleanup: ${err}`})
         }
     }
     else
-        res.send({message:"Player status saved"});
+        return res.send({message:"Player status saved"});
 
 });
 
