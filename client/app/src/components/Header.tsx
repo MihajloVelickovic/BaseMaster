@@ -6,7 +6,7 @@ function Header() {
  return (
     <div className="Header">
         <Sidebar/>
-        {/* <label>Temporary links: </label>
+         <label>Temporary links: </label>
         <Link to="/">
             <button className="btn btn-primary header-link-button">
                 Home
@@ -27,8 +27,9 @@ function Header() {
                 LoginSignup
             </button>
         </Link>
-    
+
     </div>
+        
  );
 }
 

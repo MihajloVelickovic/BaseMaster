@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import axiosInstance from "../utils/axiosInstance";   //ovde za sad ne treba
 import "../styles/LoginSignup.css";
 
 interface FormValues {
@@ -58,16 +58,16 @@ const LoginSignup: React.FC = () => {
             try {
                 let response;
                 if (action === "Login") {
-                    response = await axios.post("/user/login", {
+                    response = await axiosInstance.post("/user/login", {
                         email: formValues.email,
                         password: formValues.password
                     });
                     console.log(response);
                     //setUserId(response.data.userId);
                 } else {
-                    response = await axios.post("/user/register", {
-                        username: formValues.username,
+                    response = await axiosInstance.post("/user/register", {
                         email: formValues.email,
+                        username: formValues.username,
                         password: formValues.password
                     });
                     console.log(response);

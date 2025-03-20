@@ -7,6 +7,7 @@ const userRouter = Router();
 
 
 userRouter.post("/register", async (req:any, res:any) => {
+    console.log("Entering register route");
     const {
         email,
         username,
@@ -16,23 +17,28 @@ userRouter.post("/register", async (req:any, res:any) => {
     if(!email || !username || ! password)
         return res.status(400).send({message: "Did not recieve all parameters"});
 
-    const emailStatus = await redisClient.sAdd(IdPrefixes.USER_EMAILS, email);
+    console.log("email, username, password", email, username, password);
 
-    if(emailStatus === 0) //Check if email is already used
+    const emailStatus = await redisClient.hExists(IdPrefixes.USER_EMAILS, email);
+    console.log("Email unique check");
+    if(emailStatus) //Check if email is already used
         return res.status(400).send({message: `User with email already exists`,
                                      email:email});
     
     const fullUsername = `${username}_${nanoid()}`;
-
+    console.log("username", fullUsername);
     const usernameExists = 
     await redisClient.sIsMember(IdPrefixes.USERNAMES, fullUsername);
-
+    console.log("Username exsists:",usernameExists);
     if(usernameExists)
         return res.status(500).send({message: "User with same full username exists"});
 
     try {
         // this is used for fast checking if username or email already exist
+        console.log(await redisClient.hGetAll(IdPrefixes.USER_EMAILS));
+        console.log("adding email");
         await redisClient.hSet(IdPrefixes.USER_EMAILS, email, fullUsername); //add email to all emails
+        console.log("added email");
         await redisClient.sAdd(IdPrefixes.USERNAMES, fullUsername); // add username to usernames
 
         await redisClient.set(fullUsername, password);
