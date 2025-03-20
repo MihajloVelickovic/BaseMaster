@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import "../styles/Sidebar.css";
-import { FaUser, FaUserFriends, FaSignOutAlt } from "react-icons/fa";
+import { FaSignOutAlt, FaUser, FaUserFriends } from "react-icons/fa";
 
 function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -20,9 +20,9 @@ function Sidebar() {
           ✖
         </button>
         <div className="sidebar-content">
-          <button className="sidebar-item"><FaUser/> Profile</button>
-          <button className="sidebar-item"><FaUserFriends /> Friend List</button>
-          <button className="sidebar-item logout"><FaSignOutAlt /> Logout</button>
+          <button className="sidebar-item"><FaUser />  Profile</button>
+          <button className="sidebar-item"><FaUserFriends/>  Friend List</button>
+          <button className="sidebar-item logout"><FaSignOutAlt/>  Logout</button>
         </div>
       </div>
 
