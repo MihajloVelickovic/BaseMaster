@@ -17,7 +17,7 @@
     transform: translateX(-100%); /* Move off-screen */
     opacity: 0;
     visibility: hidden;
-    transition: transform 0.2s ease-in-out, opacity 0.3s ease-in-out, visibility 0s 0.2s;
+    transition: transform 0.2s ease-in-out, opacity 0.2s ease-in-out, visibility 0s 0.2s;
     z-index: 1100;
     padding-top: 30px;
   }
@@ -27,7 +27,7 @@
     transform: translateX(0);
     opacity: 1;
     visibility: visible;
-    transition: transform 0.2s ease-in-out, opacity 0.2s ease-in-out;
+    transition: transform 0.2s ease-in-out, opacity 0.1s ease-in-out;
   }
   
   .close-btn {
@@ -76,6 +76,7 @@
     width: 100vw;
     height: 93vh;
     background-color: rgba(82, 90, 103, 0.6);
+    transition: opacity 1s ease-in-out;
     z-index: 1099;
   }
 
