@@ -4,12 +4,14 @@ import Home from './components/Home';
 import Game from './components/Game';
 import Header from './components/Header';
 import Lobby from './components/Lobby';
+import LoginSignup from './components/LoginSignup';
 import "./styles/AppRoutes.css";
 
 const routes = [
     { path: "/", element: <Home /> },
     { path: "/Game", element: <Game />},
-    { path: "/Lobby", element: <Lobby />}
+    { path: "/Lobby", element: <Lobby />},
+    { path: "/LoginSignup", element: <LoginSignup />}
     // { path: "/login", element: <LoginSignupPage /> },
     // { path: "/register/:token", element: <Register /> },
 ];

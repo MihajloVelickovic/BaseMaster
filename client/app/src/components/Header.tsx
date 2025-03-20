@@ -20,6 +20,11 @@ function Header() {
                 Game
             </button>
         </Link>
+        <Link to="/LoginSignup">
+            <button className="btn btn-primary header-link-button">
+                LoginSignup
+            </button>
+        </Link>
     
     </div>
  );
