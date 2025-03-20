@@ -2,13 +2,12 @@
     display: flex;
     text-align: center;
     flex-direction: row;
-    padding-left: 100px;
     border-bottom: solid darkblue 1px;
     background: #009900;
 }
 
-.Header * {
-    padding: 20px;
+.Header  {
+    padding: 15px;
 }
 
 .header-link-button {

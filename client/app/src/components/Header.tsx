@@ -1,10 +1,12 @@
 import { Link, NavLink } from "react-router-dom";
 import "../styles/Header.css"
+import Sidebar from "./Sidebar";
 
 function Header() {
  return (
     <div className="Header">
-        <label>Temporary links: </label>
+        <Sidebar/>
+        {/* <label>Temporary links: </label>
         <Link to="/">
             <button className="btn btn-primary header-link-button">
                 Home
@@ -19,7 +21,7 @@ function Header() {
             <button className="btn btn-primary header-link-button">
                 Game
             </button>
-        </Link>
+        </Link> */}
     
     </div>
  );
