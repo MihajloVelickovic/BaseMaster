@@ -206,10 +206,10 @@ function Home() {
           {Chooser(players, playerNum, setPlayerNum, "Players: ", "Choose player count:")}
           {Chooser(gameModes, gameMode, setGameMode, "", "Choose Game Mode:")}
           {Chooser(difficulties, difficulty, setDifficulty, "", "Choose difficulty:")}
+          {advancedOptions && renderAdvancedOptions()}
           <button className="advancedOptions" onClick={handleAdvanceOptions}>
             {advancedOptions ? "\u02C4":"\u02C5"}
           </button>
-          {advancedOptions && renderAdvancedOptions()}
           <button className="createLobbyButton" onClick={createGame}>Create Lobby</button>
         </>
       ) : (

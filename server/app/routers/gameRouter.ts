@@ -83,7 +83,7 @@ gameRouter.post("/createGame", async (req: any, res) => {
     }
 });
 
-gameRouter.post("/getCurrNum", async (req:any, res) => {  
+gameRouter.post("/getCurrNum", async (req:any, res:any) => {  
     const {
         gameId,
         currRound,
@@ -116,21 +116,21 @@ gameRouter.post("/getCurrNum", async (req:any, res) => {
         }
 
         if(num === null)
-            res.status(404).send({message:"Could not find the number"});
+            return res.status(404).send({message:"Could not find the number"});
         if(fromBase === null && gamemode === GameModes.CHAOS)
-            res.status(404).send({message:"Could not find the fromBase"});
+            return res.status(404).send({message:"Could not find the fromBase"});
         if(toBase === null && gamemode === GameModes.CHAOS)
-            res.status(404).send({message:"Could not find the toBase"});
+            return res.status(404).send({message:"Could not find the toBase"});
         if(scoreboard === null)
-            res.status(404).send({message:"Could not find the scoreboard"});
+            return res.status(404).send({message:"Could not find the scoreboard"});
 
         console.log("sending data to subscriber");
         publisher.publish(gameId, JSON.stringify(scoreboard));
 
         if(gamemode !== GameModes.CHAOS)
-            res.send({currRndNum:num});
+            return res.send({currRndNum:num});
         else
-            res.send({currRndNum:num, fromBase:fromBase, toBase:toBase});
+            return res.send({currRndNum:num, fromBase:fromBase, toBase:toBase});
     } catch (err) {
         res.status(500).send('Error saving user data to Redis');
     }
