@@ -38,7 +38,7 @@ function Sidebar() {
       </div>
 
       {/* Render Sidebar */}
-      {isOpen && renderSidebar()}
+      {renderSidebar()}
     </>
   );
 }

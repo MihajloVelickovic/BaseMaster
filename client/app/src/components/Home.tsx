@@ -137,14 +137,14 @@ function Home() {
             Round count: 
           </label> 
           <input className="advancedOptionsInput inputFont" value={roundCount}
-          onChange={e => setRoundCount(Math.min(64,Math.max(0,Number(e.target.value))))} type="number"/>
+          onChange={e => setRoundCount(Math.min(64,Math.max(1,Number(e.target.value))))} type="number"/>
         </div>
         <div className="choosingDiv centerAlignItems">
           <label className="smallFont choosingLabel"> 
             Lobby name:            
           </label>
           <input className="advancedOptionsInput inputFont" 
-          value={lobbyName} onChange={e => setLobbyName(e.target.value.toString().slice(0,8))}/> 
+          value={lobbyName} onChange={e => setLobbyName(e.target.value.toString().slice(0,10))}/> 
           </div>
       </>
     );
