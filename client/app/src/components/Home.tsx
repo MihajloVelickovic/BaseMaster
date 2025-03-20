@@ -136,14 +136,14 @@ function Home() {
             Round count: 
           </label> 
           <input className="advancedOptionsInput inputFont" value={roundCount}
-          onChange={e => setRoundCount(Number(e.target.value))} type="number"/>
+          onChange={e => setRoundCount(Math.min(64,Math.max(0,Number(e.target.value))))} type="number"/>
         </div>
         <div className="choosingDiv centerAlignItems">
           <label className="smallFont choosingLabel"> 
             Lobby name:            
           </label>
           <input className="advancedOptionsInput inputFont" 
-          value={lobbyName} onChange={e => setLobbyName(e.target.value.toString())}/> 
+          value={lobbyName} onChange={e => setLobbyName(e.target.value.toString().slice(0,8))}/> 
           </div>
       </>
     );
@@ -200,24 +200,36 @@ function Home() {
       </div>
       
       {!browsingLobbies ? (
-        <>
-          <label className="mainFont">Game Options</label>
-          {Chooser(bases, toBase, setToBase, "Base ", "Choose Base:", gameMode === GameModes.CHAOS)}
-          {Chooser(players, playerNum, setPlayerNum, "Players: ", "Choose player count:")}
-          {Chooser(gameModes, gameMode, setGameMode, "", "Choose Game Mode:")}
-          {Chooser(difficulties, difficulty, setDifficulty, "", "Choose difficulty:")}
-          {advancedOptions && renderAdvancedOptions()}
+      <>
+        <label className="mainFont">Game Options</label>
+        {Chooser(bases, toBase, setToBase, "Base ", "Choose Base:", gameMode === GameModes.CHAOS)}
+        {Chooser(players, playerNum, setPlayerNum, "Players: ", "Choose player count:")}
+        {Chooser(gameModes, gameMode, setGameMode, "", "Choose Game Mode:")}
+        {Chooser(difficulties, difficulty, setDifficulty, "", "Choose difficulty:")}
+
+        {/* Show only ˅ when collapsed, show 'Advanced Options' when expanded */}
+        {!advancedOptions ? (
           <button className="advancedOptions" onClick={handleAdvanceOptions}>
-            {advancedOptions ? "\u02C4":"\u02C5"}
+            ˅
           </button>
-          <button className="createLobbyButton" onClick={createGame}>Create Lobby</button>
-        </>
-      ) : (
-        <>
-          <label className="mainFont">Available Lobbies</label>
-          {showLobbies()}
-        </>
-      )}
+        ) : (
+          <>
+            <label className="advancedLabel">Advanced Options</label>
+            {renderAdvancedOptions()}
+            <button className="advancedOptions" onClick={handleAdvanceOptions}>
+              ˄
+            </button>
+          </>
+        )}
+
+      <button className="createLobbyButton" onClick={createGame}>Create Lobby</button>
+    </>
+  ) : (
+    <>
+      <label className="mainFont">Available Lobbies</label>
+      {showLobbies()}
+    </>
+  )}
     </div>
   );
 }

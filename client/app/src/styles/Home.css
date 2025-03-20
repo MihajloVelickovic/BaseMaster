@@ -231,3 +231,11 @@ input.inputFont {
 .centerAlignItems {
   align-items: center;
 }
+
+.advancedLabel{
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: bolder;
+  font-size: 2rem;
+
+}
