@@ -4,6 +4,8 @@
     flex-direction: row;
     border-bottom: solid darkblue 1px;
     background: #009900;
+    z-index: 1200;
+    height: 7vh;
 }
 
 .Header  {

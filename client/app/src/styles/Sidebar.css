@@ -10,10 +10,10 @@
   .sidebar-container {
     position: fixed;
     top: 78px;
-    left: -250px;
+    /* left: -250px; */
     width: 250px;
     height: 100vh;
-    background-color: #32D336;
+    background: #32E537;
     transition: left 0.3s ease-in-out;
     z-index: 1100;
     padding-top: 30px; 
@@ -43,7 +43,7 @@
   }
   
   .sidebar-item {
-    background-color: #32D336;;
+    background-color: #32E537;
     border: none;
     padding: 12px;
     cursor: pointer;
@@ -54,6 +54,7 @@
     font-family: 'JetBrains Mono', monospace;
     font-size: 1.2rem;
     font-weight: bold;
+    color:#ffffe8;
   }
   
   
@@ -64,11 +65,11 @@
 
   .sidebar-overlay {
     position: fixed;
-    top: 0;
+    top: 7vh;
     left: 0;
     width: 100vw;
-    height: 100vh;
-    background-color: rgba(0, 0, 0, 0.5);
+    height: 93vh;
+    background-color: rgba(82, 90, 103, 0.6);
     z-index: 1099;
   }
 
