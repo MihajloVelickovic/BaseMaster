@@ -78,9 +78,17 @@ const LoginSignup: React.FC = () => {
     };
 
     return (
-        <div>
-            <h2>{action}</h2>
-            <form onSubmit={handleSubmit}>
+        <div className="LoginSignupContainer">
+            <h2 className="mainFont">{action}</h2>
+            <div className="lobbyOptionDiv">
+                <button className={`btn ${action=="Login" ? 'btn-primary' : 'btn-secondary'} lobbyOptionButton`} onClick={() => setAction("Login")}>
+                    Login
+                </button>
+                <button className={`btn ${action=="Register" ? 'btn-primary' : 'btn-secondary '} lobbyOptionButton`} onClick={() => setAction("Register")}>
+                    Register
+                </button>
+            </div>
+            <form className="inputs" onSubmit={handleSubmit}>
                 {action === "Register" && (
                     <>
                         <input
@@ -121,12 +129,9 @@ const LoginSignup: React.FC = () => {
                         {formErrors.confirmPassword && <p>{formErrors.confirmPassword}</p>}
                     </>
                 )}
-                <button type="submit">{action}</button>
+                <button className="createLobbyButton" type="submit">{action}</button>
             </form>
             {userId && <p>Logged in as: {formValues.username}_{userId}</p>}
-            <button onClick={() => setAction(action === "Login" ? "Register" : "Login")}>
-                Switch to {action === "Login" ? "Register" : "Login"}
-            </button>
         </div>
     );
 };
