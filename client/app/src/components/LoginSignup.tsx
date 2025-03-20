@@ -58,18 +58,20 @@ const LoginSignup: React.FC = () => {
             try {
                 let response;
                 if (action === "Login") {
-                    response = await axios.post("/api/login", {
+                    response = await axios.post("/user/login", {
                         email: formValues.email,
                         password: formValues.password
                     });
-                    setUserId(response.data.userId);
+                    console.log(response);
+                    //setUserId(response.data.userId);
                 } else {
-                    response = await axios.post("/api/register", {
+                    response = await axios.post("/user/register", {
                         username: formValues.username,
                         email: formValues.email,
                         password: formValues.password
                     });
-                    setUserId(response.data.userId);
+                    console.log(response);
+                    //setUserId(response.data.userId);
                 }
             } catch (error) {
                 setFormErrors({ serverResponse: "Server error, try again later" });
