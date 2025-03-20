@@ -80,8 +80,7 @@ const LoginSignup: React.FC = () => {
     };
 
     return (
-        <div className="LoginSignupContainer">
-            <h2 className="mainFont">{action}</h2>
+        <div className="LoginSignupContainer">            
             <div className="lobbyOptionDiv">
                 <button className={`btn ${action=="Login" ? 'btn-primary' : 'btn-secondary'} lobbyOptionButton`} onClick={() => setAction("Login")}>
                     Login
@@ -90,6 +89,7 @@ const LoginSignup: React.FC = () => {
                     Register
                 </button>
             </div>
+            <h2 className="mainFont">{action}</h2>
             <form className="inputs" onSubmit={handleSubmit}>
                 {action === "Register" && (
                     <>
@@ -100,7 +100,7 @@ const LoginSignup: React.FC = () => {
                             value={formValues.username}
                             onChange={handleChange}
                         />
-                        {formErrors.username && <p>{formErrors.username}</p>}
+                        {formErrors.username && <p className="loginSignupErrors">{formErrors.username}</p>}
                     </>
                 )}
                 <input
@@ -110,7 +110,7 @@ const LoginSignup: React.FC = () => {
                     value={formValues.email}
                     onChange={handleChange}
                 />
-                {formErrors.email && <p>{formErrors.email}</p>}
+                {formErrors.email && <p className="loginSignupErrors">{formErrors.email}</p>}
                 <input
                     type="password"
                     name="password"
@@ -118,7 +118,7 @@ const LoginSignup: React.FC = () => {
                     value={formValues.password}
                     onChange={handleChange}
                 />
-                {formErrors.password && <p>{formErrors.password}</p>}
+                {formErrors.password && <p className="loginSignupErrors">{formErrors.password}</p>}
                 {action === "Register" && (
                     <>
                         <input
@@ -128,7 +128,7 @@ const LoginSignup: React.FC = () => {
                             value={formValues.confirmPassword}
                             onChange={handleChange}
                         />
-                        {formErrors.confirmPassword && <p>{formErrors.confirmPassword}</p>}
+                        {formErrors.confirmPassword && <p className="loginSignupErrors">{formErrors.confirmPassword}</p>}
                     </>
                 )}
                 <button className="createLobbyButton" type="submit">{action}</button>
