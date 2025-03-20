@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import "../styles/Game.css";
 import { useLocation } from "react-router-dom";
-import { GameModes, Difficulties, DifficultyValues } from "../shared_modules/shared_enums";
+import { GameModes, Difficulties, DifficultyValues, IdPrefixes } from "../shared_modules/shared_enums";
 import axiosInstance from "../utils/axiosInstance";
 
 var maxVal:bigint = BigInt(255);
@@ -69,13 +69,13 @@ function Game() {
 
     ws.onopen = () => {
       
-      ws.send(JSON.stringify({ type: "scoreUpdate", gameId, playerID }));
+      ws.send(JSON.stringify({ type: IdPrefixes.SCOREBOARD_UPDATE, gameId, playerID }));
   };
 
   ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
       console.log(data);
-      if (data.type === "scoreUpdate") {
+      if (data.type === IdPrefixes.SCOREBOARD_UPDATE) {
         console.log("the type is that..");
         setScoreboard(data.scores);
     }

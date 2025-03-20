@@ -37,7 +37,7 @@ wss.on("connection", (ws) => {
                 currentLobby = gameId;
                 console.log(`Player ${playerID} joined lobby ${gameId}`);
             }
-            else if (type === "scoreUpdate") {
+            else if (type === IdPrefixes.SCOREBOARD_UPDATE) {
                 if (!wsClients.has(gameId)) {
                     wsClients.set(gameId, new Set());
                 }
