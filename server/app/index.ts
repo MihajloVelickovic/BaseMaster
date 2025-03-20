@@ -6,6 +6,7 @@ import cors from "cors";
 import { WebSocketServer } from "ws"
 import http from "http";
 import { IdPrefixes } from "./shared_modules/shared_enums";
+import userRouter from "./routers/userRouter";
 
 const wsClients = new Map(); // Maps WebSocket clients to lobbies
 
@@ -109,6 +110,7 @@ subscriber.pSubscribe(`${IdPrefixes.ALL_PLAYERS_COMPLETE}_*`, async (message, ch
 });
 
 app.use("/game", gameRouter);
+app.use("/user", userRouter);
 
 server.listen(SERVER_PORT, async () => {
     console.log(`Server running on port ${SERVER_PORT}`);

@@ -21,7 +21,12 @@ function Header() {
             <button className="btn btn-primary header-link-button">
                 Game
             </button>
-        </Link> */}
+        </Link>
+        <Link to="/LoginSignup">
+            <button className="btn btn-primary header-link-button">
+                LoginSignup
+            </button>
+        </Link>
     
     </div>
  );
