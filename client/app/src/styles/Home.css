@@ -239,3 +239,24 @@ input.inputFont {
   font-size: 2rem;
 
 }
+
+.refresh-button {
+  padding: 10px 15px;
+  font-size: 1.3rem;
+  background-color: #32E537;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  font-family: 'JetBrains Mono', monospace;
+  width: 50%;
+  margin: auto;
+  margin-top: 15px;
+  border-radius: 10px;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+  border: solid #010050 1px;
+}
+
+.refresh-button:hover {
+  background-color: #009900;
+}

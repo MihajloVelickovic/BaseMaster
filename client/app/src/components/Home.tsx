@@ -88,7 +88,13 @@ function Home() {
       navigate("/Lobby", { state: { toBase:toBasee, playerNum:playerNumm, gameMode:gameModee, difficulty:difficultyy, gameId: selectedGameId, playerID } });
     } catch (error:any) {
       console.error('Error joining lobby:', error.response ? error.response.data : error.message);
+      if (error.response?.data?.message === "Lobby is full") {
+        window.alert("The lobby is already full. Please try joining another game.");
+      } else {
+        window.alert("An error occurred while joining the lobby. Please try again.");
+      }
     }
+    
   };
 
   function showLobbies() {
@@ -118,8 +124,11 @@ function Home() {
                 <span className="game-id">{lobby[3] !== "NONE" ? lobby[3]:lobby[0].slice(-5)}</span>
                 <span className="players">{lobby[1]}/{lobby[2]}</span>
               </button>
-            
           ))}
+
+          <button className="refresh-button" onClick={fetchLobbies}>
+            🔄 Refresh Lobbies
+          </button>
       </>
       ) : (
         <p className="no-lobbies">No available lobbies.</p>
