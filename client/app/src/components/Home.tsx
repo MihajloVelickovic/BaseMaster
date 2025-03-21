@@ -112,7 +112,10 @@ function Home() {
       //       )) : <p>No available lobbies.</p>}
       //     </div>
       <div className="lobby-list">
-      {lobbies.length > 0 ? (
+        <button className="refresh-button" onClick={fetchLobbies}>
+            🔄 Refresh Lobbies
+        </button>
+        {lobbies.length > 0 ? (
         <>
           <div className="lobbyColumnNames">
             <div className="lobbyColumnNameItem">Game</div>
@@ -125,11 +128,7 @@ function Home() {
                 <span className="game-id">{lobby[3] !== "NONE" ? lobby[3]:lobby[0].slice(-5)}</span>
                 <span className="players">{lobby[1]}/{lobby[2]}</span>
               </button>
-          ))}
-
-          <button className="refresh-button" onClick={fetchLobbies}>
-            🔄 Refresh Lobbies
-          </button>
+          ))}          
       </>
       ) : (
         <p className="no-lobbies">No available lobbies.</p>

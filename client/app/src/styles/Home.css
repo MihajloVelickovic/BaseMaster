@@ -101,6 +101,7 @@ input.inputFont {
   /* flex-wrap: wrap; */
   flex-direction: column;
   justify-content: center;
+  align-items: center;
   padding: 5px;
   gap: 5px;
 }
@@ -241,8 +242,10 @@ input.inputFont {
 }
 
 .refresh-button {
-  padding: 10px 15px;
+  padding-top: 5px;
+  padding-bottom: 10px;
   font-size: 1.3rem;
+  font-weight: bold;
   background-color: #32E537;
   color: white;
   border: none;
@@ -250,8 +253,6 @@ input.inputFont {
   transition: background 0.3s ease;
   font-family: 'JetBrains Mono', monospace;
   width: 50%;
-  margin: auto;
-  margin-top: 15px;
   border-radius: 10px;
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
   border: solid #010050 1px;
