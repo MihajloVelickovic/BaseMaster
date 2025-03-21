@@ -299,6 +299,46 @@ gameRouter.post("/playerComplete", async (req:any, res:any) => {
 
 });
 
+
+gameRouter.post("/leaveLobby", async (req: any, res: any) => {
+    const { gameId, playerID } = req.body;
+
+    if (!gameId || !playerID) {
+        return res.status(400).send({ message: "Missing gameId or playerID" });
+    }
+
+    try {
+        const lobbyData = await redisClient.hGet(IdPrefixes.LOBBIES_CURR_PLAYERS, gameId);
+        const gameData = await redisClient.get(gameId);
+        console.log(lobbyData);
+        console.log(gameData);
+
+        if (!lobbyData || !gameData) {
+            return res.status(404).send({ message: "Lobby or game not found" });
+        }
+
+        let parsedData = JSON.parse(gameData);
+
+        if (parsedData.currPlayerCount > 1) {
+            parsedData.currPlayerCount -= 1;
+            await redisClient.set(gameId, JSON.stringify(parsedData));
+            await redisClient.hIncrBy(IdPrefixes.LOBBIES_CURR_PLAYERS, gameId, -1);
+        } else {
+            await CleanupGameContext(gameId);
+            await redisClient.hDel(IdPrefixes.LOBBIES_CURR_PLAYERS, gameId);
+            await redisClient.hDel(IdPrefixes.LOBBIES_MAX_PLAYERS, gameId);
+        }
+
+        const scoreboardID = `${IdPrefixes.PLAYER_POINTS}_${gameId}`;
+        await redisClient.zRem(scoreboardID, playerID);
+
+        return res.status(200).send({ message: "Player left the lobby successfully" });
+    } catch (err) {
+        return res.status(500).send({ message: "Error processing leave request" });
+    }
+});
+
+
 async function addChaosBaseArrays(roundCount:number, gameId:String) {
     console.log("Entering chaos bases creation....");
     const fromBases = Array.from({ length: roundCount }, () => 

@@ -78,4 +78,12 @@
   .startGameButton:hover {
     background: #32D336;
   }
+
+  .leaveLobbyButton{
+    background-color:red;
+    margin-top: 10px;
+  }
   
+  .leaveLobbyButton:hover {
+    background: #d40000;
+  }

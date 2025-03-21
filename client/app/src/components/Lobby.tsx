@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 
 export default function Lobby () {
     const location = useLocation();
-    var { toBasee = 2, playerNum = 1, gameMode = GameModes.CLASSIC.toString(), difficulty = Difficulties.LAYMAN.toString(), gameId = "", playerID, roundCount = 15, lobbyName} = location.state || {};
+    var { toBasee = 2, playerNum = 1, gameMode = GameModes.CLASSIC.toString(), difficulty = Difficulties.LAYMAN.toString(), gameId = "", playerID, roundCount = 15, lobbyName = ""} = location.state || {};
     console.log(playerID, 'ovo je player id');
     const navigate = useNavigate();
     const [startGameFlag, setStartGameFlag] = useState(false);
@@ -29,7 +29,7 @@ export default function Lobby () {
             console.log(data);
             setStartGameFlag(true);
         };
-        
+  
         return () => ws.close(); // Cleanup WebSocket on unmount
 
     }, [startGameFlag]);  // This effect runs when `gameId` is updated
@@ -47,7 +47,27 @@ export default function Lobby () {
         // };
         setStartGameFlag(true);
     }
+
     
+    const leaveLobby = async () => {
+        try {
+            await axiosInstance.post("/game/leaveLobby", { gameId, playerID });
+        } catch (error) {
+            console.error("Error leaving lobby:", error);
+        }
+    };
+
+
+    useEffect(() => {
+        const handleBeforeUnload = () => leaveLobby();
+    
+        window.addEventListener("beforeunload", handleBeforeUnload);
+    
+        return () => {
+            leaveLobby(); 
+            window.removeEventListener("beforeunload", handleBeforeUnload);
+        };
+    }, []);
 
     function showLobbyStats() {
         return (
@@ -61,6 +81,10 @@ export default function Lobby () {
                     <label>{playerNum}</label>
                 </div>
                 <div>
+                    <label>Number of rounds: </label>
+                    <label>{roundCount}</label>
+                </div>
+                <div>
                     <label>Game Mode: </label>
                     <label>{gameMode}</label>
                 </div>
@@ -68,16 +92,20 @@ export default function Lobby () {
                     <label>Difficulty: </label>
                     <label>{difficulty}</label>
                 </div>
+               
             </div>
         );
     }
 
     return (                                                // change the label txt to LOBBY on release
         <div className="LobbyContainer ">
-            <label className="mainLobbyText"> Ovo je lobby! </label>            
+            <label className="mainLobbyText"> {lobbyName} Lobby </label>            
             {showLobbyStats()}
             <button className="startGameButton" onClick={handleStartGame}>
                 Start Game!
+            </button>
+            <button className="startGameButton leaveLobbyButton" onClick={() => navigate("/")}>
+                Leave Lobby
             </button>
         </div>
     )

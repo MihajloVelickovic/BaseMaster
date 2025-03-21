@@ -84,8 +84,9 @@ function Home() {
       const toBasee:number = Number(gameData.toBase);
       const playerNumm:number = gameData.maxPlayers;
       const gameModee:string = gameId.split('_')[0];
-      const difficultyy:string = gameData.difficulty;  
-      navigate("/Lobby", { state: { toBase:toBasee, playerNum:playerNumm, gameMode:gameModee, difficulty:difficultyy, gameId: selectedGameId, playerID } });
+      const difficultyy:string = gameData.difficulty; 
+
+      navigate("/Lobby", { state: { toBase:toBasee, playerNum:playerNumm, gameMode:gameModee, difficulty:difficultyy, gameId: selectedGameId, playerID, roundCount, lobbyName } });
     } catch (error:any) {
       console.error('Error joining lobby:', error.response ? error.response.data : error.message);
       if (error.response?.data?.message === "Lobby is full") {

@@ -26,10 +26,11 @@ const wss = new WebSocketServer({ server });
 wss.on("connection", (ws) => {
     let currentLobby = null;
 
-    ws.on("message", (data: any) => {
+    ws.on("message", async (data: any) => {
         try {
             const { type, gameId, playerID } = JSON.parse(data);
             console.log("data je: ", JSON.parse(data));
+
             if (type === "joinLobby") {
                 if (!wsClients.has(gameId)) {
                     wsClients.set(gameId, new Set());
@@ -37,6 +38,7 @@ wss.on("connection", (ws) => {
                 wsClients.get(gameId).add(ws);
                 currentLobby = gameId;
                 console.log(`Player ${playerID} joined lobby ${gameId}`);
+                
             }
             else if (type === IdPrefixes.SCOREBOARD_UPDATE) {
                 if (!wsClients.has(gameId)) {
