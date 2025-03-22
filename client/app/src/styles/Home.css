@@ -261,3 +261,7 @@ input.inputFont {
 .refresh-button:hover {
   background-color: #009900;
 }
+
+.clicked-button {
+  background: #E00029 !important;
+}

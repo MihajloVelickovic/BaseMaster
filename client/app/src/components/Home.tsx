@@ -23,7 +23,7 @@ function Home() {
   const [advancedOptions, setAdvancedOptions] = useState(false);
   const [lobbyName, setLobbyName] = useState("");
   const [roundCount, setRoundCount] = useState(Number(15));
-
+  const [clickedLobbies, setClickedLobbies] = useState<Map<string, boolean>>(new Map());
   // const [playerId, setPlayerId] = useState(playerID);
 
   const navigate = useNavigate();
@@ -76,28 +76,60 @@ function Home() {
     }
   };
 
-  const joinLobby = async (selectedGameId: string) => { 
-    try {
+  const joinLobby = async (selectedGameId: string, isFull:boolean) => {
+    if (isFull) {
+      // ✅ Disable button for 3 seconds if full (NO request sent)
+      setClickedLobbies(prev => {
+          const newMap = new Map(prev);
+          newMap.set(selectedGameId, true);
+          return newMap;
+      });
+
+      setTimeout(() => {
+          setClickedLobbies(prev => {
+              const newMap = new Map(prev);
+              newMap.delete(selectedGameId);
+              return newMap;
+          });
+      }, 3000);
+      return;
+  }
+
+  try {
       const response = await axiosInstance.post('/game/joinLobby', { gameId: selectedGameId, playerId: playerID });
       console.log(response);
-      const { messsage, gameId, gameData } = response.data;
-      const toBasee:number = Number(gameData.toBase);
-      const playerNumm:number = gameData.maxPlayers;
-      const gameModee:string = gameId.split('_')[0];
-      const difficultyy:string = gameData.difficulty; 
 
-      navigate("/Lobby", { state: { toBase:toBasee, playerNum:playerNumm, gameMode:gameModee, difficulty:difficultyy, gameId: selectedGameId, playerID, roundCount, lobbyName } });
-    } catch (error:any) {
+      const { gameId, gameData } = response.data;
+      const toBase = Number(gameData.toBase);
+      const playerNum = gameData.maxPlayers;
+      const gameMode = gameId.split('_')[0];
+      const difficulty = gameData.difficulty; 
+
+      navigate("/Lobby", { state: { toBase, playerNum, gameMode, difficulty, gameId: selectedGameId, playerID } });
+
+  } catch (error: any) {
       console.error('Error joining lobby:', error.response ? error.response.data : error.message);
+
       if (error.response?.data?.message === "Lobby is full") {
-        window.alert("The lobby is already full. Please try joining another game.");
-      } else {
-        window.alert("An error occurred while joining the lobby. Please try again.");
+          // ✅ Now ONLY mark as clicked if the request fails due to full lobby
+          setClickedLobbies(prev => {
+              const newMap = new Map(prev);
+              newMap.set(selectedGameId, true);
+              return newMap;
+          });
+
+          setTimeout(() => {
+              setClickedLobbies(prev => {
+                  const newMap = new Map(prev);
+                  newMap.delete(selectedGameId);
+                  return newMap;
+              });
+          }, 3000);
       }
-    }
+  }
     
   };
-
+  
   function showLobbies() {
     return (
       // <div className="lobby-list">
@@ -123,11 +155,7 @@ function Home() {
           </div>
           
           {lobbies.map((lobby) => (
-
-              <button className=" lobby-item" onClick={() => joinLobby(lobby[0])}>
-                <span className="game-id">{lobby[3] !== "NONE" ? lobby[3]:lobby[0].slice(-5)}</span>
-                <span className="players">{lobby[1]}/{lobby[2]}</span>
-              </button>
+              renderLobbyButton(lobby)
           ))}          
       </>
       ) : (
@@ -138,6 +166,29 @@ function Home() {
     );
   }
   
+  function renderLobbyButton(lobby: any[]) {
+    const isFull = lobby[1] >= lobby[2]; // ✅ Check if full
+    const isClicked = clickedLobbies.get(lobby[0]) || false; // ✅ Check if clicked
+
+    return (
+      <button 
+        key={lobby[0]}
+        className={`lobby-item ${isClicked ? "clicked-button" : ""}`} 
+        onClick={() => joinLobby(lobby[0], isFull)}
+        disabled={isClicked} // ✅ Disable if clicked
+      >
+        {isClicked ? (
+          <span className="players">Lobby is full!</span>
+        ) : (
+          <>
+            <span className="game-id ">{lobby[3] !== "NONE" ? lobby[3] : lobby[0].slice(-5)}</span>
+            <span className="players">{lobby[1]}/{lobby[2]}</span>
+          </>
+        )}
+      </button>
+    );
+  }
+
   const renderAdvancedOptions = () => {
     return (
       <>

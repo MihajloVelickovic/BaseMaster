@@ -122,13 +122,13 @@ gameRouter.post("/getCurrNum", async (req:any, res:any) => {
                         lIndex(`${IdPrefixes.TO_BASE}_${gameId}`,currRound);
         }
 
-        if(num === null)
+        if(!num)
             return res.status(404).send({message:"Could not find the number"});
-        if(fromBase === null && gamemode === GameModes.CHAOS)
+        if(!fromBase && gamemode === GameModes.CHAOS)
             return res.status(404).send({message:"Could not find the fromBase"});
-        if(toBase === null && gamemode === GameModes.CHAOS)
+        if(!toBase && gamemode === GameModes.CHAOS)
             return res.status(404).send({message:"Could not find the toBase"});
-        if(scoreboard === null)
+        if(!scoreboard)
             return res.status(404).send({message:"Could not find the scoreboard"});
 
         console.log("sending data to subscriber");
@@ -158,9 +158,9 @@ gameRouter.post("/joinLobby", async (req:any, res:any) => {
 
     const gameData = await redisClient.get(gameId);
 
-    if(gameData === null)
+    if(!gameData)
         return res.status(404).send({message: "Requested lobby does not exsist"});
-    if(lobbyData === null)
+    if(!lobbyData)
         return res.status(404).send({message: "Requested game does not exsist"});
     var parcedData = JSON.parse(gameData);
     
@@ -170,7 +170,7 @@ gameRouter.post("/joinLobby", async (req:any, res:any) => {
 
     try {        
         parcedData.currPlayerCount = 
-        (Number(parcedData.currPlayerCount)+1).toString();
+        (Number(parcedData.currPlayerCount) + 1).toString();
         
         await redisClient.set(gameId, JSON.stringify(parcedData));
 
@@ -197,13 +197,13 @@ gameRouter.get("/getLobbies", async (req:any, res:any) => {
 
         const lobbies_names = await redisClient.hGetAll(IdPrefixes.LOBBIES_NAMES);
 
-        if(lobbies_curr_players === null)
+        if(!lobbies_curr_players)
             return res.status(404).send({message:"Could not fin any lobbies!"});
                                                 //Fin???? adventure time????
-        if(lobbies_max_players === null)
+        if(!lobbies_max_players)
             return res.status(404).send({message:"Could not fin any lobbies!"});
                                                 //Fin???? adventure time????
-        if(lobbies_names === null)
+        if(!lobbies_names)
             return res.status(404).send({message:"Could not fin any lobbies!"});
 
         const parsedLobbies_curr_players = Object.fromEntries(
@@ -237,7 +237,7 @@ gameRouter.post("/setGameState", async (req:any, res:any) => {
     try {
         const gameData = await redisClient.get(gameId);
 
-        if(gameData === null)
+        if(!gameData)
             return res.status(404).send({message:"Could not fin the game"});
 
         const parcedData = JSON.parse(gameData);
@@ -283,20 +283,18 @@ gameRouter.post("/playerComplete", async (req:any, res:any) => {
     const remainingPlayers = 
     await redisClient.decr(`${IdPrefixes.GAME_END}_${gameId}`);
 
-    if(remainingPlayers === 0 ) {
-        try {
-            await CleanupGameContext(gameId);
-
-            publisher.publish(`${IdPrefixes.ALL_PLAYERS_COMPLETE}_${gameId}`,
-                               "Game Over");
-        }
-        catch(err:any) {
-            return res.send({message: `Error with cleanup: ${err}`})
-        }
-    }
-    else
+    if(remainingPlayers > 0 ) 
         return res.send({message:"Player status saved"});
+    
+    try {
+        await CleanupGameContext(gameId);
 
+        publisher.publish(`${IdPrefixes.ALL_PLAYERS_COMPLETE}_${gameId}`,
+                           "Game Over");
+    }
+    catch(err:any) {
+        return res.send({message: `Error with cleanup: ${err}`})
+    }   
 });
 
 

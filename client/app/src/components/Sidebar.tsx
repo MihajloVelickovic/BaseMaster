@@ -2,9 +2,6 @@ import React, { useState } from "react";
 import "../styles/Sidebar.css";
 import { FaSignOutAlt, FaUser, FaUserFriends } from "react-icons/fa";
 
-
-
-
 function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
 
