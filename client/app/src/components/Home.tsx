@@ -78,7 +78,6 @@ function Home() {
 
   const joinLobby = async (selectedGameId: string, isFull:boolean) => {
     if (isFull) {
-      // ✅ Disable button for 3 seconds if full (NO request sent)
       setClickedLobbies(prev => {
           const newMap = new Map(prev);
           newMap.set(selectedGameId, true);
