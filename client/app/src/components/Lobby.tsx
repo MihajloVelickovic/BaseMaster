@@ -49,25 +49,25 @@ export default function Lobby () {
     }
 
     
-    const leaveLobby = async () => {
-        try {
-            await axiosInstance.post("/game/leaveLobby", { gameId, playerID });
-        } catch (error) {
-            console.error("Error leaving lobby:", error);
-        }
-    };
+    // const leaveLobby = async () => {
+    //     try {
+    //         await axiosInstance.post("/game/leaveLobby", { gameId, playerID });
+    //     } catch (error) {
+    //         console.error("Error leaving lobby:", error);
+    //     }
+    // };
 
 
-    useEffect(() => {
-        const handleBeforeUnload = () => leaveLobby();
+    // useEffect(() => {
+    //     const handleBeforeUnload = () => leaveLobby();
     
-        window.addEventListener("beforeunload", handleBeforeUnload);
+    //     window.addEventListener("beforeunload", handleBeforeUnload);
     
-        return () => {
-            leaveLobby(); 
-            window.removeEventListener("beforeunload", handleBeforeUnload);
-        };
-    }, []);
+    //     return () => {
+    //         leaveLobby(); 
+    //         window.removeEventListener("beforeunload", handleBeforeUnload);
+    //     };
+    // }, []);
 
     function showLobbyStats() {
         return (
