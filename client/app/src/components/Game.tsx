@@ -7,7 +7,6 @@ import axiosInstance from "../utils/axiosInstance";
 var maxVal:bigint = BigInt(255);
 var numToFind = getRandomNumber(1, Number(maxVal));   //this appears to be unneeded
 const maxBase = 32;
-const roundCount = 15;
 
 function clcBtnCount(base:bigint, maxValue:bigint) {
   var count = 0, currVal=maxValue;
@@ -35,7 +34,7 @@ function Game() {
   const [scoreboard, setScoreboard] = useState<{ value: string, score: number }[]>([]);
   const [finished, setFinished] = useState(false);
 
-  var { toBasee = 2, playerNum = 1, gameMode = GameModes.CLASSIC.toString(), difficulty = Difficulties.LAYMAN.toString(), gameId = "", playerID = "" } = location.state || {};
+  var { toBasee = 2, playerNum = 1, gameMode = GameModes.CLASSIC.toString(), difficulty = Difficulties.LAYMAN.toString(), gameId = "", playerID = "" , roundCount} = location.state || {};
   console.log("toBasee je: ", toBasee);
   useEffect( () => {
     const ws = new WebSocket("ws://localhost:1738");
@@ -127,7 +126,7 @@ function Game() {
       }
       //console.log(response.data["scoreboard"])
       console.log(response);
-      setCurrRound(currRound+5);                                  //CHANGE THIS BACK TO +1 WHEN DONE
+      setCurrRound(currRound+1);                                  //CHANGE THIS BACK TO +1 WHEN DONE
       setCurrNum(num);
       console.log("Current round: ", currRound);
       return num;  

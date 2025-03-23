@@ -3,7 +3,7 @@ import { GameModes, Difficulties, GameStates } from "../shared_modules/shared_en
 import "../styles/Lobby.css";
 //import { roundCount } from "./Home";
 import axiosInstance from "../utils/axiosInstance";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 
 export default function Lobby () {
@@ -13,10 +13,15 @@ export default function Lobby () {
     const navigate = useNavigate();
     const [startGameFlag, setStartGameFlag] = useState(false);
 
+    const startGameRef = useRef(false);
+    useEffect(() => {
+        startGameRef.current = startGameFlag; 
+    }, [startGameFlag]);
+
     useEffect(() => {
         const ws = new WebSocket("ws://localhost:1738");
         if (startGameFlag) {
-            navigate("/Game", { state: { toBasee:toBasee, playerNum, gameMode, difficulty, gameId, playerID } });
+            navigate("/Game", { state: { toBasee:toBasee, playerNum, gameMode, difficulty, gameId, playerID, roundCount } });
         }
 
         ws.onopen = () => {
@@ -49,25 +54,26 @@ export default function Lobby () {
     }
 
     
-    // const leaveLobby = async () => {
-    //     try {
-    //         await axiosInstance.post("/game/leaveLobby", { gameId, playerID });
-    //     } catch (error) {
-    //         console.error("Error leaving lobby:", error);
-    //     }
-    // };
+    const leaveLobby = async () => {
+        try {
+            await axiosInstance.post("/game/leaveLobby", { gameId, playerID });
+        } catch (error) {
+            console.error("Error leaving lobby:", error);
+        }
+    };
 
 
-    // useEffect(() => {
-    //     const handleBeforeUnload = () => leaveLobby();
+    useEffect(() => {
+        const handleBeforeUnload = () => leaveLobby();
     
-    //     window.addEventListener("beforeunload", handleBeforeUnload);
+        window.addEventListener("beforeunload", handleBeforeUnload);
     
-    //     return () => {
-    //         leaveLobby(); 
-    //         window.removeEventListener("beforeunload", handleBeforeUnload);
-    //     };
-    // }, []);
+        return () => {
+            if(!startGameRef.current)
+                leaveLobby(); 
+            window.removeEventListener("beforeunload", handleBeforeUnload);
+        };
+    }, []);
 
     function showLobbyStats() {
         return (
