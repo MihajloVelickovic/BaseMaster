@@ -180,10 +180,16 @@ gameRouter.post("/joinLobby", async (req:any, res:any) => {
 
         const roundsKey = `rn_${gameId}`;
         const roundCount = await redisClient.lLen(roundsKey);
+        //needed since we may join after the message is sent
+        const players = await redisClient.zRange(scoreboardID, 0, -1);
 
         console.log("Success", gameId, parcedData);
 
-        return res.send({message:"Success", gameId:gameId, gameData: {...parcedData, roundCount:roundCount}});
+        publisher.publish(`${IdPrefixes.PLAYER_JOIN}_${gameId}`,
+                            JSON.stringify({playerID:playerId}));
+
+        return res.send({message:"Success", gameId:gameId,
+        gameData: {...parcedData, roundCount:roundCount}, players:players});
     }
     catch(err:any) {
         return res.status(404).send({message: err.message});
@@ -311,8 +317,6 @@ gameRouter.post("/leaveLobby", async (req: any, res: any) => {
     try {
         const lobbyData = await redisClient.hGet(IdPrefixes.LOBBIES_CURR_PLAYERS, gameId);
         const gameData = await redisClient.get(gameId);
-        console.log(lobbyData);
-        console.log(gameData);
 
         if (!lobbyData || !gameData) {
             return res.status(404).send({ message: "Lobby or game not found" });
@@ -332,6 +336,9 @@ gameRouter.post("/leaveLobby", async (req: any, res: any) => {
 
         const scoreboardID = `${IdPrefixes.PLAYER_POINTS}_${gameId}`;
         await redisClient.zRem(scoreboardID, playerID);
+
+        publisher.publish(`${IdPrefixes.PlAYER_LEAVE}_${gameId}`,
+                           JSON.stringify({playerID:playerID}));
 
         return res.status(200).send({ message: "Player left the lobby successfully" });
     } catch (err) {

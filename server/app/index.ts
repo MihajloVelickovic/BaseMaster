@@ -111,6 +111,42 @@ subscriber.pSubscribe(`${IdPrefixes.ALL_PLAYERS_COMPLETE}_*`, async (message, ch
     }
 });
 
+subscriber.pSubscribe(`${IdPrefixes.PLAYER_JOIN}_*`, async (message, channel) => {
+    const lobbyId = channel.replace(`${IdPrefixes.PLAYER_JOIN}_`, ""); // Extract game ID
+    const parsedMessage = JSON.parse(message);
+    const playerId = parsedMessage.playerID;
+
+    if (wsClients.has(lobbyId)) {
+        wsClients.get(lobbyId).forEach(client => {
+            if (client.readyState === 1) {
+                client.send(JSON.stringify({
+                    type: `${IdPrefixes.PLAYER_JOIN}`,
+                    message: "Player joined the game",
+                    playerId:playerId
+                }));
+            }
+        });
+    }
+});
+
+subscriber.pSubscribe(`${IdPrefixes.PlAYER_LEAVE}_*`, async (message, channel) => {
+    const lobbyId = channel.replace(`${IdPrefixes.PlAYER_LEAVE}_`, ""); // Extract game ID
+    const parsedMessage = JSON.parse(message);
+    const playerId = parsedMessage.playerID;
+
+    if (wsClients.has(lobbyId)) {
+        wsClients.get(lobbyId).forEach(client => {
+            if (client.readyState === 1) {
+                client.send(JSON.stringify({
+                    type: `${IdPrefixes.PlAYER_LEAVE}`,
+                    message: "Player left the game",
+                    playerId:playerId
+                }));
+            }
+        });
+    }
+});
+
 app.use("/game", gameRouter);
 app.use("/user", userRouter);
 

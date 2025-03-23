@@ -20,8 +20,11 @@
     
     margin: auto;
     margin-top: 30px;  
+    /* margin-right: 0px; */
     font-size: 7vh;
-  
+    
+    
+
     border: solid #010050 1px;
     border-radius: 25px;
     background-color:#FFFFF2;
@@ -31,6 +34,7 @@
   
   .LobbyContainer * {
     padding: 15px;
+    margin-right: 0px !important;
   }
 
   .LobbyStats {
@@ -94,4 +98,50 @@
     font-weight: bold;
     margin-top: 20px;
     font-family: 'JetBrains Mono', monospace;
+}
+
+.lobbyScreen {
+  display: flex;
+  justify-content: center; /* Keeps the LobbyContainer centered */
+  align-items: flex-start;
+  gap: 40px; /* Adds space between the lobby and the player list */
+  position: relative;
+}
+
+.playerList {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* Aligns items to the left */
+  width: 10%;
+  padding: 30px;
+  border: solid #010050 1px;
+  border-radius: 25px;
+  background-color: #FFFFF2;
+  margin-top: 30px;
+  position: absolute;
+  left: 65vw; /* Moves it to the right side without affecting LobbyContainer */
+}
+
+.playerEntry {
+  display: flex;
+  padding: 20px;
+  font-size: 2vh;
+  font-weight: bold;
+}
+
+.playerIndex {
+  color: #010050;
+}
+
+.playerName {
+  color: #1E6ACD;
+}
+.playersText {
+  font-size: 3vh;
+  font-weight: 900;
+  color: #1E6ACD;
+  border-bottom: solid #010050 3px;
+  width: 100%;
+  text-align: center;
+  padding: 20px;
 }

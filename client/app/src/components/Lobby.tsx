@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { GameModes, Difficulties, GameStates } from "../shared_modules/shared_enums";
+import { GameModes, Difficulties, GameStates, IdPrefixes } from "../shared_modules/shared_enums";
 import "../styles/Lobby.css";
 //import { roundCount } from "./Home";
 import axiosInstance from "../utils/axiosInstance";
@@ -8,10 +8,14 @@ import { useEffect, useState, useRef } from "react";
 
 export default function Lobby () {
     const location = useLocation();
-    var { toBasee = 2, playerNum = 1, gameMode = GameModes.CLASSIC.toString(), difficulty = Difficulties.LAYMAN.toString(), gameId = "", playerID, lobbyName = "", hostId, roundCount} = location.state || {};
+    var { toBasee = 2, playerNum = 1, gameMode = GameModes.CLASSIC.toString(),
+         difficulty = Difficulties.LAYMAN.toString(), gameId = "", playerID,
+          lobbyName = "", hostId, roundCount, playerIds} = location.state || {};
     console.log(playerID, 'ovo je player id');
     const navigate = useNavigate();
     const [startGameFlag, setStartGameFlag] = useState(false);
+    const [players, setPlayers] = useState<string[]>
+    (Array.isArray(playerIds) ? playerIds : playerID ? [playerID] : []);
 
     const startGameRef = useRef(false);
     useEffect(() => {
@@ -24,15 +28,26 @@ export default function Lobby () {
             navigate("/Game", { state: { toBasee:toBasee, playerNum, gameMode, difficulty, gameId, playerID, roundCount } });
         }
 
-        ws.onopen = () => {
-            
+        ws.onopen = () => {         
             ws.send(JSON.stringify({ type: "joinLobby", gameId, playerID }));
         };
         
         ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
-            console.log(data);
-            setStartGameFlag(true);
+            if(data.type === IdPrefixes.GAME_STARTED) {
+                console.log(data);
+                setStartGameFlag(true);
+            }
+            else if(data.type === IdPrefixes.PLAYER_JOIN) {
+                console.log("Player joined the lobby: ",data.playerId);
+                setPlayers(prevPlayers => 
+                    prevPlayers.includes(data.playerId) ? prevPlayers : [...prevPlayers, data.playerId]
+                );
+            }
+            else if(data.type === IdPrefixes.PlAYER_LEAVE) {
+                console.log("Player joined the lobby: ",data.playerId);
+                setPlayers(prevPlayers => prevPlayers.filter(id => id !== data.playerId));
+            }
         };
   
         return () => ws.close(); // Cleanup WebSocket on unmount
@@ -104,21 +119,34 @@ export default function Lobby () {
     }
 
     return (                                                // change the label txt to LOBBY on release
-        <div className="LobbyContainer ">
-            <label className="mainLobbyText"> {lobbyName} Lobby </label>            
-            {showLobbyStats()}
+        <div className="lobbyScreen">
+            <div className="LobbyContainer ">
+                <label className="mainLobbyText"> {lobbyName} Lobby </label>            
+                {showLobbyStats()}
 
-            {playerID === hostId ? (
-                <button className="startGameButton" onClick={handleStartGame}>
-                    Start Game!
+                {playerID === hostId ? (
+                    <button className="startGameButton" onClick={handleStartGame}>
+                        Start Game!
+                    </button>
+                ) : (
+                    <div className="waitingText">Waiting for lobby owner to start the game...</div>
+                )}
+                
+                <button className="startGameButton leaveLobbyButton" onClick={() => navigate("/")}>
+                    Leave Lobby
                 </button>
-            ) : (
-                <div className="waitingText">Waiting for lobby owner to start the game...</div>
-            )}
+            </div>
             
-            <button className="startGameButton leaveLobbyButton" onClick={() => navigate("/")}>
-                Leave Lobby
-            </button>
+            <div className="playerList">
+                <label className="playersText"> Players </label>
+                {players.map((playerID, index) => (
+                    <div key={index} className="playerEntry">
+                        <span className="playerIndex">{index + 1}.</span>
+                        <span className="playerName"> {playerID}</span>
+                    </div>
+                ))}
+            </div>
+            
         </div>
     )
 

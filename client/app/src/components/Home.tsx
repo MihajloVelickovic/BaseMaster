@@ -99,22 +99,25 @@ function Home() {
       const response = await axiosInstance.post('/game/joinLobby', { gameId: selectedGameId, playerId: playerID });
       console.log(response);
 
-      const { gameId, gameData } = response.data;
+      const { gameId, gameData, players } = response.data;
       const toBase = Number(gameData.toBase);
       const playerNum = gameData.maxPlayers;
       const gameMode = gameId.split('_')[0];
       const difficulty = gameData.difficulty; 
       const hostId = gameData.hostId;
       const roundCount = gameData.roundCount;
+      const playerIds = players;
+      console.log(players);
       console.log(roundCount);
 
-      navigate("/Lobby", { state: { toBase, playerNum, gameMode, difficulty, gameId: selectedGameId, playerID, hostId, roundCount } });
+      navigate("/Lobby", { state: { toBase, playerNum, gameMode,
+                           difficulty, gameId: selectedGameId, playerID,
+                            hostId, roundCount, playerIds:playerIds } });
 
   } catch (error: any) {
       console.error('Error joining lobby:', error.response ? error.response.data : error.message);
 
       if (error.response?.data?.message === "Lobby is full") {
-          // ✅ Now ONLY mark as clicked if the request fails due to full lobby
           setClickedLobbies(prev => {
               const newMap = new Map(prev);
               newMap.set(selectedGameId, true);
@@ -170,15 +173,15 @@ function Home() {
   }
   
   function renderLobbyButton(lobby: any[]) {
-    const isFull = lobby[1] >= lobby[2]; // ✅ Check if full
-    const isClicked = clickedLobbies.get(lobby[0]) || false; // ✅ Check if clicked
+    const isFull = lobby[1] >= lobby[2]; 
+    const isClicked = clickedLobbies.get(lobby[0]) || false; 
 
     return (
       <button 
         key={lobby[0]}
         className={`lobby-item ${isClicked ? "clicked-button" : ""}`} 
         onClick={() => joinLobby(lobby[0], isFull)}
-        disabled={isClicked} // ✅ Disable if clicked
+        disabled={isClicked} 
       >
         {isClicked ? (
           <span className="players">Lobby is full!</span>
