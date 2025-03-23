@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 
 export default function Lobby () {
     const location = useLocation();
-    var { toBasee = 2, playerNum = 1, gameMode = GameModes.CLASSIC.toString(), difficulty = Difficulties.LAYMAN.toString(), gameId = "", playerID, roundCount = 15, lobbyName = ""} = location.state || {};
+    var { toBasee = 2, playerNum = 1, gameMode = GameModes.CLASSIC.toString(), difficulty = Difficulties.LAYMAN.toString(), gameId = "", playerID, lobbyName = "", hostId, roundCount} = location.state || {};
     console.log(playerID, 'ovo je player id');
     const navigate = useNavigate();
     const [startGameFlag, setStartGameFlag] = useState(false);
@@ -101,9 +101,15 @@ export default function Lobby () {
         <div className="LobbyContainer ">
             <label className="mainLobbyText"> {lobbyName} Lobby </label>            
             {showLobbyStats()}
-            <button className="startGameButton" onClick={handleStartGame}>
-                Start Game!
-            </button>
+
+            {playerID === hostId ? (
+                <button className="startGameButton" onClick={handleStartGame}>
+                    Start Game!
+                </button>
+            ) : (
+                <div className="waitingText">Waiting for lobby owner to start the game...</div>
+            )}
+            
             <button className="startGameButton leaveLobbyButton" onClick={() => navigate("/")}>
                 Leave Lobby
             </button>

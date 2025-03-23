@@ -87,3 +87,11 @@
   .leaveLobbyButton:hover {
     background: #d40000;
   }
+
+  .waitingText {
+    font-size: 18px;
+    color: #1E6ACD;
+    font-weight: bold;
+    margin-top: 20px;
+    font-family: 'JetBrains Mono', monospace;
+}

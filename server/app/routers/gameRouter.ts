@@ -178,9 +178,12 @@ gameRouter.post("/joinLobby", async (req:any, res:any) => {
 
         await redisClient.hIncrBy(IdPrefixes.LOBBIES_CURR_PLAYERS,gameId,1);
 
+        const roundsKey = `rn_${gameId}`;
+        const roundCount = await redisClient.lLen(roundsKey);
+
         console.log("Success", gameId, parcedData);
 
-        return res.send({message:"Success", gameId:gameId, gameData:parcedData});
+        return res.send({message:"Success", gameId:gameId, gameData: {...parcedData, roundCount:roundCount}});
     }
     catch(err:any) {
         return res.status(404).send({message: err.message});

@@ -35,7 +35,7 @@ function Home() {
   
   useEffect(() => {
     if (gameId) {
-      navigate("/Lobby", { state: { toBasee:toBase, playerNum, gameMode, difficulty, gameId, playerID, roundCount, lobbyName } });
+      navigate("/Lobby", { state: { toBasee:toBase, playerNum, gameMode, difficulty, gameId, playerID, roundCount, lobbyName, hostId: playerID } });
     }
   }, [gameId]);  // This effect runs when `gameId` is updated
 
@@ -104,8 +104,11 @@ function Home() {
       const playerNum = gameData.maxPlayers;
       const gameMode = gameId.split('_')[0];
       const difficulty = gameData.difficulty; 
+      const hostId = gameData.hostId;
+      const roundCount = gameData.roundCount;
+      console.log(roundCount);
 
-      navigate("/Lobby", { state: { toBase, playerNum, gameMode, difficulty, gameId: selectedGameId, playerID } });
+      navigate("/Lobby", { state: { toBase, playerNum, gameMode, difficulty, gameId: selectedGameId, playerID, hostId, roundCount } });
 
   } catch (error: any) {
       console.error('Error joining lobby:', error.response ? error.response.data : error.message);
