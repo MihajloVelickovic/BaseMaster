@@ -149,14 +149,16 @@ function Home() {
       //       )) : <p>No available lobbies.</p>}
       //     </div>
       <div className="lobby-list">
-        <button className="refresh-button" onClick={fetchLobbies}>
-            🔄 Refresh Lobbies
-        </button>
         {lobbies.length > 0 ? (
         <>
           <div className="lobbyColumnNames">
             <div className="lobbyColumnNameItem">Game</div>
-            <div className="lobbyColumnNameItem">Players</div>  
+            <div className="lobbyColumnNameItem lobbyColumnNameItemPlayer">Players
+            <button className="refresh-button-small" onClick={fetchLobbies}>
+              🔄
+              </button>  
+            </div>
+            
           </div>
           
           {lobbies.map((lobby) => (

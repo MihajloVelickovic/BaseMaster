@@ -44,21 +44,6 @@
     font-family: 'JetBrains Mono', monospace;
   }
   
-  .choosingLabel {
-    width: fit-content;
-    padding-right: 5px; /* Custom value */
-    padding-top: inherit;
-    padding-bottom: inherit;
-    padding-left: inherit;
-  }
-  
-  .choosingFont {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 1.2rem;
-    padding: 0px;
-    margin: 0px;
-  }
-  
   
   input.inputFont {
     font-size: 1.25rem;
@@ -70,88 +55,8 @@
     margin: 0px;
   }
   
-  .choosingDiv {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 3rem;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-  }
   
-  .choosingBtn {
-    width: 170px;
-    font-size: 0.5rem;
-    justify-self: right;
-    justify-content: right;
-    padding-right: 0px;
-    padding-left: 0px;
-  }
-  
-  .dropdown-menu {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr); /* Two columns */
-    grid-auto-rows: auto; /* Adjusts row height based on content */
-    max-height: calc(4 * 42px); /* Only allows 2 rows (4 elements max) */
-    overflow-y: auto; /* Scroll appears if more than 4 elements */
-    width: 170px;
-  }
-  
-  .lobby-list {
-    display: flex;
-    /* flex-wrap: wrap; */
-    flex-direction: column;
-    justify-content: center;
-    padding: 5px;
-    gap: 5px;
-  }
-  
-  .lobby-item {
-    background:#32E537;
-    color: #ffffe8;
-    font-family: 'JetBrains Mono', monospace;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-around;
-    width: 100%;
-    height: 6vh;
-    padding: 1px;
-    font-size: 3vh;
-    text-align: center;
-    border-radius: 10px;
-    transition: all 0.3s ease-in-out;
-    font-weight: bold;
-    padding: 0px;
-  }
-  
-  .lobbyColumnNames {
-    justify-content: space-between;
-    height: fit-content;
-    width: 100%;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    flex: 1; /* Makes each button container take equal space */
-    color:#32E537;
-    font-size: 4vh;
-    font-weight: bold;
-    font-family: 'JetBrains Mono', monospace;
-    padding: 0px;
-  }
-  
-  .lobbyColumnNameItem {
-    padding: 0px;
-    /* display: flex;
-    flex-direction: row; */
-    flex: 1; /* Makes each button container take equal space */
-  }
-  
-  .lobby-item:hover {
-    background-color: #009900;
-    color: white;
-    transform: scale(1.05);
-  }
-  
-  .game-id {
+   .game-id {
     font-weight: bold;
     display: block;
     font-family: 'JetBrains Mono', monospace;
@@ -170,76 +75,7 @@
     padding: 8px;
   }
   
-  .no-lobbies {
-    text-align: center;
-    font-size: 1.2rem;
-    color: gray;
-  }
-  
-  .createLobbyButton {
-    height: 4rem;
-    background:#32E537;
-    /* justify-content: center; */
-    color: #ffffe8;
-    font-weight: bolder;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 1.5rem;
-    border-radius: 10px;
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add slight shadow */
-  }
-  
-  .createLobbyButton:hover {
-    background: #32D336;
-  }
-  
-  
-  .lobbyOptionDiv {
-    display: flex;
-    flex-direction: row;
-  }
-  
-  .lobbyOptionButton {
-    flex: 1; /* Makes each button container take equal space */
-    max-width: 50%;
-    font-weight: bolder;
-    font-family: 'JetBrains Mono', monospace;
-  }
-  
-  .advancedOptions {
-    display: block;
-    width: 2rem;
-    height: 2rem;
-    font-size: 1.2rem;
-    font-weight: bolder;
-    font-family: 'JetBrains Mono', monospace;
-    align-self: center;
-    background-color: #FFFFF2;
-    border: none;
-    color: #010050;
-    padding: 0px;
-  }
-  
-  .advancedOptionsInput {
-    width: 170px;
-    height: 2.5rem !important;
-    font-size: 0.5rem;
-    justify-self: right;
-    justify-content: right;
-    padding: 15px !important;
-  }
-  
-  .centerAlignItems {
-    align-items: center;
-  }
-  
-  .advancedLabel{
-    text-align: center;
-    font-family: 'JetBrains Mono', monospace;
-    font-weight: bolder;
-    font-size: 2rem;
-  
-  }
-
+ 
   .inputs {
     display: flex;
     flex-direction: column;
