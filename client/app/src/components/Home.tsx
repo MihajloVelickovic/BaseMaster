@@ -218,15 +218,29 @@ function Home() {
   }
 
   function Chooser<T extends string | number>(choosingArray: T[], state: T, setState: (value: T) => void, text: string, labelTxt: string, disabled: boolean = false) {
-    function onSelection(value: T) {
+    function onSelection(value: T, event: React.MouseEvent<HTMLButtonElement>) {
       if (!disabled) {
-        setState(value);
-      }
+          setState(value);
+  
+          const dropdown = (event.target as HTMLElement).closest(".dropdown");
+          if (dropdown) {
+              const button = dropdown.querySelector(".dropdown-toggle");
+              if (button) {
+                  button.setAttribute("aria-expanded", "false"); 
+                  dropdown.classList.remove("show"); 
+                  const menu = dropdown.querySelector(".dropdown-menu");
+                  if (menu) {
+                      menu.classList.remove("show"); 
+                  }
+              }
+           }
+        }
     }
+  
     const basesButtons = choosingArray.map((val, ind) => {
       return (
-        <li className="choosingFont">
-          <button className="dropdown-item" onClick={() => onSelection(val)} disabled={disabled}>
+        <li className="choosingFont" key={ind}>
+          <button className="dropdown-item" onClick={(e) => onSelection(val,e)} disabled={disabled} data-bs-dismiss="dropdown">
             {text} {val}
           </button>
         </li>
