@@ -18,7 +18,6 @@
     /* width: fit-content; */
     width: 550px;
     
-    margin: auto;
     margin-top: 30px;  
     /* margin-right: 0px; */
     font-size: 7vh;
@@ -102,39 +101,52 @@
 
 .lobbyScreen {
   display: flex;
-  justify-content: center; /* Keeps the LobbyContainer centered */
-  align-items: flex-start;
-  gap: 40px; /* Adds space between the lobby and the player list */
-  position: relative;
+  flex-wrap: wrap; /* Allows elements to move if screen is too small */
+  justify-content: center;
+  gap: 20px;
 }
+
 
 .playerList {
   display: flex;
   flex-direction: column;
   align-items: flex-start; /* Aligns items to the left */
-  width: 10%;
+  width: auto;
   padding: 30px;
   border: solid #010050 1px;
   border-radius: 25px;
   background-color: #FFFFF2;
   margin-top: 30px;
-  position: absolute;
-  left: 65vw; /* Moves it to the right side without affecting LobbyContainer */
+  position: relative;
+  height: 40vh;
 }
 
 .playerEntry {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
   padding: 20px;
   font-size: 2vh;
   font-weight: bold;
 }
 
+
 .playerIndex {
   color: #010050;
+  font-weight: bold;
+}
+
+.hostBadge {
+  font-weight: bold;
+  margin-left: 8px;
 }
 
 .playerName {
   color: #1E6ACD;
+  flex-grow: 1;
+  text-align: left;
+  padding-left: 5px;
 }
 .playersText {
   font-size: 3vh;

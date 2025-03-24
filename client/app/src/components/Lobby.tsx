@@ -140,9 +140,10 @@ export default function Lobby () {
             <div className="playerList">
                 <label className="playersText"> Players </label>
                 {players.map((playerID, index) => (
-                    <div key={index} className="playerEntry">
+                    <div key={index} className={`playerEntry ${playerID === hostId ? "hostPlayer" : ""}`}>
                         <span className="playerIndex">{index + 1}.</span>
-                        <span className="playerName"> {playerID}</span>
+                        <span className="playerName">{playerID}</span>
+                        {playerID === hostId && <span className="hostBadge">👑 Host</span>}
                     </div>
                 ))}
             </div>
