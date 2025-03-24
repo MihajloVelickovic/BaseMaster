@@ -103,7 +103,7 @@ function Home() {
       const playerNum = gameData.maxPlayers;
       const gameMode = gameId.split('_')[0];
       const difficulty = gameData.difficulty; 
-      const hostId = gameData.hostId;
+      const hostId = players[0];
       const roundCount = gameData.roundCount;
       const playerIds = players;
       console.log(players);

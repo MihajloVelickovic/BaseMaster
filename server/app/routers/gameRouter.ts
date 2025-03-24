@@ -83,7 +83,10 @@ gameRouter.post("/createGame", async (req: any, res:any) => {
 
         await redisClient.zAdd(`${IdPrefixes.PLAYER_POINTS}_${gameId}`, 
                                 { score: 0, value: hostId });                              
-
+        
+        await redisClient.rPush(`${IdPrefixes.LOBBY_PLAYERS}_${gameId}`,
+                                hostId);
+                                        
         res.send({message:`Game created succesfully`, gameID:gameId});
     } catch (err) {
         res.status(500).send('Error saving user data to Redis');
@@ -178,10 +181,19 @@ gameRouter.post("/joinLobby", async (req:any, res:any) => {
 
         await redisClient.hIncrBy(IdPrefixes.LOBBIES_CURR_PLAYERS,gameId,1);
 
+        await redisClient.rPush(`${IdPrefixes.LOBBY_PLAYERS}_${gameId}`,
+                                 playerId);
+        
+        const players = await 
+        redisClient.lRange(`${IdPrefixes.LOBBY_PLAYERS}_${gameId}`, 0, -1);
+        
+        if(!players)
+            return res.status(404).send({message: "Could not find lobby"});
+
         const roundsKey = `rn_${gameId}`;
         const roundCount = await redisClient.lLen(roundsKey);
         //needed since we may join after the message is sent
-        const players = await redisClient.zRange(scoreboardID, 0, -1);
+       
 
         console.log("Success", gameId, parcedData);
 
