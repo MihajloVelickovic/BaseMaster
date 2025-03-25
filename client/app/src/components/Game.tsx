@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import "../styles/Game.css";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { GameModes, Difficulties, DifficultyValues, IdPrefixes } from "../shared_modules/shared_enums";
 import axiosInstance from "../utils/axiosInstance";
 
@@ -33,7 +33,8 @@ function Game() {
   const [isConfirmDisabled, setIsConfirmDisabled] = useState(false);
   const [scoreboard, setScoreboard] = useState<{ value: string, score: number }[]>([]);
   const [finished, setFinished] = useState(false);
-
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const navigate = useNavigate();
   var { toBasee = 2, playerNum = 1, gameMode = GameModes.CLASSIC.toString(), difficulty = Difficulties.LAYMAN.toString(), gameId = "", playerID = "" , roundCount} = location.state || {};
   console.log("toBasee je: ", toBasee);
   useEffect( () => {
@@ -89,6 +90,15 @@ function Game() {
 
   console.log("toBase: "+toBase+" playerNum: "+playerNum+" gameMode: "+gameMode+" difficulty: "+difficulty+ " gameId: "+gameId);
   
+  const leaveGame = async () => {
+    try {
+        await axiosInstance.post("/game/leaveGame", { gameId, playerID });
+        navigate("/"); // Redirect to home or another page
+    } catch (error) {
+        console.error("Error leaving game:", error);
+    }
+};
+
   const updateGameState = async (newState: string) => {
     try {
       await axiosInstance.post('/game/setGameState', { gameId, gameState: newState });
@@ -281,11 +291,19 @@ function Game() {
           {scoreboard.map((player, index) => (
             <li key={index}>{player.value}: {player.score} pts</li>
           ))}
+          <button className="leaveGameButton" onClick={() => setShowExitConfirm(true)}>
+            Exit Game
+        </button>
         </ul>
         </div>
-
-
     </div>
+        {showExitConfirm && (
+            <div className="confirmationDialog">
+                <p>Are you sure you want to leave the game?</p>
+                <button onClick={leaveGame}>Yes, Exit</button>
+                <button onClick={() => setShowExitConfirm(false)}>Cancel</button>
+            </div>
+        )} 
     {finished && 
       <div className="finishedGameButtons">
         <button className="finishedGameButton">

@@ -237,3 +237,67 @@
     background-color: #006600;
 }
   
+.leaveGameButton {
+    background-color: #f5312b;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease-in-out;
+}
+
+.leaveGameButton:hover {
+    background-color: #c9302c;
+}
+
+.confirmationDialog {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    width: 300px;
+}
+
+.confirmationDialog p {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.confirmationDialog button {
+    padding: 10px 15px;
+    margin: 5px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.confirmationDialog button:first-child {
+    background-color: #d9534f;
+    color: white;
+}
+
+.confirmationDialog button:first-child:hover {
+    background-color: #c9302c;
+}
+
+.confirmationDialog button:last-child {
+    background-color: #5bc0de;
+    color: white;
+}
+
+.confirmationDialog button:last-child:hover {
+    background-color: #31b0d5;
+}
