@@ -118,7 +118,7 @@
   background-color: #FFFFF2;
   margin-top: 30px;
   position: relative;
-  height: 40vh;
+  height: 47vh;
 }
 
 .playerEntry {
@@ -129,6 +129,7 @@
   padding: 20px;
   font-size: 2vh;
   font-weight: bold;
+  margin-top: 5px;
 }
 
 
@@ -156,4 +157,9 @@
   width: 100%;
   text-align: center;
   padding: 20px;
+}
+
+.currentPlayer{
+  background-color: rgb(225, 240, 240);
+  border-left: 3px solid #1E6ACD;
 }

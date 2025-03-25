@@ -48,13 +48,16 @@ function Home() {
           difficulty: difficulty,
           hostId:playerID,
           toBase:toBase,
-          lobbyName: lobbyName?.trim() ? lobbyName : "NONE"
+          lobbyName: lobbyName.trim() || "NONE"
         };
         var response = await axiosInstance.post('/game/createGame', toSend);
         console.log("response za createGame je: ", response);
         const gId = response.data[`${gameID}`];        //check the name.. if changed
         console.log("gameId je: ", gId);
         setGameId(gId);
+
+        const finalLobbyName = lobbyName.trim() ? lobbyName : `${gId.slice(-5)}`;
+        setLobbyName(finalLobbyName);
 
     } catch (error:any) {
         console.error('Error creating game:', error.response ? error.response.data : error.message);
@@ -98,7 +101,7 @@ function Home() {
       const response = await axiosInstance.post('/game/joinLobby', { gameId: selectedGameId, playerId: playerID });
       console.log(response);
 
-      const { gameId, gameData, players } = response.data;
+      const { gameId, gameData, players, lobbyName } = response.data;
       const toBase = Number(gameData.toBase);
       const playerNum = gameData.maxPlayers;
       const gameMode = gameId.split('_')[0];
@@ -106,12 +109,11 @@ function Home() {
       const hostId = players[0];
       const roundCount = gameData.roundCount;
       const playerIds = players;
-      console.log(players);
-      console.log(roundCount);
+      const finalLobbyName = lobbyName;
 
       navigate("/Lobby", { state: { toBase, playerNum, gameMode,
                            difficulty, gameId: selectedGameId, playerID,
-                            hostId, roundCount, playerIds:playerIds } });
+                            hostId, roundCount, playerIds:playerIds, lobbyName:finalLobbyName } });
 
   } catch (error: any) {
       console.error('Error joining lobby:', error.response ? error.response.data : error.message);
@@ -188,9 +190,9 @@ function Home() {
           <span className="players">Lobby is full!</span>
         ) : (
           <>
-            <span className="game-id ">{lobby[3] !== "NONE" ? lobby[3] : lobby[0].slice(-5)}</span>
-            <span className="players">{lobby[1]}/{lobby[2]}</span>
-          </>
+         <span className="game-id ">{lobby[3] !== "NONE" ? lobby[3] : lobby[0].slice(-5)}</span>
+          <span className="players">{lobby[1]}/{lobby[2]}</span>
+        </>
         )}
       </button>
     );

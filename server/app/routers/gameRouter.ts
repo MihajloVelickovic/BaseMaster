@@ -164,6 +164,9 @@ gameRouter.post("/joinLobby", async (req:any, res:any) => {
 
     const gameData = await redisClient.get(gameId);
 
+    const lobbyName = await redisClient.hGet(IdPrefixes.LOBBIES_NAMES, gameId);
+
+
     if(!gameData)
         return res.status(404).send({message: "Requested lobby does not exsist"});
     if(!lobbyData)
@@ -207,7 +210,7 @@ gameRouter.post("/joinLobby", async (req:any, res:any) => {
                             JSON.stringify({playerID:playerId}));
 
         return res.send({message:"Success", gameId:gameId,
-        gameData: {...parcedData, roundCount:roundCount}, players:players});
+        gameData: {...parcedData, roundCount:roundCount}, players:players, lobbyName: lobbyName || gameId.slice(-5)});
     }
     catch(err:any) {
         return res.status(404).send({message: err.message});

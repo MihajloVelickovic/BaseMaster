@@ -10,7 +10,7 @@ export default function Lobby () {
     const location = useLocation();
     var { toBasee = 2, playerNum = 1, gameMode = GameModes.CLASSIC.toString(),
          difficulty = Difficulties.LAYMAN.toString(), gameId = "", playerID,
-          lobbyName = "", hostId, roundCount, playerIds} = location.state || {};
+          lobbyName, hostId, roundCount, playerIds} = location.state || {};
     console.log(playerID, 'ovo je player id');
     const navigate = useNavigate();
     const [startGameFlag, setStartGameFlag] = useState(false);
@@ -125,7 +125,7 @@ export default function Lobby () {
     return (                                                // change the label txt to LOBBY on release
         <div className="lobbyScreen">
             <div className="LobbyContainer ">
-                <label className="mainLobbyText"> {lobbyName} Lobby </label>            
+                <label className="mainLobbyText"> {lobbyName}'s Lobby </label>            
                 {showLobbyStats()}
 
                 {playerID === hostIdState ? (
@@ -143,11 +143,11 @@ export default function Lobby () {
             
             <div className="playerList">
                 <label className="playersText"> Players </label>
-                {players.map((playerID, index) => (
-                    <div key={index} className={`playerEntry ${playerID === hostIdState ? "hostPlayer" : ""}`}>
+                {players.map((id, index) => (
+                    <div key={index} className={`playerEntry ${id === hostIdState ? "hostPlayer" : ""} ${id === playerID ? "currentPlayer" : ""}`}>
                         <span className="playerIndex">{index + 1}.</span>
-                        <span className="playerName">{playerID}</span>
-                        {playerID === hostIdState && <span className="hostBadge">👑 Host</span>}
+                        <span className="playerName">{id}</span>
+                        {id === hostIdState && <span className="hostBadge">👑 Host</span>}
                     </div>
                 ))}
             </div>
