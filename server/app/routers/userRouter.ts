@@ -43,7 +43,7 @@ userRouter.post("/register", async (req:any, res:any) => {
 
         await redisClient.set(fullUsername, password);
 
-        return res.status(200).send({message: "Added user succesfuly", username:fullUsername});
+        return res.status(200).send({message: "Added user succesfuly", fullUsername:fullUsername});
     }
     catch(err:any) {
         return res.status(400).send({message: "Failed to create user", reason:err.message});

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import axiosInstance from "../utils/axiosInstance";   //ovde za sad ne treba
 import "../styles/LoginSignup.css";
 
@@ -19,7 +19,9 @@ interface FormErrors {
     serverResponse?: string;
 }
 
-const LoginSignup: React.FC = () => {
+const LoginSignup = () => {
+    // const location = useLocation();
+    // var { playerIdTransfered = ""} = location.state || {};
     const [action, setAction] = useState<"Login" | "Register">("Login");
     const [formValues, setFormValues] = useState<FormValues>({
         username: "",
@@ -58,24 +60,33 @@ const LoginSignup: React.FC = () => {
         if (Object.keys(errors).length === 0) {
             try {
                 let response;
+                var msg = "";
+                var userName = "";
                 if (action === "Login") {
                     response = await axiosInstance.post("/user/login", {
                         email: formValues.email,
                         password: formValues.password
                     });
-                    console.log("passed");
-                    let msg, pass = response.data;
-                    console.log(msg, pass);
-                    console.log(response);
+                    msg = response.data['message'];
+                    userName = response.data['fullUsername'];
+                    console.log(msg, userName);
+                    //console.log(response);
                     //setUserId(response.data.userId);
-                } else {
+                    navigate("/", { state: { playerIdTransfered: userName} });
+                } else if (action === "Register") {
                     response = await axiosInstance.post("/user/register", {
                         email: formValues.email,
                         username: formValues.username,
                         password: formValues.password
                     });
                     console.log(response);
+                    msg = response.data['message'];
+                    userName = response.data['fullUsername'];
                     //setUserId(response.data.userId);
+                    navigate("/", { state: { playerIdTransfered: userName} });
+                } else {
+                    console.log("Unknown action..");
+                    setFormErrors({ serverResponse: "Unknown action.." });    
                 }
             } catch (error: any) {
                 let msg = error.response.data.message;
@@ -84,7 +95,7 @@ const LoginSignup: React.FC = () => {
         }
     };
 
-    
+
     return (
         <div className="LoginSignupContainer">            
             <div className="lobbyOptionDiv">

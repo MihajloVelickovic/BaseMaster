@@ -1,13 +1,19 @@
 import React, { useState } from "react";
 import "../styles/Sidebar.css";
 import { FaSignOutAlt, FaUser, FaUserFriends } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
+  function handleLogout() {
+    navigate("/LoginSignup", { state: { playerIdTransfered: ""} });
+  }
 
   const toggleSidebar = () => setIsOpen(!isOpen);
 
   const renderSidebar = () => {
+
     return (
     <>
       <div className={`sidebar-container ${isOpen ? "open" : ""}`}>
@@ -17,7 +23,7 @@ function Sidebar() {
         <div className="sidebar-content">
           <button className="sidebar-item"><FaUser />  Profile</button>
           <button className="sidebar-item"><FaUserFriends/>  Friend List</button>
-          <button className="sidebar-item logout"><FaSignOutAlt/>  Logout</button>
+          <button className="sidebar-item logout" onClick={handleLogout}><FaSignOutAlt/>  Logout</button>
         </div>
       </div>
     </>);

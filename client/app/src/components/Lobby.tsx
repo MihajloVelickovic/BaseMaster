@@ -5,6 +5,12 @@ import "../styles/Lobby.css";
 import axiosInstance from "../utils/axiosInstance";
 import { useEffect, useState, useRef } from "react";
 
+function getUserName (id: string) {
+    if (id && id != "") {
+      return id.split("_")[0];
+    }
+    return "";
+}
 
 export default function Lobby () {
     const location = useLocation();
@@ -146,7 +152,7 @@ export default function Lobby () {
                 {players.map((id, index) => (
                     <div key={index} className={`playerEntry ${id === hostIdState ? "hostPlayer" : ""} ${id === playerID ? "currentPlayer" : ""}`}>
                         <span className="playerIndex">{index + 1}.</span>
-                        <span className="playerName">{id}</span>
+                        <span className="playerName">{getUserName(id)}</span>
                         {id === hostIdState && <span className="hostBadge">👑 Host</span>}
                     </div>
                 ))}

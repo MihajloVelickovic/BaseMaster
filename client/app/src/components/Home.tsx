@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import "../styles/Home.css"
 import { JSXElementConstructor, ReactElement, ReactNode, ReactPortal, useEffect, useState } from "react";
 import axiosInstance from "../utils/axiosInstance";   //ovde za sad ne treba
@@ -11,12 +11,23 @@ const gameID = "gameID";
 const playerID = Math.floor(Math.random()*10000).toString();
 console.log(playerID);
 
+function getUserName (id: string) {
+  if (id && id != "") {
+    return id.split("_")[0];
+  }
+  return "";
+}
+
 function Home() {
+  const location = useLocation();
+  var { playerIdTransfered = ""} = location.state || {};
   const [toBase, setToBase] = useState(2);
   const [playerNum, setPlayerNum] = useState(1);
   const [gameMode, setGameMode] = useState(GameModes.CLASSIC.toString());
   const [difficulty, setDifficulty] = useState(Difficulties.LAYMAN.toString());
   const [gameId, setGameId] = useState(null);
+  const [playerId, setPlayerId] = useState<string>(playerIdTransfered);
+
 
   const [browsingLobbies, setBrowsingLobbies] = useState(false);
   const [lobbies, setLobbies] = useState<[string, number, number, string][]>([]);
@@ -35,8 +46,11 @@ function Home() {
   
   useEffect(() => {
     if (gameId) {
-      navigate("/Lobby", { state: { toBasee:toBase, playerNum, gameMode, difficulty, gameId, playerID, roundCount, lobbyName, hostId: playerID } });
+      navigate("/Lobby", { state: { toBasee:toBase, playerNum, gameMode, difficulty, gameId, playerID: playerId!=""? playerId : playerID, roundCount, lobbyName, hostId: playerId!=""? playerId : playerID } });
     }
+    // console.log("here");
+    // console.log(location.state?.playerIdTransfered, "this is it");
+    // setPlayerId(location.state?.playerIdTransfered);
   }, [gameId]);  // This effect runs when `gameId` is updated
 
   const createGame = async () => {
@@ -46,11 +60,11 @@ function Home() {
           playerCount: playerNum,
           roundCount: Math.max(1, Math.min(roundCount, 128)),
           difficulty: difficulty,
-          hostId:playerID,
+          hostId:playerId!=""? playerId : playerID,
           toBase:toBase,
           lobbyName: lobbyName.trim() || "NONE"
         };
-        var response = await axiosInstance.post('/game/createGame', toSend);
+        var response = await axiosInstance.post('/game/createGame', {toSend});
         console.log("response za createGame je: ", response);
         const gId = response.data[`${gameID}`];        //check the name.. if changed
         console.log("gameId je: ", gId);
@@ -98,7 +112,7 @@ function Home() {
   }
 
   try {
-      const response = await axiosInstance.post('/game/joinLobby', { gameId: selectedGameId, playerId: playerID });
+      const response = await axiosInstance.post('/game/joinLobby', { gameId: selectedGameId, playerId: playerId!=""? playerId : playerID });
       console.log(response);
 
       const { gameId, gameData, players, lobbyName } = response.data;
@@ -112,7 +126,7 @@ function Home() {
       const finalLobbyName = lobbyName;
 
       navigate("/Lobby", { state: { toBase, playerNum, gameMode,
-                           difficulty, gameId: selectedGameId, playerID,
+                           difficulty, gameId: selectedGameId, playerID: playerId!=""? playerId : playerID,
                             hostId, roundCount, playerIds:playerIds, lobbyName:finalLobbyName } });
 
   } catch (error: any) {

@@ -8,6 +8,13 @@ var maxVal:bigint = BigInt(255);
 var numToFind = getRandomNumber(1, Number(maxVal));   //this appears to be unneeded
 const maxBase = 32;
 
+function getUserName (id: string) {
+  if (id && id != "") {
+    return id.split("_")[0];
+  }
+  return "";
+}
+
 function clcBtnCount(base:bigint, maxValue:bigint) {
   var count = 0, currVal=maxValue;
   while(currVal > 0) {
@@ -289,7 +296,7 @@ function Game() {
         <h2>Scoreboard</h2>
         <ul>
           {scoreboard.map((player, index) => (
-            <li key={index}>{player.value}: {player.score} pts</li>
+            <li key={index}>{getUserName(player.value)}: {player.score} pts</li>
           ))}
           <button className="leaveGameButton" onClick={() => setShowExitConfirm(true)}>
             Exit Game
