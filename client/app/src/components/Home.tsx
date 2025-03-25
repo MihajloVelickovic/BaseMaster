@@ -156,10 +156,10 @@ function Home() {
           <div className="lobbyColumnNames">
             <div className="lobbyColumnNameItem">Game</div>
             <div className="lobbyColumnNameItem lobbyColumnNameItemPlayer">Players
+            </div>
             <button className="refresh-button-small" onClick={fetchLobbies}>
               🔄
-              </button>  
-            </div>
+            </button>  
             
           </div>
           

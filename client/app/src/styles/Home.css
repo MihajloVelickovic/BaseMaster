@@ -126,7 +126,7 @@ input.inputFont {
 
 .lobbyColumnNames {
   display: grid;
-  grid-template-columns: 2fr 2fr; /* Game and Players take equal space, refresh takes minimal space */
+  grid-template-columns: 5fr 5fr 1fr; /* Game and Players take equal space, refresh takes minimal space */
   align-items: center;
   width: 100%;
   color: #32E537;
