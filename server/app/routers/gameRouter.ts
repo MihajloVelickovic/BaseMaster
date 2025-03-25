@@ -31,7 +31,7 @@ gameRouter.post("/createGame", async (req: any, res:any) => {
         return res.status(400).send({message: "Invalid player count"});
     if(roundCount <= 0)
         return res.status(400).send({message: "Invalid round count"});
-    if(difficulty === undefined)
+    if(diffProcessed === undefined)
         return res.status(400).send({message: "Invalid difficulty option"});
 
     var maxValue = maxValueFromDifficulty(diffProcessed);

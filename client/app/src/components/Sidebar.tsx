@@ -7,6 +7,7 @@ function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
   function handleLogout() {
+    toggleSidebar();
     navigate("/LoginSignup", { state: { playerIdTransfered: ""} });
   }
 
