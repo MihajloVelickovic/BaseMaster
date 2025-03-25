@@ -64,7 +64,7 @@ function Home() {
           toBase:toBase,
           lobbyName: lobbyName.trim() || "NONE"
         };
-        var response = await axiosInstance.post('/game/createGame', {toSend});
+        var response = await axiosInstance.post('/game/createGame', toSend);
         console.log("response za createGame je: ", response);
         const gId = response.data[`${gameID}`];        //check the name.. if changed
         console.log("gameId je: ", gId);

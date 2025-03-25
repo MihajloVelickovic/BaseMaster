@@ -23,29 +23,30 @@ gameRouter.post("/createGame", async (req: any, res:any) => {
             hostId,
             toBase,
             lobbyName
-        } = req.body;
+    } = req.body;
           
-    const diffProcessed = fromStringDiff(difficulty);
+    const gameOptions = new GameOptions({
+        gamemode:fromStringGM(gamemode),
+        playerCount,
+        roundCount,
+        difficulty:fromStringDiff(difficulty),
+        hostId,
+        lobbyName  
+    });
+
 
     if(playerCount <= 0)
         return res.status(400).send({message: "Invalid player count"});
     if(roundCount <= 0)
         return res.status(400).send({message: "Invalid round count"});
-    if(diffProcessed === undefined)
+    console.log(gameOptions.difficulty)
+    if(gameOptions.difficulty === undefined)
         return res.status(400).send({message: "Invalid difficulty option"});
 
-    var maxValue = maxValueFromDifficulty(diffProcessed);
+    var maxValue = maxValueFromDifficulty(gameOptions.difficulty);
     if(maxValue === -1)
         return res.status(400).send({message: "Could not process difficulty"});
 
-    const gameOptions = new GameOptions({
-        gamemode:fromStringGM(gamemode),
-        playerCount,
-        roundCount,
-        difficulty:diffProcessed,
-        hostId,
-        lobbyName  
-    });
 
     var randomNums = Array.from({length:roundCount}, (_,i) => 
         Math.floor(Math.random() * maxValue) + 1
