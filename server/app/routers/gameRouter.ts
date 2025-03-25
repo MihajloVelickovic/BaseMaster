@@ -14,8 +14,7 @@ import { receiveMessageOnPort } from "worker_threads";
 const gameRouter = Router();
 
 gameRouter.post("/createGame", async (req: any, res:any) => {
-    console.log(req.body);
-    //console.log("someting");
+    console.log(req.body); //DEBUG
     const {
             gamemode,
             playerCount,
@@ -26,15 +25,7 @@ gameRouter.post("/createGame", async (req: any, res:any) => {
             lobbyName
         } = req.body;
           
-    const gameOptions = new GameOptions({
-        gamemode:fromStringGM(gamemode),
-        playerCount,
-        roundCount,
-        difficulty:fromStringDiff(difficulty),
-        hostId,
-        lobbyName  
-    });
-
+    const diffProcessed = fromStringDiff(difficulty);
 
     if(playerCount <= 0)
         return res.status(400).send({message: "Invalid player count"});
@@ -43,19 +34,26 @@ gameRouter.post("/createGame", async (req: any, res:any) => {
     if(difficulty === undefined)
         return res.status(400).send({message: "Invalid difficulty option"});
 
-    var maxValue = maxValueFromDifficulty(gameOptions.difficulty);
-
+    var maxValue = maxValueFromDifficulty(diffProcessed);
     if(maxValue === -1)
         return res.status(400).send({message: "Could not process difficulty"});
 
-    var randomNums = Array.from({length:roundCount}, (_,i) => 
-        Math.floor(Math.random()*maxValue) + 1
-    );
+    const gameOptions = new GameOptions({
+        gamemode:fromStringGM(gamemode),
+        playerCount,
+        roundCount,
+        difficulty:diffProcessed,
+        hostId,
+        lobbyName  
+    });
 
+    var randomNums = Array.from({length:roundCount}, (_,i) => 
+        Math.floor(Math.random() * maxValue) + 1
+    );
     
     var gameId = `${gamemode}_${nanoid()}`; // upisati u redis i vratiti ID
     
-    console.log(gameOptions.gamemode);
+    console.log(gameOptions.gamemode); //DEBUG
 
     try {
         //save random numbers
@@ -116,8 +114,7 @@ gameRouter.post("/getCurrNum", async (req:any, res:any) => {
         
         await redisClient.zIncrBy(scoreboardID, correct ? 100 : 0, playerId );
         
-        const scoreboard = await 
-        redisClient.zRangeWithScores(scoreboardID, 0, -1);
+        const scoreboard = await redisClient.zRangeWithScores(scoreboardID, 0, -1);
         
         scoreboard.reverse();
 
@@ -152,7 +149,8 @@ gameRouter.post("/getCurrNum", async (req:any, res:any) => {
 
 
 gameRouter.post("/joinLobby", async (req:any, res:any) => {
-    console.log("join Lobby is here");
+    console.log("join Lobby is here"); //DEBUG
+    
     const {
         gameId,
         playerId
@@ -166,22 +164,21 @@ gameRouter.post("/joinLobby", async (req:any, res:any) => {
 
     const lobbyName = await redisClient.hGet(IdPrefixes.LOBBIES_NAMES, gameId);
 
-
     if(!gameData)
         return res.status(404).send({message: "Requested lobby does not exsist"});
     if(!lobbyData)
         return res.status(404).send({message: "Requested game does not exsist"});
-    var parcedData = JSON.parse(gameData);
+    var parsedData = JSON.parse(gameData);
     
-    const maxPlayerCount = parcedData.maxPlayers;
+    const maxPlayerCount = parsedData.maxPlayers;
     if(Number(lobbyData) >= Number(maxPlayerCount))
         return res.status(404).send({message: "Lobby is full"});  
 
     try {        
-        parcedData.currPlayerCount = 
-        (Number(parcedData.currPlayerCount) + 1).toString();
+        parsedData.currPlayerCount = 
+        (Number(parsedData.currPlayerCount) + 1).toString();
         
-        await redisClient.set(gameId, JSON.stringify(parcedData));
+        await redisClient.set(gameId, JSON.stringify(parsedData));
 
         await redisClient.zAdd(scoreboardID, { score: 0, value: playerId });
 
@@ -204,13 +201,13 @@ gameRouter.post("/joinLobby", async (req:any, res:any) => {
         //needed since we may join after the message is sent
        
 
-        console.log("Success", gameId, parcedData);
+        console.log("Success", gameId, parsedData);
 
         publisher.publish(`${IdPrefixes.PLAYER_JOIN}_${gameId}`,
                             JSON.stringify({playerID:playerId}));
 
         return res.send({message:"Success", gameId:gameId,
-        gameData: {...parcedData, roundCount:roundCount}, players:players, lobbyName: lobbyName || gameId.slice(-5)});
+        gameData: {...parsedData, roundCount:roundCount}, players:players, lobbyName: lobbyName || gameId.slice(-5)});
     }
     catch(err:any) {
         return res.status(404).send({message: err.message});

@@ -18,6 +18,7 @@ const publisher = createClient({
     port: Number(REDIS_PORT)
   }
 });
+
 const subscriber = createClient({
   username: 'default',
   password: REDIS_PASSWORD,
