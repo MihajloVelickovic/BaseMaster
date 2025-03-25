@@ -422,7 +422,7 @@ gameRouter.post("/leaveGame", async (req: any, res: any) => {
     }
 });
 
-gameRouter.post("/sendMessage", async (req:any, res:any) => {
+gameRouter.post("/sendLobbyMessage", async (req:any, res:any) => {
     const {
         playerId,
         message,
@@ -433,7 +433,7 @@ gameRouter.post("/sendMessage", async (req:any, res:any) => {
         return res.status(400).send({ message: "Error processing request" });
     if(!message)
         return res.status(400).send({ message: "Error processing request" });
-    if(!message)
+    if(!gameId)
         return res.status(400).send({ message: "Error processing request" });
 
     try {
@@ -443,6 +443,26 @@ gameRouter.post("/sendMessage", async (req:any, res:any) => {
         publisher.publish(`${IdPrefixes.MESSAGE_UPDATE}_${gameId}`,
              JSON.stringify({ playerId, message }));
         return res.send({ Message:"SENT", playerId, message });
+    } 
+    catch (err) {
+        console.error(err);
+        return res.status(500).send({ message: "Error processing message" });
+    }
+});
+
+gameRouter.post("/getLobbyMessages", async (req:any, res:any) => {
+    const {
+        gameId
+    } = req.body;
+
+    if(!gameId)
+        return res.status(400).send({ message: "Error processing request" });
+
+    try {
+        const messages = 
+        await redisClient.lRange(`${IdPrefixes.MESSAGE}_${gameId}`, 0,-1);
+        
+        return res.send({gameId:"SUCCESS", gmaeId:gameId, messages:messages });
     } 
     catch (err) {
         console.error(err);
