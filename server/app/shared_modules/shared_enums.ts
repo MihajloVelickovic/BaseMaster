@@ -61,7 +61,7 @@ export const fromStringGM = (value: string): GameModes | undefined => {
     return (Object.values(GameModes) as string[]).includes(value) ? (value as GameModes) : undefined;
 };
 
-export function maxValueFromDifficulty(diff:Difficulties) {
+export function maxValueFromDifficulty(diff:Difficulties | undefined) {
     var maxValue:number;
     switch(diff) {
         case Difficulties.LAYMAN:
