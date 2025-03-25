@@ -462,7 +462,7 @@ gameRouter.post("/getLobbyMessages", async (req:any, res:any) => {
         const messages = 
         await redisClient.lRange(`${IdPrefixes.MESSAGE}_${gameId}`, 0,-1);
         
-        return res.send({gameId:"SUCCESS", gmaeId:gameId, messages:messages });
+        return res.send({message:"SUCCESS", gmaeId:gameId, messages:messages });
     } 
     catch (err) {
         console.error(err);
