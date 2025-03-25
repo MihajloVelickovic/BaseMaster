@@ -455,13 +455,18 @@ gameRouter.post("/getLobbyMessages", async (req:any, res:any) => {
         gameId
     } = req.body;
 
+    console.log(req.body);
+
     if(!gameId)
         return res.status(400).send({ message: "Error processing request" });
 
     try {
-        const messages = 
+        var messages = 
         await redisClient.lRange(`${IdPrefixes.MESSAGE}_${gameId}`, 0,-1);
-        
+        messages = messages.map((e) => {
+            return JSON.parse(e);
+        })
+        console.log(messages);
         return res.send({message:"SUCCESS", gmaeId:gameId, messages:messages });
     } 
     catch (err) {

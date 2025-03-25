@@ -23,6 +23,10 @@ export default function Lobby () {
     const [players, setPlayers] = useState<string[]>
     (Array.isArray(playerIds) ? playerIds : playerID ? [playerID] : []);
     const [hostIdState, setHostIdState] = useState(hostId);
+    const [playerChat, setPlayerChat] = useState<string[]>([]);
+    const [chatInput, setChatInput] = useState(""); 
+
+    console.log("playerChat: ", playerChat);
    
     const startGameRef = useRef(false);
     useEffect(() => {
@@ -60,6 +64,7 @@ export default function Lobby () {
             }
             else if(data.type === IdPrefixes.MESSAGE_UPDATE) {
                 console.log("player: ", data.playerId, "message: ", data.playerMessage);
+                setPlayerChat(prevChat => [...prevChat, `${data.playerId}: ${data.playerMessage}`]);
             }   
         };
   
@@ -70,6 +75,17 @@ export default function Lobby () {
     // function handleStartGame() {
     //     setStartGameFlag(true);
     // }
+
+    async function sendPlayerChatMessage() {
+        if (!chatInput.trim()) return; // Prevent sending empty messages
+
+        try {
+            await axiosInstance.post('/game/sendLobbyMessage', { playerId: playerID, message: chatInput, gameId });
+            setChatInput(""); // Clear input after sending
+        } catch (error) {
+            console.error("Error sending message:", error);
+        }
+    }
 
     const handleStartGame = async () => {
         var response = await axiosInstance.post('/game/setGameState', {gameId, gameState:GameStates.STARTED});      //ovde treba da se posalje i lobby name i roundCount
@@ -90,11 +106,23 @@ export default function Lobby () {
         }
     };
 
+    const getPlayerChat = async () => {
+        var response = await axiosInstance.post('/game/getLobbyMessages', {gameId});
+        var res = response.data['messages'];
+        console.log("ovo je res: ",res);
+        res = res.map((e:any) => {
+            return `${e.playerId}: ${e.message}`
+        })
+        setPlayerChat(res);
+    }
 
     useEffect(() => {
         const handleBeforeUnload = () => leaveLobby();
     
         window.addEventListener("beforeunload", handleBeforeUnload);
+
+        //adding chat functions
+        getPlayerChat();
     
         return () => {
             if(!startGameRef.current)
@@ -130,9 +158,32 @@ export default function Lobby () {
             </div>
         );
     }
-
+    console.log("player chat pre poslednjeg: ", playerChat);
     return (                                                // change the label txt to LOBBY on release
         <div className="lobbyScreen">
+            <div>
+                <div className="playerList">
+                <label className="playersText"> Chat </label>
+                {playerChat.map((id, index) => (
+                    <div key={index} className="playerEntry">
+                        <span className="playerName">{id}</span>
+                        
+                    </div>
+                ))}
+                <div className="chatInputContainer">
+                    <input
+                        type="text"
+                        value={chatInput}
+                        onChange={(e) => setChatInput(e.target.value)}
+                        placeholder="Type a message..."
+                        className="chatInput"
+                    />
+                    <button onClick={sendPlayerChatMessage} className="sendMessageButton">
+                        Send
+                    </button>
+                </div>
+            </div>
+            </div>
             <div className="LobbyContainer ">
                 <label className="mainLobbyText"> {lobbyName}'s Lobby </label>            
                 {showLobbyStats()}
