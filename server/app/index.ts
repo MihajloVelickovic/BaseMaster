@@ -133,6 +133,7 @@ subscriber.pSubscribe(`${IdPrefixes.PlAYER_LEAVE}_*`, async (message, channel) =
     const lobbyId = channel.replace(`${IdPrefixes.PlAYER_LEAVE}_`, ""); // Extract game ID
     const parsedMessage = JSON.parse(message);
     const playerId = parsedMessage.playerID;
+    const newHost = parsedMessage.newHost;
 
     if (wsClients.has(lobbyId)) {
         wsClients.get(lobbyId).forEach(client => {
@@ -140,7 +141,8 @@ subscriber.pSubscribe(`${IdPrefixes.PlAYER_LEAVE}_*`, async (message, channel) =
                 client.send(JSON.stringify({
                     type: `${IdPrefixes.PlAYER_LEAVE}`,
                     message: "Player left the game",
-                    playerId:playerId
+                    playerId:playerId,
+                    newHost:newHost
                 }));
             }
         });

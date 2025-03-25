@@ -16,7 +16,8 @@ export default function Lobby () {
     const [startGameFlag, setStartGameFlag] = useState(false);
     const [players, setPlayers] = useState<string[]>
     (Array.isArray(playerIds) ? playerIds : playerID ? [playerID] : []);
-
+    const [hostIdState, setHostIdState] = useState(hostId);
+   
     const startGameRef = useRef(false);
     useEffect(() => {
         startGameRef.current = startGameFlag; 
@@ -45,8 +46,11 @@ export default function Lobby () {
                 );
             }
             else if(data.type === IdPrefixes.PlAYER_LEAVE) {
-                console.log("Player joined the lobby: ",data.playerId);
+                console.log("Player left the lobby: ",data.playerId);
                 setPlayers(prevPlayers => prevPlayers.filter(id => id !== data.playerId));
+                if(data.newHost){
+                    setHostIdState(data.newHost);  
+                }
             }
         };
   
@@ -124,7 +128,7 @@ export default function Lobby () {
                 <label className="mainLobbyText"> {lobbyName} Lobby </label>            
                 {showLobbyStats()}
 
-                {playerID === hostId ? (
+                {playerID === hostIdState ? (
                     <button className="startGameButton" onClick={handleStartGame}>
                         Start Game!
                     </button>
@@ -140,10 +144,10 @@ export default function Lobby () {
             <div className="playerList">
                 <label className="playersText"> Players </label>
                 {players.map((playerID, index) => (
-                    <div key={index} className={`playerEntry ${playerID === hostId ? "hostPlayer" : ""}`}>
+                    <div key={index} className={`playerEntry ${playerID === hostIdState ? "hostPlayer" : ""}`}>
                         <span className="playerIndex">{index + 1}.</span>
                         <span className="playerName">{playerID}</span>
-                        {playerID === hostId && <span className="hostBadge">👑 Host</span>}
+                        {playerID === hostIdState && <span className="hostBadge">👑 Host</span>}
                     </div>
                 ))}
             </div>

@@ -84,8 +84,11 @@ gameRouter.post("/createGame", async (req: any, res:any) => {
         await redisClient.zAdd(`${IdPrefixes.PLAYER_POINTS}_${gameId}`, 
                                 { score: 0, value: hostId });                              
         
-        await redisClient.rPush(`${IdPrefixes.LOBBY_PLAYERS}_${gameId}`,
-                                hostId);
+        const now = Date.now();
+        await redisClient.zAdd(`${IdPrefixes.LOBBY_PLAYERS}_${gameId}`, {
+            score:now,
+            value:hostId
+        });
                                         
         res.send({message:`Game created succesfully`, gameID:gameId});
     } catch (err) {
@@ -181,11 +184,14 @@ gameRouter.post("/joinLobby", async (req:any, res:any) => {
 
         await redisClient.hIncrBy(IdPrefixes.LOBBIES_CURR_PLAYERS,gameId,1);
 
-        await redisClient.rPush(`${IdPrefixes.LOBBY_PLAYERS}_${gameId}`,
-                                 playerId);
+        const now=Date.now();
+        await redisClient.zAdd(`${IdPrefixes.LOBBY_PLAYERS}_${gameId}`,{
+            score: now,
+            value: playerId
+        });
         
         const players = await 
-        redisClient.lRange(`${IdPrefixes.LOBBY_PLAYERS}_${gameId}`, 0, -1);
+        redisClient.zRange(`${IdPrefixes.LOBBY_PLAYERS}_${gameId}`,0,-1);
         
         if(!players)
             return res.status(404).send({message: "Could not find lobby"});
@@ -336,21 +342,37 @@ gameRouter.post("/leaveLobby", async (req: any, res: any) => {
 
         let parsedData = JSON.parse(gameData);
 
+        const scoreboardID = `${IdPrefixes.PLAYER_POINTS}_${gameId}`;
+        await redisClient.zRem(scoreboardID, playerID);
+        await redisClient.zRem(`${IdPrefixes.LOBBY_PLAYERS}_${gameId}`, playerID);
+
+        const remainingPlayers = await redisClient.zRange(`${IdPrefixes.LOBBY_PLAYERS}_${gameId}`,0,-1);
+
+        var newHost : string|null=null;
         if (parsedData.currPlayerCount > 1) {
             parsedData.currPlayerCount -= 1;
             await redisClient.set(gameId, JSON.stringify(parsedData));
             await redisClient.hIncrBy(IdPrefixes.LOBBIES_CURR_PLAYERS, gameId, -1);
+
+            if(remainingPlayers.length>0)
+            {
+                newHost = remainingPlayers[0];
+                console.log(newHost);
+            }
+                
         } else {
             await CleanupGameContext(gameId);
             await redisClient.hDel(IdPrefixes.LOBBIES_CURR_PLAYERS, gameId);
             await redisClient.hDel(IdPrefixes.LOBBIES_MAX_PLAYERS, gameId);
+            await redisClient.del(`${IdPrefixes.LOBBY_PLAYERS}_${gameId}`);
         }
 
-        const scoreboardID = `${IdPrefixes.PLAYER_POINTS}_${gameId}`;
-        await redisClient.zRem(scoreboardID, playerID);
 
-        publisher.publish(`${IdPrefixes.PlAYER_LEAVE}_${gameId}`,
-                           JSON.stringify({playerID:playerID}));
+        publisher.publish(`${IdPrefixes.PlAYER_LEAVE}_${gameId}`, JSON.stringify({
+            type:IdPrefixes.PlAYER_LEAVE,
+            playerID,
+            newHost: newHost
+        }));
 
         return res.status(200).send({ message: "Player left the lobby successfully" });
     } catch (err) {
