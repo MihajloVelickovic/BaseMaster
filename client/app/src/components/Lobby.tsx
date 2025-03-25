@@ -64,7 +64,7 @@ export default function Lobby () {
             }
             else if(data.type === IdPrefixes.MESSAGE_UPDATE) {
                 console.log("player: ", data.playerId, "message: ", data.playerMessage);
-                setPlayerChat(prevChat => [...prevChat, `${data.playerId}: ${data.playerMessage}`]);
+                setPlayerChat(prevChat => [...prevChat, `${getUserName(data.playerId)}: ${data.playerMessage}`]);
             }   
         };
   
@@ -111,7 +111,7 @@ export default function Lobby () {
         var res = response.data['messages'];
         console.log("ovo je res: ",res);
         res = res.map((e:any) => {
-            return `${e.playerId}: ${e.message}`
+            return `${getUserName(e.playerId)}: ${e.message}`
         })
         setPlayerChat(res);
     }
