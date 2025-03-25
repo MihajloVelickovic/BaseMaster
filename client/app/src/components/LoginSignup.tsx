@@ -8,6 +8,7 @@ interface FormValues {
     email: string;
     password: string;
     confirmPassword?: string;
+
 }
 
 interface FormErrors {
@@ -62,6 +63,9 @@ const LoginSignup: React.FC = () => {
                         email: formValues.email,
                         password: formValues.password
                     });
+                    console.log("passed");
+                    let msg, pass = response.data;
+                    console.log(msg, pass);
                     console.log(response);
                     //setUserId(response.data.userId);
                 } else {
@@ -73,12 +77,14 @@ const LoginSignup: React.FC = () => {
                     console.log(response);
                     //setUserId(response.data.userId);
                 }
-            } catch (error) {
-                setFormErrors({ serverResponse: "Server error, try again later" });
+            } catch (error: any) {
+                let msg = error.response.data.message;
+                setFormErrors({ serverResponse: msg? msg : "Error occured.." });
             }
         }
     };
 
+    
     return (
         <div className="LoginSignupContainer">            
             <div className="lobbyOptionDiv">
@@ -131,6 +137,7 @@ const LoginSignup: React.FC = () => {
                         {formErrors.confirmPassword && <p className="loginSignupErrors">{formErrors.confirmPassword}</p>}
                     </>
                 )}
+                {formErrors.serverResponse && <p className="loginSignupErrors">{formErrors.serverResponse}</p>}
                 <button className="createLobbyButton" type="submit">{action}</button>
             </form>
             {userId && <p>Logged in as: {formValues.username}_{userId}</p>}

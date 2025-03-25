@@ -65,7 +65,7 @@ userRouter.post("/login", async (req:any, res:any) => {
         const fullUsername = await redisClient.hGet(IdPrefixes.USER_EMAILS, email);
 
         if(!fullUsername)
-            return res.status(404).send({message: `Wrong email or password`});
+            return res.status(400).send({message: `Wrong email or password`});
 
         const realPassword = await redisClient.get(fullUsername);
 
