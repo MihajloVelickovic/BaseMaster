@@ -149,6 +149,26 @@ subscriber.pSubscribe(`${IdPrefixes.PlAYER_LEAVE}_*`, async (message, channel) =
     }
 });
 
+subscriber.pSubscribe(`${IdPrefixes.MESSAGE_UPDATE}_*`, async (message, channel) => {
+    const lobbyId = channel.replace(`${IdPrefixes.MESSAGE_UPDATE}_`, ""); // Extract game ID
+    const parsedMessage = JSON.parse(message);
+    const playerId = parsedMessage.playerId;
+    const pMessage = parsedMessage.message;
+
+    if (wsClients.has(lobbyId)) {
+        wsClients.get(lobbyId).forEach(client => {
+            if (client.readyState === 1) {
+                client.send(JSON.stringify({
+                    type: `${IdPrefixes.MESSAGE_UPDATE}`,
+                    message: "Player joined the game",
+                    playerId:playerId,
+                    playerMessage: pMessage
+                }));
+            }
+        });
+    }
+});
+
 app.use("/game", gameRouter);
 app.use("/user", userRouter);
 

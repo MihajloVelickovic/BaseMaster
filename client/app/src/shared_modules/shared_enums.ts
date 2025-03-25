@@ -31,10 +31,13 @@ export enum IdPrefixes {
     LOBBIES_NAMES = "LOBBIES_NAMES",
     ALL_PLAYERS_COMPLETE = "ALL_PLAYERS_COMPLETE",
     SCOREBOARD_UPDATE = "SCOREBOARD_UPDATE",
+    MESSAGE_UPDATE = "MESSAGE_UPDATE",
     USER_EMAILS = "USER_EMAILS",
     USERNAMES = "USERNAMES",
     PLAYER_JOIN = "PLAYER_JOIN",
-    PlAYER_LEAVE = "PLAYER_LEAVE"
+    PlAYER_LEAVE = "PLAYER_LEAVE",
+    LOBBY_PLAYERS = "lp",
+    MESSAGE = "msg"
 }
 
 export enum BaseValues {
@@ -60,7 +63,7 @@ export const fromStringGM = (value: string): GameModes | undefined => {
     return (Object.values(GameModes) as string[]).includes(value) ? (value as GameModes) : undefined;
 };
 
-export function maxValueFromDifficulty(diff:Difficulties) {
+export function maxValueFromDifficulty(diff:Difficulties | undefined) {
     var maxValue:number;
     switch(diff) {
         case Difficulties.LAYMAN:

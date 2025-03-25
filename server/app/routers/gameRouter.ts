@@ -422,6 +422,34 @@ gameRouter.post("/leaveGame", async (req: any, res: any) => {
     }
 });
 
+gameRouter.post("/sendMessage", async (req:any, res:any) => {
+    const {
+        playerId,
+        message,
+        gameId
+    } = req.body;
+
+    if(!playerId)
+        return res.status(400).send({ message: "Error processing request" });
+    if(!message)
+        return res.status(400).send({ message: "Error processing request" });
+    if(!message)
+        return res.status(400).send({ message: "Error processing request" });
+
+    try {
+        // MIHAJLO VELICKOVIC: NAPRAVI OVO CUVANJE DA IDE NA NEO4J!!!!!
+        await redisClient.rPush(`${IdPrefixes.MESSAGE}_${gameId}`,
+                                 JSON.stringify({ playerId, message }));
+        publisher.publish(`${IdPrefixes.MESSAGE_UPDATE}_${gameId}`,
+             JSON.stringify({ playerId, message }));
+        return res.send({ Message:"SENT", playerId, message });
+    } 
+    catch (err) {
+        console.error(err);
+        return res.status(500).send({ message: "Error processing message" });
+    }
+});
+
 
 async function addChaosBaseArrays(roundCount:number, gameId:String) {
     console.log("Entering chaos bases creation....");

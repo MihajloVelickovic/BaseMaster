@@ -58,6 +58,9 @@ export default function Lobby () {
                     setHostIdState(data.newHost);  
                 }
             }
+            else if(data.type === IdPrefixes.MESSAGE_UPDATE) {
+                console.log("player: ", data.playerId, "message: ", data.playerMessage);
+            }   
         };
   
         return () => ws.close(); // Cleanup WebSocket on unmount
