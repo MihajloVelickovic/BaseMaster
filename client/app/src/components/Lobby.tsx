@@ -25,9 +25,14 @@ export default function Lobby () {
     const [hostIdState, setHostIdState] = useState(hostId);
     const [playerChat, setPlayerChat] = useState<string[]>([]);
     const [chatInput, setChatInput] = useState(""); 
+    const chatEndRef = useRef<HTMLDivElement | null>(null);
 
     console.log("playerChat: ", playerChat);
    
+    useEffect(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [playerChat]); 
+
     const startGameRef = useRef(false);
     useEffect(() => {
         startGameRef.current = startGameFlag; 
@@ -41,6 +46,13 @@ export default function Lobby () {
 
         ws.onopen = () => {         
             ws.send(JSON.stringify({ type: "joinLobby", gameId, playerID }));
+
+            if(playerID === hostId) {
+                setPlayerChat(prevChat => [...prevChat, "You created a lobby."]);
+            }
+            else {
+                setPlayerChat(["You joined a lobby."]);
+            }
         };
         
         ws.onmessage = (event) => {
@@ -54,6 +66,12 @@ export default function Lobby () {
                 setPlayers(prevPlayers => 
                     prevPlayers.includes(data.playerId) ? prevPlayers : [...prevPlayers, data.playerId]
                 );
+
+                if (data.playerId === playerID) {
+                    setPlayerChat(["You joined a lobby."]); // Clear old chat
+                } else {
+                    setPlayerChat(prevChat => [...prevChat, `Player ${getUserName(data.playerId)} joined the lobby.`]);
+                }
             }
             else if(data.type === IdPrefixes.PlAYER_LEAVE) {
                 console.log("Player left the lobby: ",data.playerId);
@@ -61,6 +79,8 @@ export default function Lobby () {
                 if(data.newHost){
                     setHostIdState(data.newHost);  
                 }
+
+                setPlayerChat(prevChat => [...prevChat, `Player ${getUserName(data.playerId)} left the lobby.`]);
             }
             else if(data.type === IdPrefixes.MESSAGE_UPDATE) {
                 console.log("player: ", data.playerId, "message: ", data.playerMessage);
@@ -109,12 +129,13 @@ export default function Lobby () {
     const getPlayerChat = async () => {
         var response = await axiosInstance.post('/game/getLobbyMessages', {gameId});
         var res = response.data['messages'];
-        console.log("ovo je res: ",res);
-        res = res.map((e:any) => {
-            return `${getUserName(e.playerId)}: ${e.message}`
-        })
-        setPlayerChat(res);
-    }
+    
+        setPlayerChat([playerID === hostId ? "You created a lobby." : "You joined a lobby."]);
+    
+        res = res.map((e:any) => `${getUserName(e.playerId)}: ${e.message}`);
+        setPlayerChat(prevChat => [...prevChat, ...res]);
+    };
+    
 
     useEffect(() => {
         const handleBeforeUnload = () => leaveLobby();
@@ -159,22 +180,37 @@ export default function Lobby () {
         );
     }
     console.log("player chat pre poslednjeg: ", playerChat);
-    return (                                                // change the label txt to LOBBY on release
+    return (  
         <div className="lobbyScreen">
-            <div>
-                <div className="playerList">
+            <div className="chatContainer">
                 <label className="playersText"> Chat </label>
-                {playerChat.map((id, index) => (
-                    <div key={index} className="playerEntry">
-                        <span className="playerName">{id}</span>
-                        
-                    </div>
-                ))}
+                <div className="chatMessages">
+                    {playerChat.map((message, index) => {
+                            const isSystemMessage = message.startsWith("Player") || message.startsWith("You");
+                            const [playerId, ...messageParts] = message.split(": ");
+                            const messageText = messageParts.join(": ");
+                            return (
+                                <div key={index} className={`chatMessage ${isSystemMessage ? "systemMessage" : ""}`}>
+                                    {isSystemMessage? (
+                                        <span className="systemText">{message}</span>
+                                    ) : (
+                                        <>
+                                            <span className="playerName">{playerId}:</span>
+                                            <span className="messageText">{messageText}</span>
+                                        </>
+                                    )}
+                                    
+                                </div>
+                            );        
+                    })}
+                    <div ref={chatEndRef}/>
+                </div>
                 <div className="chatInputContainer">
                     <input
                         type="text"
                         value={chatInput}
                         onChange={(e) => setChatInput(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && sendPlayerChatMessage()}
                         placeholder="Type a message..."
                         className="chatInput"
                     />
@@ -183,7 +219,7 @@ export default function Lobby () {
                     </button>
                 </div>
             </div>
-            </div>
+
             <div className="LobbyContainer ">
                 <label className="mainLobbyText"> {lobbyName}'s Lobby </label>            
                 {showLobbyStats()}
@@ -211,8 +247,7 @@ export default function Lobby () {
                     </div>
                 ))}
             </div>
-            
-        </div>
+        </div>  
     )
 
 }
