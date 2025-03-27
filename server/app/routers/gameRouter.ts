@@ -67,13 +67,13 @@ gameRouter.post("/createGame", async (req: any, res:any) => {
         
         var gameData = {difficulty:gameOptions.difficulty, maxPlayers:playerCount,
             currPlayerCount: 1, gameState: GameStates.LOBBY, base: toBase,
-            gamemode:gameOptions.gamemode
+            gamemode:gameOptions.gamemode, roundCount:roundCount
         }
 
         await redisClient.set(gameId, JSON.stringify(gameData)); // set max player count
              
         await redisClient.hSet(IdPrefixes.LOBBIES_CURR_PLAYERS, gameId,  1); //[gameid,curr,max]
-
+        
         await redisClient.hSet(IdPrefixes.LOBBIES_MAX_PLAYERS, gameId, playerCount);               
         
         if(gameOptions.lobbyName !== "NONE")
@@ -107,13 +107,23 @@ gameRouter.post("/getCurrNum", async (req:any, res:any) => {
         const num = await redisClient.lIndex(
             `${IdPrefixes.RANDOM_NUMBERS}_${gameId}`, currRound);
 
-        var fromBase ,toBase;
+        var fromBase ,toBase, orderBonus=0;
 
         const gamemode = fromStringGM(String(gameId).split("_")[0]);
         
         const scoreboardID = `${IdPrefixes.PLAYER_POINTS}_${gameId}`;
         
-        await redisClient.zIncrBy(scoreboardID, correct ? 100 : 0, playerId );
+        if(currRound > 0 && correct) {
+            orderBonus = await 
+            redisClient.hIncrBy(`${IdPrefixes.ORDER_POINTS}_${gameId}`,
+                                `${currRound}`, -1);
+            console.log(`Order bonus: ${orderBonus+1}`);
+        }
+        
+        const basePoints = 100;
+        const pointsToAdd = orderBonus * basePoints;
+
+        await redisClient.zIncrBy(scoreboardID, pointsToAdd, playerId );
         
         const scoreboard = await redisClient.zRangeWithScores(scoreboardID, 0, -1);
         
@@ -269,17 +279,26 @@ gameRouter.post("/setGameState", async (req:any, res:any) => {
             return res.status(404).send({message:"Could not fin the game"});
 
         const parcedData = JSON.parse(gameData);
-
-        parcedData.gameState = fromStringState(gameState);
+        //console.log(parcedData);
+        parcedData.gameState = fromStringState(gameState)
 
         await redisClient.set(`${IdPrefixes.GAME_END}_${gameId}`,
                                Number(parcedData.currPlayerCount));
 
         await redisClient.set(gameId, JSON.stringify(parcedData));
+        
+        const currPlayers = 
+        await redisClient.hGet(IdPrefixes.LOBBIES_CURR_PLAYERS, gameId);
+
+        if(!currPlayers)
+            return res.status(404).send({message: "could not find curr players"});
 
         await redisClient.hDel(IdPrefixes.LOBBIES_CURR_PLAYERS, gameId); // remove the data
 
         await redisClient.hDel(IdPrefixes.LOBBIES_MAX_PLAYERS, gameId);
+        
+        await setRounds(`${IdPrefixes.ORDER_POINTS}_${gameId}`,
+            parcedData.roundCount, Number(currPlayers) + 1);
 
         publisher.publish(
         `${IdPrefixes.GAME_STARTED}_${gameId}`,
@@ -315,6 +334,8 @@ gameRouter.post("/playerComplete", async (req:any, res:any) => {
         return res.send({message:"Player status saved"});
     
     try {
+        //Ove dodaj da se sacuvaju stvari u NEO4J, poruke i rezultat
+
         await CleanupGameContext(gameId);
 
         publisher.publish(`${IdPrefixes.ALL_PLAYERS_COMPLETE}_${gameId}`,
@@ -499,11 +520,23 @@ async function CleanupGameContext(gameId:string) {
     await redisClient.del(`${IdPrefixes.RANDOM_NUMBERS}_${gameId}`);
     await redisClient.del(`${IdPrefixes.PLAYER_POINTS}_${gameId}`);
     await redisClient.del(`${IdPrefixes.GAME_END}_${gameId}`);
+    await redisClient.del(`${IdPrefixes.MESSAGE}_${gameId}`);
+    await redisClient.del(`${IdPrefixes.ORDER_POINTS}_${gameId}`);
 
     if(gameId.split("_")[0] === GameModes.CHAOS) {
         await redisClient.del(`${IdPrefixes.FROM_BASE}_${gameId}`);
         await redisClient.del(`${IdPrefixes.TO_BASE}_${gameId}`);
     }
 }
+
+async function setRounds(gameId, roundCount, initialValue) {
+    // Prepare the fields and values as a key-value pair for the hash
+    const roundData = {};
+    for (let i = 1; i <= roundCount; i++) {
+      roundData[`${i}`] = initialValue;
+    }
+    //console.log("Order data: ", roundData);
+    await redisClient.hSet(gameId, roundData);
+  }
 
 export default gameRouter;

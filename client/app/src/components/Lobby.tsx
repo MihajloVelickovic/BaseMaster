@@ -211,7 +211,7 @@ export default function Lobby () {
                         value={chatInput}
                         onChange={(e) => setChatInput(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && sendPlayerChatMessage()}
-                        placeholder="Type a message..."
+                        placeholder="Type a message...."
                         className="chatInput"
                     />
                     <button onClick={sendPlayerChatMessage} className="sendMessageButton">
