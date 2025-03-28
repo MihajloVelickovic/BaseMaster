@@ -145,7 +145,7 @@ gameRouter.post("/getCurrNum", async (req:any, res:any) => {
         if(!scoreboard)
             return res.status(404).send({message:"Could not find the scoreboard"});
 
-        console.log("sending data to subscriber");
+        console.log("sending data to subscriber", scoreboard);
         publisher.publish(`${IdPrefixes.SCOREBOARD_UPDATE}_${gameId}`,
                            JSON.stringify(scoreboard));
 
