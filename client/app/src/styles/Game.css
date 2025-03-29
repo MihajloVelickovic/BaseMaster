@@ -162,30 +162,13 @@
 
 .Scoreboard {
     flex-grow: 1;
-    background: linear-gradient(rgba(255, 255, 242, 0.9), rgba(255, 255, 242, 0.5));
     margin-top: 20px;
-    /*padding: 15px;*/
-    /*background: white; /* Dark theme background */
     border-radius: 10px;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
     color: #009900;
     text-align: center;
-    width: 300px;
-    width: 20%;
-    max-width: 20%;
-    margin-right: 1vw;
     font-family: 'JetBrains Mono', monospace;
     font-size: 4vh;
-  }
-  
-  .Scoreboard h2 {
-    font-size: 4vh;
-    font-weight: bold;
-    margin-bottom: 10px;
-    color: #009900; /* Gold color */
-    border-bottom: 2px solid #009900;
-    display: inline-block;
-    padding-bottom: 5px;
+    background: linear-gradient(rgba(255, 255, 242, 0.9), rgba(255, 255, 242, 0.5));
   }
   
   .Scoreboard ul {
@@ -198,7 +181,6 @@
   .Scoreboard li {
     padding: 10px;
     font-size: 3vh;
-    background: white;
     color:#009900;
     margin: 5px 0;
     border-radius: 8px;
@@ -247,6 +229,9 @@
     border-radius: 8px;
     cursor: pointer;
     transition: background-color 0.3s ease-in-out;
+    text-align: center;
+    width: 75%;
+    margin:2vh auto;
 }
 
 .leaveGameButton:hover {
@@ -301,3 +286,100 @@
 .confirmationDialog button:last-child:hover {
     background-color: #31b0d5;
 }
+
+.infoContainer {
+    min-width: 380px;
+    max-width: 380px; 
+    padding: 10px;
+    border-radius: 8px;
+    background: linear-gradient(rgba(255, 255, 242, 0.9), rgba(255, 255, 242, 0.5));
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+    max-height: 49vh;
+    margin: 2vh;
+    font-family: 'JetBrains Mono', monospace;
+    text-align: center;
+    display:flex;
+    flex-direction: column;
+  }
+  
+  .toggleContainer {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 10px;
+    font-size: 19px;
+  }
+  
+  .toggleButton {
+    padding: 10px 15px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    background-color: #6c757d;
+    color:white;
+    border-radius: 5px;
+    transition: 0.3s;
+    flex: 1;  
+    text-align: center;
+  }
+  
+  .toggleButton:hover{
+    background-color:#5c636a;
+  }
+  .toggleButton.active {
+    background-color: green;
+    color: white;
+  }
+
+  .gameChatMessages{
+  width: 100%; 
+  overflow-y: auto;  
+  display: flex;
+  flex-direction: column; 
+  background-color: rgb(255, 255, 255);
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  margin-top: 5px;
+  white-space: normal;
+  height: 34vh;
+  text-align: left;
+  }
+
+  .gameChatContainer{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #FFFFF2;
+  }
+
+  .gamePlayerName {
+    color: #009900;
+    flex-grow: 1;
+    text-align: left;
+    white-space: nowrap;
+    font-weight: bold;
+  }
+
+  .gameMessageText{
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    padding: 5px;
+    color: #5ed15e;
+  }
+
+  .gameSendMessageButton{
+    background-color: #009900;
+    color: white;
+    font-size: 16px;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease-in-out;
+  }
+
+  .gameSendMessageButton:hover {
+    background-color: #036603;
+  }
+  
+

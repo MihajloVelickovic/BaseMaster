@@ -458,6 +458,11 @@ gameRouter.post("/leaveGame", async (req: any, res: any) => {
         publisher.publish(`${IdPrefixes.SCOREBOARD_UPDATE}_${gameId}`,
             JSON.stringify(scoreboard));
 
+        publisher.publish(`${IdPrefixes.PlAYER_LEAVE}_${gameId}`, JSON.stringify({
+            type:IdPrefixes.PlAYER_LEAVE,
+            playerID,
+        }));
+
         return res.status(200).send({ message: "Player left the game successfully" });
     } catch (err) {
         console.error(err);

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import "../styles/Game.css";
 import { useLocation, useNavigate } from "react-router-dom";
 import { GameModes, Difficulties, DifficultyValues, IdPrefixes } from "../shared_modules/shared_enums";
@@ -41,6 +41,15 @@ function Game() {
   const [scoreboard, setScoreboard] = useState<{ value: string, score: number }[]>([]);
   const [finished, setFinished] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [showChat, setShowChat] = useState(false);
+  const [playerChat, setPlayerChat] = useState<string[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const chatEndRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+}, [playerChat]);
+
   const navigate = useNavigate();
   var { toBasee = 2, playerNum = 1, gameMode = GameModes.CLASSIC.toString(), difficulty = Difficulties.LAYMAN.toString(), gameId = "", playerID = "" , roundCount} = location.state || {};
   console.log("toBasee je: ", toBasee);
@@ -81,11 +90,16 @@ function Game() {
 
   ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      console.log(data);
       if (data.type === IdPrefixes.SCOREBOARD_UPDATE) {
-        console.log("the type is that..");
         setScoreboard(data.scores);
-    }
+      } 
+      else if(data.type === IdPrefixes.PlAYER_LEAVE) {
+        setPlayerChat(prevChat => [...prevChat, `Player ${getUserName(data.playerId)} left the game.`]);
+      }
+      else if(data.type === IdPrefixes.MESSAGE_UPDATE){
+        setPlayerChat(prevChat => [...prevChat, `${data.playerId}: ${data.playerMessage}`]);
+      }
+    
   };
 
   updateGameState("GAME STARTED");
@@ -97,6 +111,16 @@ function Game() {
 
   console.log("toBase: "+toBase+" playerNum: "+playerNum+" gameMode: "+gameMode+" difficulty: "+difficulty+ " gameId: "+gameId);
   
+  const sendPlayerChatMessage = async () => {
+    if (!chatInput.trim()) return;
+    try {
+      await axiosInstance.post('/game/sendLobbyMessage', { playerId: playerID, message: chatInput, gameId });
+      setChatInput("");
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
+  };
+
   const leaveGame = async () => {
     try {
         await axiosInstance.post("/game/leaveGame", { gameId, playerID });
@@ -277,56 +301,100 @@ function Game() {
 
   return (
     <>
-    <div className="GameScreen">
-    {!finished && 
-    <div className="Game">
-      
-    {generateTargetNumLabel(currNum, gameMode)}
-    {generateBaseButtons(numOfButtons)}
-    
-    <button className= "ClearButton" onClick={clearButtonHandler}>
-      Clear
-    </button>
-    <button className="ConfirmButton" onClick={confirmButtonHandler} disabled={isConfirmDisabled}>
-      Confirm
-    </button>
+      <div className="GameScreen">
+        {!finished && (
+          <div className="Game">
+            {generateTargetNumLabel(currNum, gameMode)}
+            {generateBaseButtons(numOfButtons)}
   
-  </div>}
-        <div className="Scoreboard">
-        <h2>Scoreboard</h2>
-        <ul>
-          {scoreboard.map((player, index) => (
-            <li key={index}>{getUserName(player.value)}: {player.score} pts</li>
-          ))}
-          {!finished && (
+            <button className="ClearButton" onClick={clearButtonHandler}>Clear</button>
+            <button className="ConfirmButton" onClick={confirmButtonHandler} disabled={isConfirmDisabled}>
+              Confirm
+            </button>
+          </div>
+        )}
+  
+        <div className="infoContainer">
+          <div className="toggleContainer">
+            <button className={`toggleButton ${!showChat ? 'active' : ''}`} onClick={() => setShowChat(false)}>
+              Scoreboard
+            </button>
+            <button className={`toggleButton ${showChat ? 'active' : ''}`} onClick={() => setShowChat(true)}>
+              Chat
+            </button>
+          </div>
+  
+          {!showChat ? (
+            <div className="Scoreboard">
+              <ul>
+                {scoreboard.map((player, index) => (
+                  <li key={index}>{getUserName(player.value)}: {player.score} pts</li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <div className="gameChatContainer">
+              <div className="gameChatMessages">
+                {playerChat.map((message, index) => {
+                  const isSystemMessage = message.startsWith("Player") || message.startsWith("You");
+                  const [playerId, ...messageParts] = message.split(": ");
+                  const messageText = messageParts.join(": ");
+  
+                  return (
+                    <div key={index} className={`chatMessage ${isSystemMessage ? "systemMessage" : ""}`}>
+                      {isSystemMessage ? (
+                        <span className="systemText">{message}</span>
+                      ) : (
+                        <>
+                          <span className="gamePlayerName">{playerId}:</span>
+                          <span className="gameMessageText">{messageText}</span>
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+                <div ref={chatEndRef} />
+              </div>
+  
+              <div className="chatInputContainer">
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && sendPlayerChatMessage()}
+                  placeholder="Type a message..."
+                  className="chatInput"
+                />
+                <button onClick={sendPlayerChatMessage} className="gameSendMessageButton">Send</button>
+              </div>
+            </div>
+          )}
+  
+          {!finished && !showChat && (
             <button className="leaveGameButton" onClick={() => setShowExitConfirm(true)}>
               Exit Game
             </button>
-          )}     
-        </ul>
+          )}
         </div>
-    </div>
-        {showExitConfirm && (
-            <div className="confirmationDialog">
-                <p>Are you sure you want to leave the game?</p>
-                <button onClick={leaveGame}>Yes, Exit</button>
-                <button onClick={() => setShowExitConfirm(false)}>Cancel</button>
-            </div>
-        )} 
-    {finished && 
-      <div className="finishedGameButtons">
-        <button className="finishedGameButton" onClick={() => navigate("/")}>
-          Back to Home
-        </button>
-        <button className="finishedGameButton">
-          Back to Lobby
-        </button>
-        <button className="finishedGameButton">
-          Save score!
-        </button>
-      </div>}
+      </div>
+  
+      {showExitConfirm && (
+        <div className="confirmationDialog">
+          <p>Are you sure you want to leave the game?</p>
+          <button onClick={leaveGame}>Yes, Exit</button>
+          <button onClick={() => setShowExitConfirm(false)}>Cancel</button>
+        </div>
+      )}
+  
+      {finished && (
+        <div className="finishedGameButtons">
+          <button className="finishedGameButton" onClick={() => navigate("/")}>Back to Home</button>
+          <button className="finishedGameButton">Back to Lobby</button>
+          <button className="finishedGameButton">Save score!</button>
+        </div>
+      )}
     </>
   );
-} 
+}  
 
 export default Game;
