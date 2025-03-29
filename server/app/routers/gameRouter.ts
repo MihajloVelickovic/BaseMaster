@@ -296,6 +296,8 @@ gameRouter.post("/setGameState", async (req:any, res:any) => {
         await redisClient.hDel(IdPrefixes.LOBBIES_CURR_PLAYERS, gameId); // remove the data
 
         await redisClient.hDel(IdPrefixes.LOBBIES_MAX_PLAYERS, gameId);
+
+        await redisClient.del(`${IdPrefixes.LOBBY_PLAYERS}_${gameId}`);
         
         await setRounds(`${IdPrefixes.ORDER_POINTS}_${gameId}`,
             parcedData.roundCount, Number(currPlayers) + 1);
@@ -321,11 +323,30 @@ gameRouter.post("/playerComplete", async (req:any, res:any) => {
         correct: correct
     } = req.body;
 
-    const scoreboardID = `${IdPrefixes.PLAYER_POINTS}_${gameId}`;    
-    await redisClient.zIncrBy(scoreboardID, correct ? 100 : 0, playerId );
+    const scoreboardID = `${IdPrefixes.PLAYER_POINTS}_${gameId}`; 
+    const gameData = await redisClient.get(gameId);
+
+    if(!gameData)
+        return res.status(404).send({message:"Could not find the game"});
+
+    const parcedData = JSON.parse(gameData);
+    const currRound = parcedData.roundCount;
+    var orderBonus = 0;   
+    
+    if(correct) {
+        orderBonus = await 
+        redisClient.hIncrBy(`${IdPrefixes.ORDER_POINTS}_${gameId}`,
+                            `${currRound}`, -1);
+    }
+    
+    const basePoints = 100;
+    const pointsToAdd = orderBonus * basePoints;
+    await redisClient.zIncrBy(scoreboardID, pointsToAdd, playerId );
     const scoreboard = await redisClient.zRangeWithScores(scoreboardID, 0, -1);
     scoreboard.reverse();
-    publisher.publish(gameId, JSON.stringify(scoreboard));
+
+    publisher.publish(`${IdPrefixes.SCOREBOARD_UPDATE}_${gameId}`,
+        JSON.stringify(scoreboard));
 
     const remainingPlayers = 
     await redisClient.decr(`${IdPrefixes.GAME_END}_${gameId}`);
@@ -340,6 +361,7 @@ gameRouter.post("/playerComplete", async (req:any, res:any) => {
 
         publisher.publish(`${IdPrefixes.ALL_PLAYERS_COMPLETE}_${gameId}`,
                            "Game Over");
+
     }
     catch(err:any) {
         return res.send({message: `Error with cleanup: ${err}`})

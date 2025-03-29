@@ -298,9 +298,11 @@ function Game() {
           {scoreboard.map((player, index) => (
             <li key={index}>{getUserName(player.value)}: {player.score} pts</li>
           ))}
-          <button className="leaveGameButton" onClick={() => setShowExitConfirm(true)}>
-            Exit Game
-        </button>
+          {!finished && (
+            <button className="leaveGameButton" onClick={() => setShowExitConfirm(true)}>
+              Exit Game
+            </button>
+          )}     
         </ul>
         </div>
     </div>
@@ -313,7 +315,7 @@ function Game() {
         )} 
     {finished && 
       <div className="finishedGameButtons">
-        <button className="finishedGameButton">
+        <button className="finishedGameButton" onClick={() => navigate("/")}>
           Back to Home
         </button>
         <button className="finishedGameButton">
