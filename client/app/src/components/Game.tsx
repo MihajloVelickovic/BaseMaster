@@ -80,9 +80,6 @@ function Game() {
         console.log("something went wrong for this to show up");
     }
     
-
-    
-
     ws.onopen = () => {
       
       ws.send(JSON.stringify({ type: IdPrefixes.SCOREBOARD_UPDATE, gameId, playerID }));
@@ -102,7 +99,6 @@ function Game() {
     
   };
 
-  updateGameState("GAME STARTED");
   getNumberFromServer(false);
   return () => ws.close(); // Cleanup WebSocket on unmount
     //clearButtonHandler();
@@ -129,15 +125,6 @@ function Game() {
         console.error("Error leaving game:", error);
     }
 };
-
-  const updateGameState = async (newState: string) => {
-    try {
-      await axiosInstance.post('/game/setGameState', { gameId, gameState: newState });
-      console.log("Game state updated:", newState);
-    } catch (error: any) {
-      console.error("Error updating game state:", error.response?.data || error.message);
-    }
-  };
 
   const getNumberFromServer = async (correct:boolean) => {
     const toSend = {
@@ -282,7 +269,7 @@ function Game() {
   function generateBaseButtons(btnCount: number) {
     const buttonArray = btnArrayLabels.map( (element, ind) => {
       return (
-        <div className="ButtonAndLabel">
+        <div className="ButtonAndLabel" key={ind}>
           <label>
             {element}
           </label>  
@@ -328,7 +315,9 @@ function Game() {
             <div className="Scoreboard">
               <ul>
                 {scoreboard.map((player, index) => (
-                  <li key={index}>{getUserName(player.value)}: {player.score} pts</li>
+                  <div key={index} className={`${player.value === playerID ? "gameCurrentPlayer" : ""}`}>
+                    <li key={index}>{getUserName(player.value)}: {player.score} pts</li>
+                  </div>
                 ))}
               </ul>
             </div>

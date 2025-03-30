@@ -289,7 +289,7 @@ gameRouter.post("/setGameState", async (req:any, res:any) => {
         
         const currPlayers = 
         await redisClient.hGet(IdPrefixes.LOBBIES_CURR_PLAYERS, gameId);
-
+        console.log("curr players = ",currPlayers);
         if(!currPlayers)
             return res.status(404).send({message: "could not find curr players"});
 
@@ -350,6 +350,11 @@ gameRouter.post("/playerComplete", async (req:any, res:any) => {
 
     const remainingPlayers = 
     await redisClient.decr(`${IdPrefixes.GAME_END}_${gameId}`);
+    
+    if (parcedData.currPlayerCount > 0) {
+        parcedData.currPlayerCount -= 1;
+        await redisClient.set(gameId, JSON.stringify(parcedData));
+    }
 
     if(remainingPlayers > 0 ) 
         return res.send({message:"Player status saved"});

@@ -381,5 +381,10 @@
   .gameSendMessageButton:hover {
     background-color: #036603;
   }
+
+  .gameCurrentPlayer{
+    background-color: rgb(215, 248, 215);
+    border-left: 3px solid green;
+  }
   
 

@@ -85,9 +85,6 @@ function Home() {
       console.log("response: ", response);
       setLobbies(response.data['lobbies']);
 
-      var n = response.data['lobbies'][0].slice(-5);
-
-
     } catch (error:any) {
       console.error('Error fetching lobbies: ', error.response ? error.response.data : error.message);
     }
