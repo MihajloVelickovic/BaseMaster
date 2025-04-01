@@ -29,6 +29,10 @@ function Sidebar() {
       </div>
     </>);
   }
+  //This sidebar is very well structred in terms of code itself
+  //It also looks awesome
+  //But you know what is certainly is not
+  //Functional, we unfortunately do not have profile storing since neo4j is missing
   return (
     <>
       {/* Overlay outside of the sidebar */}

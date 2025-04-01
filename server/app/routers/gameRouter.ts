@@ -210,8 +210,6 @@ gameRouter.post("/joinLobby", async (req:any, res:any) => {
         const roundsKey = `rn_${gameId}`;
         const roundCount = await redisClient.lLen(roundsKey);
         //needed since we may join after the message is sent
-       
-
         console.log("Success", gameId, parsedData);
 
         publisher.publish(`${IdPrefixes.PLAYER_JOIN}_${gameId}`,

@@ -51,7 +51,8 @@ const LoginSignup = () => {
         }
         return errors;
     };
-
+    //this method sure is nice but it would be more awsome if we did not use
+    //REDIS FOR PERMANENT DATA STORAGE!!!!!!!!!!!!!!!!
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const errors = validate(formValues);

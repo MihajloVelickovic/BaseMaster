@@ -17,7 +17,7 @@ userRouter.post("/register", async (req:any, res:any) => {
     if(!email || !username || ! password)
         return res.status(400).send({message: "Did not recieve all parameters"});
 
-    console.log("email, username, password", email, username, password);
+    console.log("email, username, password", email, username, password, "if only we had neo4j");
 
     const emailStatus = await redisClient.hExists(IdPrefixes.USER_EMAILS, email);
     console.log("Email unique check");
@@ -27,6 +27,8 @@ userRouter.post("/register", async (req:any, res:any) => {
     
     const fullUsername = `${username}_${nanoid()}`;
     console.log("username", fullUsername);
+    //Erm what the sigma why is this not neo4j who could have forgotten to
+    // chane it from REDIS ?????? I wonder....
     const usernameExists = 
     await redisClient.sIsMember(IdPrefixes.USERNAMES, fullUsername);
     console.log("Username exsists:",usernameExists);
@@ -63,15 +65,15 @@ userRouter.post("/login", async (req:any, res:any) => {
 
     try {
         const fullUsername = await redisClient.hGet(IdPrefixes.USER_EMAILS, email);
-
+        //man this works nice, but you know what would worl even better
         if(!fullUsername)
             return res.status(400).send({message: `Wrong email or password`});
-
-        const realPassword = await redisClient.get(fullUsername);
+        //IF THIS WAS NEO4J
+        const realPassword = await redisClient.get(fullUsername); 
 
         if(!realPassword)
             return res.status(500).send({message: `Fatal error`});
-
+        
         if(realPassword === password)
             return res.send({message: "Succesful login", fullUsername:fullUsername});
         else
