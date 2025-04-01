@@ -9,7 +9,7 @@ import { IdPrefixes } from "./shared_modules/shared_enums";
 import userRouter from "./routers/userRouter";
 
 const wsClients = new Map(); // Maps WebSocket clients to lobbies
-
+//We are cooked no neo4j to be seen in sight
 const corsOptions = {
     origin: 'http://localhost:3000',
     optionsSuccessStatus: 200,
@@ -181,4 +181,4 @@ server.listen(SERVER_PORT, async () => {
 
 
 
-
+// I NEED A HERO HE'S GOT TO BE STRONG AND HE'S GOT TO KNOW NEO4J
