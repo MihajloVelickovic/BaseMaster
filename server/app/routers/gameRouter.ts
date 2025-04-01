@@ -147,7 +147,7 @@ gameRouter.post("/getCurrNum", async (req:any, res:any) => {
 
         console.log("sending data to subscriber", scoreboard);
         publisher.publish(`${IdPrefixes.SCOREBOARD_UPDATE}_${gameId}`,
-                           JSON.stringify(scoreboard));
+                           JSON.stringify({scoreboard, playerId, pointsToAdd}));
 
         if(gamemode !== GameModes.CHAOS)
             return res.send({currRndNum:num});
@@ -346,7 +346,7 @@ gameRouter.post("/playerComplete", async (req:any, res:any) => {
     scoreboard.reverse();
 
     publisher.publish(`${IdPrefixes.SCOREBOARD_UPDATE}_${gameId}`,
-        JSON.stringify(scoreboard));
+        JSON.stringify({scoreboard, playerId, pointsToAdd}));
 
     const remainingPlayers = 
     await redisClient.decr(`${IdPrefixes.GAME_END}_${gameId}`);
@@ -461,7 +461,7 @@ gameRouter.post("/leaveGame", async (req: any, res: any) => {
         }
 
         publisher.publish(`${IdPrefixes.SCOREBOARD_UPDATE}_${gameId}`,
-            JSON.stringify(scoreboard));
+            JSON.stringify({scoreboard, playerID, points: 0}));
 
         publisher.publish(`${IdPrefixes.PlAYER_LEAVE}_${gameId}`, JSON.stringify({
             type:IdPrefixes.PlAYER_LEAVE,

@@ -89,6 +89,10 @@ function Game() {
       const data = JSON.parse(event.data);
       if (data.type === IdPrefixes.SCOREBOARD_UPDATE) {
         setScoreboard(data.scores);
+        if(data.points && data.points!== 0)
+        {
+          setPlayerChat(prevChat => [...prevChat, playerID === `${data.playerId}` ? `You scored ${data.points} points.` : `Player ${data.playerId} scored ${data.points} points.`]);
+        }
       } 
       else if(data.type === IdPrefixes.PlAYER_LEAVE) {
         setPlayerChat(prevChat => [...prevChat, `Player ${getUserName(data.playerId)} left the game.`]);
@@ -151,6 +155,9 @@ function Game() {
         console.log(toBase, fromBase, val);
         setNumOfButtons(val);
         setArrayOfValues(Array.from({length: val}, (_, i) => 0));
+      }
+      else{
+        setArrayOfValues(Array.from({length: numOfButtons}, () => 0));
       }
       //console.log(response.data["scoreboard"])
       console.log(response);

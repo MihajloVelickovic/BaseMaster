@@ -68,13 +68,16 @@ wss.on("connection", (ws) => {
 subscriber.pSubscribe(`${IdPrefixes.SCOREBOARD_UPDATE}_*`, async (message, channel) => { // Listen to all channels
 
     const lobbyId = channel.replace(`${IdPrefixes.SCOREBOARD_UPDATE}_`, "");
+    const parsedData = JSON.parse(message);
 
     if (wsClients.has(lobbyId)) {
         wsClients.get(lobbyId).forEach(client => {
             if (client.readyState === 1) {
                 client.send(JSON.stringify({
                     type: IdPrefixes.SCOREBOARD_UPDATE,
-                    scores: JSON.parse(message)
+                    scores: parsedData.scoreboard,
+                    points: parsedData.pointsToAdd,
+                    playerId: parsedData.playerId
                 }));
             }
         });
