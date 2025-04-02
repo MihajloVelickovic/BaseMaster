@@ -70,7 +70,7 @@ userRouter.post("/login", async (req:any, res:any) => {
             return res.status(400).send({message: `Wrong email or password`});
         //IF THIS WAS NEO4J
         const realPassword = await redisClient.get(fullUsername); 
-
+        //(Certain someone is one who is not me, nor KingLaza or Jana108)
         if(!realPassword)
             return res.status(500).send({message: `Fatal error`});
         

@@ -96,7 +96,7 @@ const LoginSignup = () => {
         }
     };
 
-
+    //it would be easier with neo4j
     return (
         <div className="LoginSignupContainer">            
             <div className="lobbyOptionDiv">
@@ -156,5 +156,6 @@ const LoginSignup = () => {
         </div>
     );
 };
-
+//if only the one backend developer started working on neo4j 
+//(or anything)
 export default LoginSignup;

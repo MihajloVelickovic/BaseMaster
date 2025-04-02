@@ -11,7 +11,9 @@ function getUserName (id: string) {
     }
     return "";
 }
-
+//lobby could use a function of invite friends button
+//OH WAIT we need neo4j for that who could have guessed that have of the
+//project could not be done without it
 export default function Lobby () {
     const location = useLocation();
     var { toBasee = 2, playerNum = 1, gameMode = GameModes.CLASSIC.toString(),
@@ -113,7 +115,7 @@ export default function Lobby () {
         // const ws = new WebSocket("ws://localhost:1738");
         // ws.onopen = () => {
         //     ws.send(JSON.stringify({ type: "startGame", gameId }));
-        // };
+        // }; 
         setStartGameFlag(true);
     }
 

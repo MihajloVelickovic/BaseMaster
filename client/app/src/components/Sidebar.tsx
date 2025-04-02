@@ -14,7 +14,7 @@ function Sidebar() {
   const toggleSidebar = () => setIsOpen(!isOpen);
 
   const renderSidebar = () => {
-
+    //perfect place to have neo4j
     return (
     <>
       <div className={`sidebar-container ${isOpen ? "open" : ""}`}>
@@ -48,7 +48,8 @@ function Sidebar() {
       {/* Render Sidebar */}
       {renderSidebar()}
     </>
-  );
+  ); // if only you could know what we really are, people who actualy do the work
+     //they said that they would do a month ago, maybe longer I stopped counting weeks
 }
 
 export default Sidebar;
