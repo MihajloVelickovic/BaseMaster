@@ -16,3 +16,6 @@ export const SERVER_PORT = Number(process.env.SERVER_PORT);
 export const REDIS_PASSWORD = process.env.REDIS_PASSWORD;
 export const REDIS_HOST = process.env.REDIS_HOST;
 export const REDIS_PORT = Number(process.env.REDIS_PORT);
+export const NEO4J_URI = process.env.NEO4J_URI;
+export const NEO4J_USERNAME = process.env.NEO4J_USERNAME;
+export const NEO4J_PASSWORD = process.env.NEO4J_PASSWORD;

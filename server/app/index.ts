@@ -7,6 +7,7 @@ import { WebSocketServer } from "ws"
 import http from "http";
 import { IdPrefixes } from "./shared_modules/shared_enums";
 import userRouter from "./routers/userRouter";
+import { connectionSuccess, n4jSession, n4jDriver } from "./neo4jClient";
 
 const wsClients = new Map(); // Maps WebSocket clients to lobbies
 //We are cooked no neo4j to be seen in sight
@@ -209,8 +210,7 @@ app.use("/user", userRouter);
 
 server.listen(SERVER_PORT, async () => {
     console.log(`Server running on port ${SERVER_PORT}`);
+    console.log(connectionSuccess);
 });
-
-
 
 // I NEED A HERO HE'S GOT TO BE STRONG AND HE'S GOT TO KNOW NEO4J

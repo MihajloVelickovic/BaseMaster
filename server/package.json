@@ -15,6 +15,7 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "nanoid": "^5.1.2",
+    "neo4j-driver": "^5.28.1",
     "nodemon": "^3.1.9",
     "redis": "^4.7.0",
     "ts-node": "^10.9.2",
