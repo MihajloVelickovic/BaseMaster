@@ -107,7 +107,7 @@ userRouter.post("/login", async(req: any, res: any) => {
 
         n4jSesh.close();
 
-        return res.status(200).json({message: "Success"});
+        return res.status(200).json({message: "Success", user: user});
     }
     catch(error){
         return res.status(500).json({message:"How did this happen....", error: error});

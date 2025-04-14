@@ -488,7 +488,7 @@ gameRouter.post("/sendLobbyMessage", async (req:any, res:any) => {
         return res.status(400).send({ message: "Error processing request" });
 
     try {
-        // MIHAJLO VELICKOVIC: NAPRAVI OVO CUVANJE DA IDE NA NEO4J!!!!!
+        // TODO MIHAJLO VELICKOVIC: NAPRAVI OVO CUVANJE DA IDE NA NEO4J!!!!!
         await redisClient.rPush(`${IdPrefixes.MESSAGE}_${gameId}`,
                                  JSON.stringify({ playerId, message }));
         publisher.publish(`${IdPrefixes.MESSAGE_UPDATE}_${gameId}`,
