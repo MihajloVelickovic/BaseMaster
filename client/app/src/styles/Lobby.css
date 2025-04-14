@@ -246,3 +246,26 @@
 .systemText {
   font-weight: bold;
 }
+
+.NotificationButton {
+  position: absolute;
+  /*top: 100%; /* places it below the bell */
+  right: 0;
+  margin-top: 0px;
+  background: white;
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  width: 50px;
+  z-index: 999;
+}
+
+.dropdown.right-screen {
+  right: auto;
+  left: auto;
+  position: fixed;
+  top: 160px; /* or wherever your bell icon is */
+  right: 16px; /* distance from the right edge of the screen */
+  width: auto;
+  background-color: #009900;
+}

@@ -105,7 +105,7 @@ userRouter.post("/login", async(req: any, res: any) => {
 
 });
 
-userRouter.get("/friendRequests", async(req: any, res: any) => {
+userRouter.post("/friendRequests", async(req: any, res: any) => {
 
     console.log("na prste ruke prebroj prijatelje ☝️ ✌️ 🖐️");
 
@@ -141,7 +141,7 @@ userRouter.get("/friendRequests", async(req: any, res: any) => {
 
         n4jSesh.close();
 
-        return res.status(200).json({message: `Gathered pending requests for user '${username}'`, data: friendRequests});
+        return res.status(200).json({message: `Gathered pending requests for user '${username}'`, requests: friendRequests});
     }
     catch(error){
         return res.status(500).json({message:"How did this happen....", error: error});
@@ -293,13 +293,16 @@ userRouter.post("/handleFriendRequest", async(req:any, res:any)=>{
         }
 
         const makeFriends = await n4jSesh.executeWrite(async transaction => {
-            const result = await transaction.run(`CREATE(:User{username: $sender}) -
-                                                        [:FRIEND] ->
-                                                        (:User{username: $username})
-                                                  RETURN true AS friends`,
-                                                  {username, sender});
-            return result.records[0]?.get("friends") ?? false;                                                        
-        });
+            const result = await transaction.run(
+              `MERGE (a:User {username: $sender})
+               MERGE (b:User {username: $username})
+               MERGE (a)-[:FRIEND]->(b)
+               MERGE (b)-[:FRIEND]->(a)
+               RETURN true AS friends`,
+              { username, sender }
+            );
+            return result.records[0]?.get("friends") ?? false;
+          });
 
         n4jSesh.close();
 

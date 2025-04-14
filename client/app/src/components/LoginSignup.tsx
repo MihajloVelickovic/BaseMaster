@@ -72,9 +72,10 @@ const LoginSignup = () => {
                         password: formValues.password
                     });
                     msg = response.data['message'];
-                    userName = response.data['fullUsername'];
+                    userName = response.data.user.username;
                     console.log(msg, userName);
-                    //console.log(response);
+                    //console.log(response.data);
+
                     //setUserId(response.data.userId);
                     navigate("/", { state: { playerIdTransfered: userName} });
                 } else if (action === "Register") {
@@ -86,6 +87,7 @@ const LoginSignup = () => {
                     console.log(response);
                     msg = response.data['message'];
                     userName = response.data['fullUsername'];
+                    
                     //setUserId(response.data.userId);
                     navigate("/", { state: { playerIdTransfered: userName} });
                 } else {

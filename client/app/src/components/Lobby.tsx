@@ -4,6 +4,7 @@ import "../styles/Lobby.css";
 //import { roundCount } from "./Home";
 import axiosInstance from "../utils/axiosInstance";
 import { useEffect, useState, useRef } from "react";
+import { FaBell, FaCheck, FaTimes, FaUserPlus } from "react-icons/fa";
 
 function getUserName (id: string) {
     if (id && id != "") {
@@ -20,6 +21,7 @@ export default function Lobby () {
          difficulty = Difficulties.LAYMAN.toString(), gameId = "", playerID,
           lobbyName, hostId, roundCount, playerIds} = location.state || {};
     console.log(playerID, 'ovo je player id');
+    console.log(hostId);
     const navigate = useNavigate();
     const [startGameFlag, setStartGameFlag] = useState(false);
     const [players, setPlayers] = useState<string[]>
@@ -28,7 +30,8 @@ export default function Lobby () {
     const [playerChat, setPlayerChat] = useState<string[]>([]);
     const [chatInput, setChatInput] = useState(""); 
     const chatEndRef = useRef<HTMLDivElement | null>(null);
-
+    const [isOpen, setIsOpen] = useState(false);
+    const [friendRequests, setFriendRequests] = useState<string[]>([]);
     console.log("playerChat: ", playerChat);
    
     useEffect(() => {
@@ -182,7 +185,95 @@ export default function Lobby () {
         );
     }
     console.log("player chat pre poslednjeg: ", playerChat);
-    return (  
+    const  sendFriendRequest = async (e: React.MouseEvent<HTMLButtonElement>) => {
+        const targetPlayerID = e.currentTarget.getAttribute('data-player-id');
+        if (!targetPlayerID)
+            return;
+            
+        try {
+            const response = await axiosInstance.post('/user/sendFriendRequest',
+                 {sender:playerID, receiver:targetPlayerID});
+            
+            console.log(response);
+
+            if(response === null)
+                return;
+
+            // Replace the old array with the new one
+        }
+        catch(err:any) {
+            console.log(err.message);
+        }
+    };
+
+
+    async function handleRequestSelection(username: string, selection:boolean) {
+        //const {username, sender, userResponse} = req.body;
+        try {
+            const response = await axiosInstance.post('/user/handleFriendRequest',
+                {username: playerID, sender: username, userResponse: selection});
+            
+            console.log(response);
+            console.log("SUCCESFULLY BECAME FRIENDS!!!!!!");
+        }
+        catch(err:any) {
+            console.log(err.message);
+        }
+        
+    }
+
+
+
+    const renderNotifications = () => {
+        console.log(friendRequests)
+        return (
+          <>
+            {friendRequests.length === 0 ? (
+              <span>No new requests</span>
+            ) : (
+              friendRequests.map((username, index) => {
+                return (
+                  <div key={index}>
+                    <span>{username}</span>
+                    {/* You can add more content here for each friend request */}
+                    <button onClick={() => handleRequestSelection(username, true)}><FaCheck /></button>
+                    <button onClick={() => handleRequestSelection(username, false)}>✖</button>
+                  </div>
+                );
+              })
+            )}
+          </>
+        );
+      };
+
+    const handleNotificationBtnClick = async () => {
+        setIsOpen((prev) => !prev);
+        try {
+            var response = await axiosInstance.post('/user/friendRequests',
+                                                     {username:playerID});
+            console.log(response.data);
+            setFriendRequests(response.data.requests)
+        }
+        catch(err:any) {
+            console.log(err.message);
+        }
+        
+        console.log(isOpen);
+    }
+
+    return (
+        <>
+        <div>
+        <button className="NotificationButton" onClick={handleNotificationBtnClick}>
+            <FaBell/>
+        </button>
+        {isOpen && (
+            <div className="dropdown right-screen">
+                {renderNotifications()}
+        </div>
+        )}
+        </div>
+        
         <div className="lobbyScreen">
             <div className="chatContainer">
                 <label className="playersText"> Chat </label>
@@ -246,10 +337,16 @@ export default function Lobby () {
                         <span className="playerIndex">{index + 1}.</span>
                         <span className="playerName">{getUserName(id)}</span>
                         {id === hostIdState && <span className="hostBadge">👑 Host</span>}
+                        {id !== playerID &&  
+                        <button className="FriendRequestBtn"
+                        data-player-id={id} 
+                        onClick={sendFriendRequest}><FaUserPlus />
+                         </button>}
                     </div>
                 ))}
             </div>
         </div>  
+        </>
     )
 
 }

@@ -1,6 +1,8 @@
 import { Link, NavLink } from "react-router-dom";
 import "../styles/Header.css"
 import Sidebar from "./Sidebar";
+import { FaBell } from "react-icons/fa";
+import { useState } from "react";
 
 function Header() {
  return (
@@ -27,7 +29,7 @@ function Header() {
                 LoginSignup
             </button>
         </Link>
-
+       
     </div>
         
  );
