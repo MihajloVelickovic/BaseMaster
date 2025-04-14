@@ -70,7 +70,7 @@ userRouter.post("/login", async(req: any, res: any) => {
     console.log("someone is signing in 🕺🕺🕺");
 
     const {emailOrUsername, password} = req.body;
-    console.log(password);
+
     try{
         const n4jSesh = n4jSession();
 
