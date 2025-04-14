@@ -1,13 +1,8 @@
 import { Router } from "express";
-import { redisClient } from "../redisClient";
-import { IdPrefixes } from "../shared_modules/shared_enums";
-import { nanoid } from 'nanoid';
-
 import { n4jSession } from "../neo4jClient";
-
+import { Transaction } from "neo4j-driver";
 
 const userRouter = Router();
-
 
 userRouter.post("/register", async(req: any, res: any) => {
 
@@ -112,7 +107,49 @@ userRouter.post("/login", async(req: any, res: any) => {
 
 });
 
-userRouter.post("/friendRequest", async(req:any, res:any)=>{
+userRouter.get("/friendRequests", async(req: any, res: any) => {
+
+    console.log("na prste ruke prebroj prijatelje ☝️ ✌️ 🖐️");
+
+    const {username} = req.body;
+
+    if(!username)
+        return res.status(400).json({message: "Username necessary to retrieve friend requests"});
+
+    const n4jSesh = n4jSession();
+
+    const userExists = await n4jSesh.executeRead(transaction => {
+        return transaction.run(`RETURN EXISTS{ 
+                                    MATCH(:User{username: $username})
+                                } AS userExists`, 
+                                {username})
+                          .then(result => {
+                            return result.records[0]?.get("userExists");
+                        });
+    });
+
+    if(!userExists)
+        return res.status(400).json({message: "Request made for non-existing user"});
+
+    const friendRequests = await n4jSesh.executeRead(transaction => {
+        return transaction.run(`MATCH(:User{username: $username}) <-
+                                     [:FRIEND_REQUEST] -
+                                     (senders: User)
+                                RETURN collect(senders) AS pending`, 
+                                {username})
+                          .then(result => {
+                            return result.records[0]?.get("pending").map(f => f.properties.username);    
+                        });
+    });
+
+    n4jSesh.close();
+
+    return res.status(200).json({message: `Gathered pending requests for user '${username}'`, data: friendRequests});
+
+
+});
+
+userRouter.post("/sendFriendRequest", async(req:any, res:any)=>{
 
 
     console.log("woo friends 👋👋👋");
@@ -172,9 +209,11 @@ userRouter.post("/friendRequest", async(req:any, res:any)=>{
 
 });
 
-userRouter.post("/acceptFriendRequest", async(req:any, res:any)=>{
+userRouter.post("/handleFriendRequest", async(req:any, res:any)=>{
 
-
+    // obrisati FRIEND_REQUEST poteg
+    // ako se primi sa klijenta accept dodati bidirekcionu FRIENDS vezu
+    // ako se primi sa klijenta decline ne raditi nista
 
 });
 
