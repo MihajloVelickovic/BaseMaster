@@ -15,43 +15,37 @@ userRouter.post("/register", async(req: any, res: any) => {
     try{
         const n4jSesh = n4jSession();
 
-        let query = await n4jSesh.executeRead(transaction => {
-            const result = transaction.run(`MATCH(n:User{email: $email}) 
-                                            RETURN n IS NOT NULL AS alreadyExists`, {email})
-                                      .then(result => {
-                const resultBody = result.records[0]?.get("alreadyExists") ?? false;
-                return resultBody;
-            });
-            return result;
+        let query = await n4jSesh.executeRead(async transaction => {
+            const result = await transaction.run(`RETURN EXISTS{
+                                                  MATCH(n:User{email: $email})
+                                                  } AS alreadyExists`, 
+                                                  { email });
+            return result.records[0]?.get("alreadyExists") ?? false;
         });
 
-        if(query)
+        if(query){
+            n4jSesh.close();
             return res.status(400).json({message: "User with this email already exists"});
+        }
 
-        query = await n4jSesh.executeRead(transaction => {
-            const result = transaction.run(`MATCH(n:User{username: $username}) 
-                                            RETURN n IS NOT NULL AS alreadyExists`, 
-                                            {username})
-                                      .then(result => {
-                            const resultBody = result.records[0]?.get("alreadyExists") ?? false;
-                            return resultBody;
-                        });
-            return result;
+        query = await n4jSesh.executeRead(async transaction => {
+            const result = await transaction.run(`RETURN EXISTS{
+                                                    MATCH(n:User{username: $username}) 
+                                                  } AS alreadyExists`,
+                                                 { username });
+            return result.records[0]?.get("alreadyExists") ?? false;
         });
 
-        if(query)
+        if(query){
+            n4jSesh.close();
             return res.status(400).json({message: "Username already taken"});
+        }
 
-        const register = await n4jSesh.executeWrite(transaction => {
-
-            const result = transaction.run(`CREATE(n:User{email: $email, username: $username, password: $password})
-                                            RETURN true AS success`, 
-                                            {username, email, password})
-                                    .then(result => {
-                            const resultBody = result.records[0]?.get("success") ?? false;
-                            return resultBody;})
-                                    .catch(err => err);
-            return result;
+        const register = await n4jSesh.executeWrite(async transaction => {
+            const result = await transaction.run(`CREATE(n:User{email: $email, username: $username, password: $password})
+                                                  RETURN true AS success`,
+                                                 { username, email, password });
+            return result.records[0]?.get("success") ?? false;
         });
 
         //TODO email potvrda
@@ -78,17 +72,18 @@ userRouter.post("/login", async(req: any, res: any) => {
     try{
         const n4jSesh = n4jSession();
 
-        let user = await n4jSesh.executeRead(transaction => {
-            const result = transaction.run(`MATCH(n:User)
-                                            WHERE n.username = $emailOrUsername OR n.email = $emailOrUsername
-                                            RETURN {username: n.username, password: n.password} AS user`, {emailOrUsername})
-                                    .then(result => {
-                            const resultBody = result.records[0]?.get("user") ?? false;
-                            return resultBody;
-            });
-            return result;
+        let user = await n4jSesh.executeRead(async transaction => {
+            const result = await transaction.run(`RETURN EXISTS{
+                                                    MATCH(n:User)
+                                                    WHERE n.username = $emailOrUsername OR 
+                                                          n.email = $emailOrUsername
+                                                  } AS user`, 
+                                                 { emailOrUsername });
+            return result.records[0]?.get("user") ?? false;
         });
 
+        n4jSesh.close();
+    
         if(!user)
             return res.status(400).json({message: `User '${emailOrUsername}' does not exist`});
 
@@ -96,8 +91,6 @@ userRouter.post("/login", async(req: any, res: any) => {
             return res.status(400).json({message: "Incorrect password"});
 
         //TODO JWT
-
-        n4jSesh.close();
 
         return res.status(200).json({message: "Success", user: user});
     }
@@ -116,41 +109,42 @@ userRouter.get("/friendRequests", async(req: any, res: any) => {
     if(!username)
         return res.status(400).json({message: "Username necessary to retrieve friend requests"});
 
-    const n4jSesh = n4jSession();
+    try{
+        const n4jSesh = n4jSession();
 
-    const userExists = await n4jSesh.executeRead(transaction => {
-        return transaction.run(`RETURN EXISTS{ 
-                                    MATCH(:User{username: $username})
-                                } AS userExists`, 
-                                {username})
-                          .then(result => {
-                            return result.records[0]?.get("userExists");
-                        });
-    });
+        const userExists = await n4jSesh.executeRead(async transaction => {
+            const result = await transaction.run(`RETURN EXISTS{ 
+                                                    MATCH(:User{username: $username})
+                                                  } AS userExists`,
+                                                 { username });
+            return result.records[0]?.get("userExists");
+        });
 
-    if(!userExists)
-        return res.status(400).json({message: "Request made for non-existing user"});
+        if(!userExists){
+            n4jSesh.close();
+            return res.status(400).json({message: "Request made for non-existing user"});
+        }
 
-    const friendRequests = await n4jSesh.executeRead(transaction => {
-        return transaction.run(`MATCH(:User{username: $username}) <-
-                                     [:FRIEND_REQUEST] -
-                                     (senders: User)
-                                RETURN collect(senders) AS pending`, 
-                                {username})
-                          .then(result => {
-                            return result.records[0]?.get("pending").map(f => f.properties.username);    
-                        });
-    });
+        const friendRequests = await n4jSesh.executeRead(async transaction => {
+            const result = await transaction.run(`MATCH(:User{username: $username}) <-
+                                                       [:FRIEND_REQUEST] -
+                                                       (senders: User)
+                                                  RETURN collect(senders) AS pending`,
+                                                  { username });
+            return result.records[0]?.get("pending").map(f => f.properties.username);
+        });
 
-    n4jSesh.close();
+        n4jSesh.close();
 
-    return res.status(200).json({message: `Gathered pending requests for user '${username}'`, data: friendRequests});
-
+        return res.status(200).json({message: `Gathered pending requests for user '${username}'`, data: friendRequests});
+    }
+    catch(error){
+        return res.status(500).json({message:"How did this happen....", error: error});
+    }
 
 });
 
 userRouter.post("/sendFriendRequest", async(req:any, res:any)=>{
-
 
     console.log("woo friends 👋👋👋");
 
@@ -162,58 +156,157 @@ userRouter.post("/sendFriendRequest", async(req:any, res:any)=>{
     if(sender === receiver)
         return res.status(400).json({message: "Can't add yourself silly"});
 
-    const n4jSesh = n4jSession();
+    try{
+        const n4jSesh = n4jSession();
 
-    const requestExists = await n4jSesh.executeRead(transaction => {
-        return transaction.run(`MATCH(sender: User{username: $sender}) - 
-                                     [r:FRIEND_REQUEST] - 
-                                     (receiver: User{username: $receiver})
-                                RETURN 
-                                CASE startNode(r) 
-                                WHEN sender THEN 1
-                                ELSE 2
-                                END AS req`, {sender, receiver})
-                          .then(result => {
+        const senderExists = await n4jSesh.executeRead(async transaction => {
+            const result = await transaction.run(`RETURN EXISTS{ 
+                                                    MATCH(:User{username: $sender})
+                                                  } AS userExists`,
+                                                 { sender });
+            return result.records[0]?.get("userExists");
+        });
+
+        if(!senderExists){
+            n4jSesh.close();
+            return res.status(400).json({message: `User '${sender}' doesn't exist`});
+        }
+
+        const receiverExists = await n4jSesh.executeRead(async transaction => {
+            const result = await transaction.run(`RETURN EXISTS{ 
+                                                    MATCH(:User{username: $receiver})
+                                                  } AS userExists`,
+                                                 { receiver });
+            return result.records[0]?.get("userExists");
+        });
+
+        if(!receiverExists){
+            n4jSesh.close();
+            return res.status(400).json({message: `User '${receiver}' doesn't exist`});
+        }
+
+        const requestExists = await n4jSesh.executeRead(async transaction => {
+            const result = await transaction.run(`MATCH(sender: User{username: $sender}) - 
+                                                       [r:FRIEND_REQUEST] - 
+                                                       (receiver: User{username: $receiver})
+                                                  RETURN 
+                                                  CASE startNode(r) 
+                                                  WHEN sender THEN 1
+                                                  ELSE 2
+                                                  END AS req`, 
+                                                  { sender, receiver });
             return result.records[0]?.get("req").toNumber() ?? 0;
         });
-    });
 
-   switch(requestExists){
-    case 0:
-        break;
-    case 1:
-        return res.status(400).json({message: `Already sent friend request to user ${receiver}`});
-    case 2:
-        return res.status(400).json({message: `Already have a pending request from ${receiver}`});
-   }
+        switch(requestExists){
+            case 0:
+                break;
+            case 1:
+                n4jSesh.close();
+                return res.status(400).json({message: `Already sent friend request to user ${receiver}`});
+            case 2:
+                n4jSesh.close();
+                return res.status(400).json({message: `Already have a pending request from ${receiver}`});
+        }
+        
+        const friendRequest = await n4jSesh.executeWrite(async transaction => {
+            const result = await transaction.run(`MATCH(sender:User{username: $sender}),
+                                                    (receiver:User{username: $receiver})
+                                                CREATE(sender)-[r:FRIEND_REQUEST]->(receiver)
+                                                RETURN true AS req`, { sender, receiver });
+            return result.records[0]?.get("req") ?? false;
+        });
 
-    if(requestExists)
-        return res.status(400).json({message: `Already sent friend request to user ${receiver}`});
+        n4jSesh.close();
 
-    const friendRequest = await n4jSesh.executeWrite(transaction => {
-        return transaction.run(`MATCH(sender:User{username: $sender}),
-                                     (receiver:User{username: $receiver})
-                                CREATE(sender)-[r:FRIEND_REQUEST]->(receiver)
-                                RETURN(r) AS req`, {sender, receiver})
-                          .then(result => {
-                            return result.records[0]?.get("req") ? true : false;
-                          });
-    });
+        if(!friendRequest)
+            return res.status(400).json({message: "Failed to send friend request"});
 
-    n4jSesh.close();
+        return res.status(200).json({message: `Friend request to user '${receiver}' successfully sent!`});
 
-    if(!friendRequest)
-        return res.status(400).json({message: "Failed to send friend request"});
-
-    return res.status(200).json({message: `Friend request to user '${receiver}' successfully sent!`});
+    }
+    catch(error){
+        return res.status(500).json({message:"How did this happen....", error: error});
+    }
 
 });
 
 userRouter.post("/handleFriendRequest", async(req:any, res:any)=>{
 
-    // obrisati FRIEND_REQUEST poteg
-    // ako se primi sa klijenta accept dodati bidirekcionu FRIENDS vezu
-    // ako se primi sa klijenta decline ne raditi nista
+    console.log("handling friend request 🧛🧛🧛");
+
+    const {username, sender, userResponse} = req.body;
+    if(!username || !sender || userResponse === undefined || userResponse === null)
+        return res.status(400).json({message: "The sender and the response need to be known to handle the request"});
+
+    try{
+        const n4jSesh = n4jSession();
+        
+        const userExists = await n4jSesh.executeRead(async transaction => {
+            const result = await transaction.run(`RETURN EXISTS{ 
+                                                    MATCH(:User{username: $username})
+                                                  } AS userExists`,
+                                                 { username });
+            return result.records[0]?.get("userExists");
+        });
+
+        if(!userExists){
+            n4jSesh.close();
+            return res.status(400).json({message: `User '${username}' doesn't exist`});
+        }
+
+        const senderExists = await n4jSesh.executeRead(async transaction => {
+            const result = await transaction.run(`RETURN EXISTS{ 
+                                                    MATCH(:User{username: $sender})
+                                                  } AS userExists`,
+                                                 { sender });
+            return result.records[0]?.get("userExists");
+        });
+
+        if(!senderExists){
+            n4jSesh.close();
+            return res.status(400).json({message: `User '${sender}' doesn't exist`});
+        }
+
+        const deleteRequest = await n4jSesh.executeWrite(async transaction => {
+            const result = await transaction.run(`MATCH(: User{username: $username}) <- 
+                                                       [r: FRIEND_REQUEST] -
+                                                       (: User{username: $sender})
+                                                  DELETE r RETURN true AS deleted`,
+                                                 { username, sender });
+            return result.records[0]?.get("deleted") ?? false;
+        });
+
+        if(!deleteRequest){
+            n4jSesh.close();
+            return res.status(400).json({message: "Friend request didn't exist"});
+        }
+
+        if(!userResponse){
+            n4jSesh.close();
+            return res.status(400).json({message: `User '${username}' declined friend request from '${sender}'`});
+        }
+
+        const makeFriends = await n4jSesh.executeWrite(async transaction => {
+            const result = await transaction.run(`CREATE(:User{username: $sender}) -
+                                                        [:FRIEND] ->
+                                                        (:User{username: $username})
+                                                  RETURN true AS friends`,
+                                                  {username, sender});
+            return result.records[0]?.get("friends") ?? false;                                                        
+        });
+
+        n4jSesh.close();
+
+        if(!makeFriends)
+            return res.status(400).json({message: `Failed to establish friendship between '${username}' and '${sender}'`});
+
+        return res.status(200).json({message: `User '${username}' accepted '${sender}'s friend request!'`});
+        
+    }
+    catch(error){
+        return res.status(500).json({message:"How did this happen....", error: error});
+    }
 
 });
 
