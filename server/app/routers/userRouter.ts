@@ -127,21 +127,37 @@ userRouter.post("/friendRequest", async(req:any, res:any)=>{
 
     const n4jSesh = n4jSession();
 
-    const alreadySent = await n4jSesh.executeRead(transaction => {
-        return transaction.run(`MATCH(n:FRequest{sender: $sender, receiver: $receiver})
-                                        RETURN(n) AS req`, {sender, receiver})
-                                        .then(result => {
-                                return result.records[0]?.get("req") ? true : false;
-                            });
+    const requestExists = await n4jSesh.executeRead(transaction => {
+        return transaction.run(`MATCH(sender: User{username: $sender}) - 
+                                     [r:FRIEND_REQUEST] - 
+                                     (receiver: User{username: $receiver})
+                                RETURN 
+                                CASE startNode(r) 
+                                WHEN sender THEN 1
+                                ELSE 2
+                                END AS req`, {sender, receiver})
+                          .then(result => {
+            return result.records[0]?.get("req").toNumber() ?? 0;
+        });
     });
 
-    if(alreadySent)
+   switch(requestExists){
+    case 0:
+        break;
+    case 1:
+        return res.status(400).json({message: `Already sent friend request to user ${receiver}`});
+    case 2:
+        return res.status(400).json({message: `Already have a pending request from ${receiver}`});
+   }
+
+    if(requestExists)
         return res.status(400).json({message: `Already sent friend request to user ${receiver}`});
 
-    const label = `${sender} -> ${receiver}`;
     const friendRequest = await n4jSesh.executeWrite(transaction => {
-        return transaction.run(`CREATE(n:FRequest{label: $label, sender: $sender, receiver: $receiver})
-                                RETURN(n) AS req`, {label, sender, receiver})
+        return transaction.run(`MATCH(sender:User{username: $sender}),
+                                     (receiver:User{username: $receiver})
+                                CREATE(sender)-[r:FRIEND_REQUEST]->(receiver)
+                                RETURN(r) AS req`, {sender, receiver})
                           .then(result => {
                             return result.records[0]?.get("req") ? true : false;
                           });
@@ -157,6 +173,8 @@ userRouter.post("/friendRequest", async(req:any, res:any)=>{
 });
 
 userRouter.post("/acceptFriendRequest", async(req:any, res:any)=>{
+
+
 
 });
 
