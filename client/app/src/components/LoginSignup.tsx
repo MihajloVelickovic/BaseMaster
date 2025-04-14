@@ -6,6 +6,7 @@ import "../styles/LoginSignup.css";
 interface FormValues {
     username?: string;
     email: string;
+    emailOrUsername: string;
     password: string;
     confirmPassword?: string;
 
@@ -14,6 +15,7 @@ interface FormValues {
 interface FormErrors {
     username?: string;
     email?: string;
+    emailOrUsername?: string;
     password?: string;
     confirmPassword?: string;
     serverResponse?: string;
@@ -26,6 +28,7 @@ const LoginSignup = () => {
     const [formValues, setFormValues] = useState<FormValues>({
         username: "",
         email: "",
+        emailOrUsername: "",
         password: "",
         confirmPassword: ""
     });
@@ -46,7 +49,7 @@ const LoginSignup = () => {
             if (!values.password) errors.password = "Password is required";
             if (values.password !== values.confirmPassword) errors.confirmPassword = "Passwords do not match";
         } else {
-            if (!values.email) errors.email = "Email is required";
+            if (!values.emailOrUsername) errors.emailOrUsername = "Email or Username is required";
             if (!values.password) errors.password = "Password is required";
         }
         return errors;
@@ -65,7 +68,7 @@ const LoginSignup = () => {
                 var userName = "";
                 if (action === "Login") {
                     response = await axiosInstance.post("/user/login", {
-                        email: formValues.email,
+                        emailOrUsername: formValues.emailOrUsername,
                         password: formValues.password
                     });
                     msg = response.data['message'];
@@ -119,16 +122,29 @@ const LoginSignup = () => {
                             onChange={handleChange}
                         />
                         {formErrors.username && <p className="loginSignupErrors">{formErrors.username}</p>}
+                        <input
+                            type="email"
+                            name="email"
+                            placeholder="Email"
+                            value={formValues.email}
+                            onChange={handleChange}
+                        />
+                        {formErrors.email && <p className="loginSignupErrors">{formErrors.email}</p>}    
                     </>
                 )}
-                <input
-                    type="email"
-                    name="email"
-                    placeholder="Email"
-                    value={formValues.email}
-                    onChange={handleChange}
-                />
-                {formErrors.email && <p className="loginSignupErrors">{formErrors.email}</p>}
+
+                {action === "Login" && (
+                    <>
+                        <input
+                            type="text"
+                            name="emailOrUsername"
+                            placeholder="E-Mail or Username"
+                            value={formValues.emailOrUsername}
+                            onChange={handleChange}
+                        />
+                        {formErrors.email && <p className="loginSignupErrors">{formErrors.email}</p>} 
+                    </>
+                )}
                 <input
                     type="password"
                     name="password"
