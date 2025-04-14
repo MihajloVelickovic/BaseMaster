@@ -293,9 +293,8 @@ userRouter.post("/handleFriendRequest", async(req:any, res:any)=>{
         }
 
         const makeFriends = await n4jSesh.executeWrite(async transaction => {
-            const result = await transaction.run(`CREATE(:User{username: $sender}) -
-                                                        [:FRIEND] ->
-                                                        (:User{username: $username})
+            const result = await transaction.run(`MATCH(sender:User{username: $sender}), (user:User{username: $username})
+                                                  CREATE(sender)-[:FRIEND]->(user)
                                                   RETURN true AS friends`,
                                                   {username, sender});
             return result.records[0]?.get("friends") ?? false;                                                        
