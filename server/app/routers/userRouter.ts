@@ -2,6 +2,8 @@ import { Router } from "express";
 import { n4jSession } from "../neo4jClient";
 import { Transaction } from "neo4j-driver";
 
+// TODO hashiranje sifre
+
 const userRouter = Router();
 
 userRouter.post("/register", async(req: any, res: any) => {
@@ -68,20 +70,23 @@ userRouter.post("/login", async(req: any, res: any) => {
     console.log("someone is signing in 🕺🕺🕺");
 
     const {emailOrUsername, password} = req.body;
-
+    console.log(password);
     try{
         const n4jSesh = n4jSession();
 
         let user = await n4jSesh.executeRead(async transaction => {
-            const result = await transaction.run(`RETURN EXISTS{
-                                                    MATCH(n:User)
-                                                    WHERE n.username = $emailOrUsername OR 
-                                                          n.email = $emailOrUsername
-                                                  } AS user`, 
+            const result = await transaction.run(`MATCH(n:User)
+                                                   WHERE n.username = $emailOrUsername OR 
+                                                         n.email = $emailOrUsername
+                                                   RETURN {
+                                                    email: n.email, 
+                                                    username: n.username, 
+                                                    password: n.password
+                                                   } as user`, 
                                                  { emailOrUsername });
             return result.records[0]?.get("user") ?? false;
         });
-
+        
         n4jSesh.close();
     
         if(!user)
