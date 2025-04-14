@@ -12,13 +12,10 @@ const userRouter = Router();
 userRouter.post("/register", async(req: any, res: any) => {
 
     console.log("someone is registering 🤫🤫🤫");
-    const {email, username, password, confirmPassword} = req.body;
+    const {email, username, password} = req.body;
 
-    if(!email || !username || !password || !confirmPassword)
+    if(!email || !username || !password)
         return res.status(400).json({message: "All fields necessary"});
-
-    if(password !== confirmPassword)
-        return res.status(400).json({message: "Passwords do not match"});
 
     try{
         const n4jSesh = n4jSession();
@@ -89,7 +86,7 @@ userRouter.post("/login", async(req: any, res: any) => {
         let user = await n4jSesh.executeRead(transaction => {
             const result = transaction.run(`MATCH(n:User)
                                             WHERE n.username = $emailOrUsername OR n.email = $emailOrUsername
-                                            RETURN {username: n.username, password: n.password}as user`, {emailOrUsername})
+                                            RETURN {username: n.username, password: n.password} AS user`, {emailOrUsername})
                                     .then(result => {
                             const resultBody = result.records[0]?.get("user") ?? false;
                             return resultBody;
@@ -112,6 +109,54 @@ userRouter.post("/login", async(req: any, res: any) => {
     catch(error){
         return res.status(500).json({message:"How did this happen....", error: error});
     }
+
+});
+
+userRouter.post("/friendRequest", async(req:any, res:any)=>{
+
+
+    console.log("woo friends 👋👋👋");
+
+    const {sender, receiver} = req.body;
+
+    if(!sender || !receiver)
+        return res.status(400).json({message: "Both fields necessary"});
+
+    if(sender === receiver)
+        return res.status(400).json({message: "Can't add yourself silly"});
+
+    const n4jSesh = n4jSession();
+
+    const alreadySent = await n4jSesh.executeRead(transaction => {
+        return transaction.run(`MATCH(n:FRequest{sender: $sender, receiver: $receiver})
+                                        RETURN(n) AS req`, {sender, receiver})
+                                        .then(result => {
+                                return result.records[0]?.get("req") ? true : false;
+                            });
+    });
+
+    if(alreadySent)
+        return res.status(400).json({message: `Already sent friend request to user ${receiver}`});
+
+    const label = `${sender} -> ${receiver}`;
+    const friendRequest = await n4jSesh.executeWrite(transaction => {
+        return transaction.run(`CREATE(n:FRequest{label: $label, sender: $sender, receiver: $receiver})
+                                RETURN(n) AS req`, {label, sender, receiver})
+                          .then(result => {
+                            return result.records[0]?.get("req") ? true : false;
+                          });
+    });
+
+    n4jSesh.close();
+
+    if(!friendRequest)
+        return res.status(400).json({message: "Failed to send friend request"});
+
+    return res.status(200).json({message: `Friend request to user '${receiver}' successfully sent!`});
+
+});
+
+userRouter.post("/acceptFriendRequest", async(req:any, res:any)=>{
 
 });
 
