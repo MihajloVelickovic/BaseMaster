@@ -25,8 +25,8 @@ userRouter.post("/register", async(req: any, res: any) => {
 
         let query = await n4jSesh.executeRead(transaction => {
             const result = transaction.run(`MATCH(n:User{email: $email}) 
-                                RETURN n IS NOT NULL AS alreadyExists`, {email})
-                            .then(result => {
+                                            RETURN n IS NOT NULL AS alreadyExists`, {email})
+                                      .then(result => {
                 const resultBody = result.records[0]?.get("alreadyExists") ?? false;
                 return resultBody;
             });
@@ -40,7 +40,7 @@ userRouter.post("/register", async(req: any, res: any) => {
             const result = transaction.run(`MATCH(n:User{username: $username}) 
                                             RETURN n IS NOT NULL AS alreadyExists`, 
                                             {username})
-                                    .then(result => {
+                                      .then(result => {
                             const resultBody = result.records[0]?.get("alreadyExists") ?? false;
                             return resultBody;
                         });
@@ -62,7 +62,6 @@ userRouter.post("/register", async(req: any, res: any) => {
             return result;
         });
 
-
         //TODO email potvrda
 
         n4jSesh.close();
@@ -77,7 +76,6 @@ userRouter.post("/register", async(req: any, res: any) => {
     
         
 });
-
 
 userRouter.post("/login", async(req: any, res: any) => {
 
@@ -106,50 +104,15 @@ userRouter.post("/login", async(req: any, res: any) => {
             return res.status(400).json({message: "Incorrect password"});
 
         //TODO JWT
-        
+
         n4jSesh.close();
 
-        return res.status(200).json({message: "Success"});
+        return res.status(200).json({message: "Success", user: user});
     }
     catch(error){
         return res.status(500).json({message:"How did this happen....", error: error});
     }
 
 });
-
-
-
-// });
-// //chat is this real we still don't have neo4j
-// userRouter.post("/login", async (req:any, res:any) => {
-//     const {
-//         email,
-//         password
-//     } = req.body;
-
-//     if(!email || !password)
-//         return res.status(400).send({message: "Did not recieve all parameters"});
-
-//     try {
-//         const fullUsername = await redisClient.hGet(IdPrefixes.USER_EMAILS, email);
-//         //man this works nice, but you know what would worl even better
-//         if(!fullUsername)
-//             return res.status(400).send({message: `Wrong email or password`});
-//         //IF THIS WAS NEO4J
-//         const realPassword = await redisClient.get(fullUsername); 
-//         //(Certain someone is one who is not me, nor KingLaza or Jana108)
-//         if(!realPassword)
-//             return res.status(500).send({message: `Fatal error`});
-        
-//         if(realPassword === password)
-//             return res.send({message: "Succesful login", fullUsername:fullUsername});
-//         else
-//             return res.status(400).send({message: `Wrong email or password`});
-//     }
-//     catch(err:any) {
-//         return res.status(500).send({message: "Whoopsie this should not have happened",
-//                                      reason:err.message});
-//     }
-// });
 
 export default userRouter;
