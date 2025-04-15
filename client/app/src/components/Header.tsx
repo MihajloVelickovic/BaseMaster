@@ -24,6 +24,11 @@ function Header() {
                 Game
             </button>
         </Link>
+        <Link to="/Friends">
+            <button className="btn btn-primary header-link-button">
+                Friends
+            </button>
+        </Link>
         <Link to="/LoginSignup">
             <button className="btn btn-primary header-link-button">
                 LoginSignup
