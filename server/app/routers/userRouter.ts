@@ -17,32 +17,6 @@ userRouter.post("/register", async(req: any, res: any) => {
     try{
         const n4jSesh = n4jSession();
 
-        let query = await n4jSesh.executeRead(async transaction => {
-            const result = await transaction.run(`RETURN EXISTS{
-                                                  MATCH(n:User{email: $email})
-                                                  } AS alreadyExists`, 
-                                                  { email });
-            return result.records[0]?.get("alreadyExists") ?? false;
-        });
-
-        if(query){
-            n4jSesh.close();
-            return res.status(400).json({message: "User with this email already exists"});
-        }
-
-        query = await n4jSesh.executeRead(async transaction => {
-            const result = await transaction.run(`RETURN EXISTS{
-                                                    MATCH(n:User{username: $username}) 
-                                                  } AS alreadyExists`,
-                                                 { username });
-            return result.records[0]?.get("alreadyExists") ?? false;
-        });
-
-        if(query){
-            n4jSesh.close();
-            return res.status(400).json({message: "Username already taken"});
-        }
-
         const register = await n4jSesh.executeWrite(async transaction => {
             const result = await transaction.run(`CREATE(n:User{email: $email, username: $username, password: $password})
                                                   RETURN true AS success`,
@@ -59,7 +33,7 @@ userRouter.post("/register", async(req: any, res: any) => {
         res.status(400).json({message: `Failed to create user "${username}"\n${register}`});
     }
     catch(error){
-        return res.status(500).json({message:"How did this happen....", error: error});
+        return res.status(500).json({message:"How did this happen....", error: error.gqlStatusDescription});
     }
     
         
