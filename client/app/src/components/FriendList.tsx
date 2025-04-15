@@ -15,7 +15,7 @@ function FriendList() {
 
         const fetchFriends = async () => {
             const response = await axiosInstance.post('/user/getFriends', {username:username})
-            
+            setFriends(response.data.friends);
             console.log(response);
         };
     
@@ -27,10 +27,17 @@ function FriendList() {
     }, [username]);
 
     return (
-            <>
-            <p></p>
-             
-        </>
+             (
+                    <div>
+                        {friends.length === 0 ? (
+                            <span>No friends yer :(</span>
+                        ) : (
+                            friends.map((username, index) => (
+                                <span>{username}</span>
+                            ))
+                        )}
+                    </div>
+             )
     )
 }
 
