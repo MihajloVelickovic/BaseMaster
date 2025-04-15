@@ -72,7 +72,7 @@ const LoginSignup = () => {
                         password: formValues.password
                     });
                     msg = response.data['message'];
-                    userName = response.data.user.username;
+                    userName = response.data.username;
                     console.log(msg, userName);
                     //console.log(response.data);
 
@@ -86,7 +86,7 @@ const LoginSignup = () => {
                     });
                     console.log(response);
                     msg = response.data['message'];
-                    userName = response.data['fullUsername'];
+                    userName = response.data.username;
                     
                     //setUserId(response.data.userId);
                     navigate("/", { state: { playerIdTransfered: userName} });
@@ -94,9 +94,14 @@ const LoginSignup = () => {
                     console.log("Unknown action..");
                     setFormErrors({ serverResponse: "Unknown action.." });    
                 }
-            } catch (error: any) {
-                let msg = error.response.data.message;
-                setFormErrors({ serverResponse: msg? msg : "Error occured.." });
+            } catch (error: any) {                
+                let msg = "Something went wrong. Please try again.";
+
+                if (error.response?.data?.message) {
+                msg = error.response.data.message;
+                } else if (error.message) {
+                msg = error.message; // fallback to generic error message
+                }
             }
         }
     };
