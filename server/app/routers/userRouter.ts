@@ -55,7 +55,7 @@ userRouter.post("/register", async(req: any, res: any) => {
         n4jSesh.close();
 
         return register ?
-        res.status(200).json({message: `User '${username}' successfully created!`}):
+        res.status(200).json({message: `User successfully created!`, username}):
         res.status(400).json({message: `Failed to create user "${username}"\n${register}`});
     }
     catch(error){
