@@ -5,13 +5,15 @@ import Game from './components/Game';
 import Header from './components/Header';
 import Lobby from './components/Lobby';
 import LoginSignup from './components/LoginSignup';
+import FriendList from './components/FriendList'
 import "./styles/AppRoutes.css";
 
 const routes = [
     { path: "/", element: <Home /> },
     { path: "/Game", element: <Game />},
     { path: "/Lobby", element: <Lobby />},
-    { path: "/LoginSignup", element: <LoginSignup />}
+    { path: "/LoginSignup", element: <LoginSignup />},
+    { path: "/FriendList", element: <FriendList />}
     // { path: "/login", element: <LoginSignupPage /> },
     // { path: "/register/:token", element: <Register /> },
 ];

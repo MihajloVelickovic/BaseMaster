@@ -1,10 +1,12 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "../styles/Sidebar.css";
 import { FaSignOutAlt, FaUser, FaUserFriends } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 function Sidebar() {
+  const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
+  const [username, setUsername] = useState(location.state?.playerIdTransfered);
   const navigate = useNavigate();
   function handleLogout() {
     toggleSidebar();
@@ -14,7 +16,21 @@ function Sidebar() {
 
   const toggleSidebar = () => setIsOpen(!isOpen);
 
+   useEffect(() => {
+          const fromState = location.state?.playerIdTransfered;
+          if (fromState) {
+              setUsername(fromState);
+          }
+    }, [location]); 
+
+  const handleFriendList = () => {
+    console.log("sidebar username", username)
+    navigate("/FriendList", { state: { playerIdTransfered: username} });
+  }
+
   const renderSidebar = () => {
+    
+
     //perfect place to have neo4j
     return (
     <>
@@ -24,7 +40,7 @@ function Sidebar() {
         </button>
         <div className="sidebar-content">
           <button className="sidebar-item"><FaUser />  Profile</button>
-          <button className="sidebar-item"><FaUserFriends/>  Friend List</button>
+          <button className="sidebar-item" onClick={handleFriendList}><FaUserFriends/>  Friend List</button>
           <button className="sidebar-item logout" onClick={handleLogout}><FaSignOutAlt/>  Logout</button>
         </div>
       </div>
