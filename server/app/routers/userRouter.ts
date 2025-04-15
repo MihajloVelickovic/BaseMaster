@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { n4jSession } from "../neo4jClient";
+import { n4jDriver, n4jSession } from "../neo4jClient";
 import { Transaction } from "neo4j-driver";
 
 // TODO hashiranje sifre
@@ -74,7 +74,7 @@ userRouter.post("/login", async(req: any, res: any) => {
         return res.status(200).json({message: "Success", user: user});
     }
     catch(error){
-        return res.status(500).json({message:"How did this happen....", error: error});
+        return res.status(500).json({message:"How did this happen....", error: error.gqlStatusDescription});
     }
 
 });
@@ -118,7 +118,7 @@ userRouter.post("/friendRequests", async(req: any, res: any) => {
         return res.status(200).json({message: `Gathered pending requests for user '${username}'`, requests: friendRequests});
     }
     catch(error){
-        return res.status(500).json({message:"How did this happen....", error: error});
+        return res.status(500).json({message:"How did this happen....", error: error.gqlStatusDescription});
     }
 
 });
@@ -205,7 +205,7 @@ userRouter.post("/sendFriendRequest", async(req:any, res:any)=>{
 
     }
     catch(error){
-        return res.status(500).json({message:"How did this happen....", error: error});
+        return res.status(500).json({message:"How did this happen....", error: error.gqlStatusDescription});
     }
 
 });
@@ -283,9 +283,36 @@ userRouter.post("/handleFriendRequest", async(req:any, res:any)=>{
         
     }
     catch(error){
-        return res.status(500).json({message:"How did this happen....", error: error});
+        return res.status(500).json({message:"How did this happen....", error: error.gqlStatusDescription});
     }
 
+});
+
+userRouter.get("/getFriends", async(req: any, res: any) => {
+
+    const {username} = req.body;
+
+    if(!username)
+        return res.status(400).json({message: "Username needed to retrieve friends"});
+
+    try{
+        const n4jSesh = n4jSession();
+    
+        const friends = await n4jSesh.executeRead(async transaction => {
+            const friends = await transaction.run(`MATCH(:User{username: $username}) - 
+                                                        [r:FRIEND] - 
+                                                        (n:User) 
+                                                   RETURN collect(n) as friends`,
+                                                  {username});
+            return friends.records[0]?.get("friends").map(friend => friend.properties.username);
+        });
+
+        n4jSesh.close();
+        return res.status(200).json({message:`All friends of user '${username}'`, friends});
+    }
+    catch(error){
+        return res.status(500).json({message:"How did this happen....", error: error.gqlStatusDescription});
+    }
 });
 
 export default userRouter;
