@@ -138,28 +138,25 @@ userRouter.post("/sendFriendRequest", async(req:any, res:any)=>{
     try{
         const n4jSesh = n4jSession();
 
-        const senderExists = await n4jSesh.executeRead(async transaction => {
+        const userExists = await n4jSesh.executeRead(async transaction => {
             const result = await transaction.run(`RETURN EXISTS{ 
                                                     MATCH(:User{username: $sender})
-                                                  } AS userExists`,
-                                                 { sender });
-            return result.records[0]?.get("userExists");
+                                                  } AS userExists,
+                                                  EXISTS{ 
+                                                    MATCH(:User{username: $receiver})
+                                                  } AS receiverExists`,
+                                                 { sender, receiver });
+            const ue = result.records[0]?.get("userExists");
+            const re =  result.records[0]?.get("receiverExists");
+            return [ue, re];
         });
 
-        if(!senderExists){
+        if(!userExists[0]){
             n4jSesh.close();
             return res.status(400).json({message: `User '${sender}' doesn't exist`});
         }
 
-        const receiverExists = await n4jSesh.executeRead(async transaction => {
-            const result = await transaction.run(`RETURN EXISTS{ 
-                                                    MATCH(:User{username: $receiver})
-                                                  } AS userExists`,
-                                                 { receiver });
-            return result.records[0]?.get("userExists");
-        });
-
-        if(!receiverExists){
+        if(!userExists[1]){
             n4jSesh.close();
             return res.status(400).json({message: `User '${receiver}' doesn't exist`});
         }
@@ -224,25 +221,23 @@ userRouter.post("/handleFriendRequest", async(req:any, res:any)=>{
         const userExists = await n4jSesh.executeRead(async transaction => {
             const result = await transaction.run(`RETURN EXISTS{ 
                                                     MATCH(:User{username: $username})
-                                                  } AS userExists`,
-                                                 { username });
-            return result.records[0]?.get("userExists");
+                                                  } AS userExists, 
+                                                  EXISTS{ 
+                                                    MATCH(:User{username: $sender})
+                                                  } AS senderExists`,
+                                                 { username , sender});
+            
+            const ue = result.records[0]?.get("userExists");
+            const se = result.records[0]?.get("senderExists");
+            return [ue, se];
         });
 
-        if(!userExists){
+        if(!userExists[0]){
             n4jSesh.close();
             return res.status(400).json({message: `User '${username}' doesn't exist`});
         }
 
-        const senderExists = await n4jSesh.executeRead(async transaction => {
-            const result = await transaction.run(`RETURN EXISTS{ 
-                                                    MATCH(:User{username: $sender})
-                                                  } AS userExists`,
-                                                 { sender });
-            return result.records[0]?.get("userExists");
-        });
-
-        if(!senderExists){
+        if(!userExists[1]){
             n4jSesh.close();
             return res.status(400).json({message: `User '${sender}' doesn't exist`});
         }
@@ -288,7 +283,7 @@ userRouter.post("/handleFriendRequest", async(req:any, res:any)=>{
 
 });
 
-userRouter.get("/getFriends", async(req: any, res: any) => {
+userRouter.post("/getFriends", async(req: any, res: any) => {
 
     const {username} = req.body;
 
@@ -298,15 +293,29 @@ userRouter.get("/getFriends", async(req: any, res: any) => {
     try{
         const n4jSesh = n4jSession();
     
-        const friends = await n4jSesh.executeRead(async transaction => {
-            const friends = await transaction.run(`MATCH(:User{username: $username}) - 
-                                                        [r:FRIEND] - 
-                                                        (n:User) 
-                                                   RETURN collect(n) as friends`,
-                                                  {username});
-            return friends.records[0]?.get("friends").map(friend => friend.properties.username);
+        const userExists = await n4jSesh.executeRead(async transaction => {
+            const result = await transaction.run(`RETURN EXISTS{ 
+                                                    MATCH(:User{username: $username})
+                                                  } AS userExists`,
+                                                 { username });
+            return result.records[0]?.get("userExists");
         });
 
+        if(!userExists){
+            n4jSesh.close();
+            return res.status(400).json({message: `User '${username}' doesn't exist`});
+        }
+
+        const friends = await n4jSesh.executeRead(async transaction => {
+            const friends = await transaction.run(`MATCH(u:User{username: $username})  
+                                                   OPTIONAL MATCH (u) - 
+                                                                  [r:FRIEND] - 
+                                                                  (n:User) 
+                                                   RETURN collect(n.username) as friends`,
+                                                  {username});
+            return friends.records[0]?.get("friends")
+        });
+        
         n4jSesh.close();
         return res.status(200).json({message:`All friends of user '${username}'`, friends});
     }
