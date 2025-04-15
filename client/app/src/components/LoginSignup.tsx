@@ -71,8 +71,8 @@ const LoginSignup = () => {
                         emailOrUsername: formValues.emailOrUsername,
                         password: formValues.password
                     });
-                    msg = response.data['message'];
-                    userName = response.data.username;
+                    msg = response.data.message;
+                    userName = response.data.user.username;
                     console.log(msg, userName);
                     //console.log(response.data);
 

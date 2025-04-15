@@ -8,6 +8,7 @@ function Sidebar() {
   const navigate = useNavigate();
   function handleLogout() {
     toggleSidebar();
+    localStorage.removeItem("playerID");
     navigate("/LoginSignup", { state: { playerIdTransfered: ""} });
   }
 

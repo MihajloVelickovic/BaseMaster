@@ -24,6 +24,7 @@ export default function Lobby () {
     console.log(hostId);
     const navigate = useNavigate();
     const [startGameFlag, setStartGameFlag] = useState(false);
+    const [friends, setFriends] = useState<string[]>([]);
     const [players, setPlayers] = useState<string[]>
     (Array.isArray(playerIds) ? playerIds : playerID ? [playerID] : []);
     const [hostIdState, setHostIdState] = useState(hostId);
@@ -37,6 +38,19 @@ export default function Lobby () {
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [playerChat]); 
+
+    useEffect(() => {
+        const fetchFriends = async () => {
+            try {
+                const response = await axiosInstance.post("/user/getFriends", { username: playerID });
+                setFriends(response.data.friends || []);
+            } catch (err: any) {
+                console.error("Failed to fetch friends:", err.message);
+            }
+        };
+    
+        fetchFriends();
+    }, [playerID]);
 
     const startGameRef = useRef(false);
     useEffect(() => {
@@ -199,7 +213,8 @@ export default function Lobby () {
             if(response === null)
                 return;
 
-            // Replace the old array with the new one
+            const receiverUsername = getUserName(targetPlayerID);
+            setFriendRequests((prev) => [...prev, receiverUsername]);
         }
         catch(err:any) {
             console.log(err.message);
@@ -207,73 +222,8 @@ export default function Lobby () {
     };
 
 
-    async function handleRequestSelection(username: string, selection:boolean) {
-        //const {username, sender, userResponse} = req.body;
-        try {
-            const response = await axiosInstance.post('/user/handleFriendRequest',
-                {username: playerID, sender: username, userResponse: selection});
-            
-            console.log(response);
-            console.log("SUCCESFULLY BECAME FRIENDS!!!!!!");
-        }
-        catch(err:any) {
-            console.log(err.message);
-        }
-        
-    }
-
-
-
-    const renderNotifications = () => {
-        console.log(friendRequests)
-        return (
-          <>
-            {friendRequests.length === 0 ? (
-              <span>No new requests</span>
-            ) : (
-              friendRequests.map((username, index) => {
-                return (
-                  <div key={index}>
-                    <span>{username}</span>
-                    {/* You can add more content here for each friend request */}
-                    <button onClick={() => handleRequestSelection(username, true)}><FaCheck /></button>
-                    <button onClick={() => handleRequestSelection(username, false)}>✖</button>
-                  </div>
-                );
-              })
-            )}
-          </>
-        );
-      };
-
-    const handleNotificationBtnClick = async () => {
-        setIsOpen((prev) => !prev);
-        try {
-            var response = await axiosInstance.post('/user/friendRequests',
-                                                     {username:playerID});
-            console.log(response.data);
-            setFriendRequests(response.data.requests)
-        }
-        catch(err:any) {
-            console.log(err.message);
-        }
-        
-        console.log(isOpen);
-    }
-
     return (
         <>
-        <div>
-        <button className="NotificationButton" onClick={handleNotificationBtnClick}>
-            <FaBell/>
-        </button>
-        {isOpen && (
-            <div className="dropdown right-screen">
-                {renderNotifications()}
-        </div>
-        )}
-        </div>
-        
         <div className="lobbyScreen">
             <div className="chatContainer">
                 <label className="playersText"> Chat </label>
@@ -337,11 +287,17 @@ export default function Lobby () {
                         <span className="playerIndex">{index + 1}.</span>
                         <span className="playerName">{getUserName(id)}</span>
                         {id === hostIdState && <span className="hostBadge">👑 Host</span>}
-                        {id !== playerID &&  
-                        <button className="FriendRequestBtn"
-                        data-player-id={id} 
-                        onClick={sendFriendRequest}><FaUserPlus />
-                         </button>}
+                        {getUserName(id) !== getUserName(playerID) &&
+                        !friends.includes(getUserName(id)) &&
+                        !friendRequests.includes(getUserName(id)) && (
+                            <button
+                            className="FriendRequestButton"
+                            onClick={sendFriendRequest}
+                            data-player-id={id}
+                            >
+                            <FaUserPlus />
+                            </button>
+                        )}
                     </div>
                 ))}
             </div>

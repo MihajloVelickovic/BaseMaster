@@ -269,3 +269,24 @@
   width: auto;
   background-color: #009900;
 }
+
+.FriendRequestButton {
+  background-color: #3b82f6;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 10px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 6px rgba(59, 130, 246, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left:10px;
+}
+
+.FriendRequestButton:hover {
+  background-color: #2563eb;
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.7);
+  transform: scale(1.05);
+}
