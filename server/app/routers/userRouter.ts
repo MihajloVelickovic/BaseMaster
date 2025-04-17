@@ -377,7 +377,7 @@ userRouter.post("/sendInvite", async (req:any, res:any) => {
         return res.status(400).json({message: "Missing required parameters: username or friendUsername or gameId"});
 
     try {
-        await redisClient.rPush(`${IdPrefixes.INVITE}_${receiver}`, sender); //add to requests
+        await redisClient.hSet(`${IdPrefixes.INVITE}_${receiver}`, sender, gameId); //add to requests
 
         await publisher.publish(`${IdPrefixes.INVITE}_${receiver}`, JSON.stringify({
             from: sender,
@@ -400,7 +400,7 @@ userRouter.post("/getInvites", async (req:any, res:any) => {
         return res.status(400).json({message:"Missing username arugment"});
 
     try {
-        const invites = await redisClient.lRange(`${IdPrefixes.INVITE}_${username}`,0,-1);
+        const invites = await redisClient.hGetAll(`${IdPrefixes.INVITE}_${username}`);
 
         if(!invites)
             return res.status(404).json({message:"No invites found"});
