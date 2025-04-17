@@ -324,4 +324,60 @@ userRouter.post("/getFriends", async(req: any, res: any) => {
     }
 });
 
+userRouter.post("/removeFriend", async (req: any, res: any) => {
+    const {username, friend} = req.body;
+
+    console.log(`Removing friend '${friend}' from '${username}' 💔`);
+
+    if (!username || !friend) {
+        return res.status(400).json({ message: "Both username and friend are required" });
+    }
+
+    try {
+        const n4jSesh = n4jSession();
+
+        const userExists = await n4jSesh.executeRead(async transaction => {
+            const result = await transaction.run(`
+                RETURN EXISTS { MATCH(:User {username: $username}) } AS userExists,
+                EXISTS { MATCH(:User {username: $friend}) } AS friendExists
+                `, {username, friend});
+
+                const ue = result.records[0]?.get("userExists");
+                const fe = result.records[0]?.get("friendExists");
+                return [ue, fe];
+        });
+
+        if(!userExists[0]) {
+            n4jSesh.close();
+            return res.status(400).json({message: `User '${username}' does not exist`});
+        }
+
+        if(!userExists[1]) {
+            n4jSesh.close();
+            return res.status(400).json({message: `Friend '${friend}' does not exist`});
+        }
+
+        const deleteFriendRelation = await n4jSesh.executeWrite(async transaction => {
+            const result = await transaction.run(`
+                MATCH (u1:User {username: $username}) -[f:FRIEND]- (u2:User {username: $friend})
+                DELETE f
+                RETURN count(f) > 0 AS deleted
+                `, {username,friend});
+
+                return result.records[0]?.get("deleted") ?? false;
+        });
+
+        n4jSesh.close();
+
+        if(!deleteFriendRelation) {
+            return res.status(400).json({message: `No friendship found between '${username}' and '${friend}'`}); 
+        }
+
+        return res.status(200).json({message: `Successfully removed '${friend}' from '${username}' friend list`});
+    }
+    catch (error) {
+        return res.status(500).json({message: "How did this happen...", error: error.gqlStatusDescription})
+    }
+})
+
 export default userRouter;

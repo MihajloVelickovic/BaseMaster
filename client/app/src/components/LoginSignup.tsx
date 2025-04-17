@@ -74,6 +74,7 @@ const LoginSignup = () => {
                     msg = response.data.message;
                     userName = response.data.user.username;
                     console.log(msg, userName);
+                    localStorage.setItem("playerID",userName);
                     //console.log(response.data);
 
                     //setUserId(response.data.userId);
