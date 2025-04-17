@@ -321,6 +321,20 @@ subscriber.subscribe("USER_OFFLINE", (message) => {
     });
 });
 
+subscriber.subscribe(`${IdPrefixes.INVITE}_*`, async (message, channel) => {
+    const toUser = channel.replace(`${IdPrefixes.INVITE}_`, "");
+    if (userSockets.has(toUser)) {
+        userSockets.get(toUser)!.forEach(client => {
+            if (client.readyState === 1) {
+                client.send(JSON.stringify({
+                    type: `${IdPrefixes.INVITE}`,
+                    ...JSON.parse(message),
+                }));
+            }
+        });
+    }
+});
+
 app.use("/game", gameRouter);
 app.use("/user", userRouter);
 //the eternal silence of people who actually care will always be greater than

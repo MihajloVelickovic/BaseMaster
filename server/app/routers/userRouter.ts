@@ -3,6 +3,7 @@ import { n4jDriver, n4jSession } from "../neo4jClient";
 import { Transaction } from "neo4j-driver";
 import {publisher} from "../redisClient";
 import { getFriends } from "../utils//userService";
+import { IdPrefixes } from "../shared_modules/shared_enums";
 // TODO hashiranje sifre
 
 const userRouter = Router();
@@ -287,8 +288,7 @@ userRouter.post("/handleFriendRequest", async(req:any, res:any)=>{
             from: username,
             message: `${username} accepted your friend request`
         }));
-        return res.status(200).json({message: `User '${username}' accepted '${sender}'s friend request!'`});
-        
+        return res.status(200).json({message: `User '${username}' accepted '${sender}'s friend request!'`});        
     }
     catch(error){
         return res.status(500).json({message:"How did this happen....", error: error.gqlStatusDescription});
@@ -368,6 +368,22 @@ userRouter.post("/removeFriend", async (req: any, res: any) => {
     catch (error) {
         return res.status(500).json({message: "How did this happen...", error: error.gqlStatusDescription})
     }
-})
+});
+
+userRouter.post("/sendInvite", async (req:any, res:any) => {
+    const { sender, receiver, gameId} = req.body;
+
+    if(!sender || !receiver)
+        return res.status(400).json({message: "Missing required parameters: username or friendUsername or gameId"});
+
+    await publisher.publish(`${IdPrefixes.INVITE}_${receiver}`, JSON.stringify({
+        from: sender,
+        gameId:gameId,
+        message: `${sender} invited you to game`
+    }));
+    return res.status(200).json({message: `Successfully sent invite to '${receiver}' from '${sender}'`});
+});
+
+
 
 export default userRouter;

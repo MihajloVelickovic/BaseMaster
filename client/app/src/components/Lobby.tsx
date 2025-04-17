@@ -35,6 +35,7 @@ export default function Lobby () {
     const [isOpen, setIsOpen] = useState(false);
     //const [friendRequests, setFriendRequests] = useState<string[]>([]);
     const { friends,setFriends,friendRequests,setFriendRequests } = useFriendContext();
+    const [isInviteOpen, setIsInviteOpen] = useState<boolean>(false);
     console.log("playerChat: ", playerChat);
    
     useEffect(() => {
@@ -224,6 +225,10 @@ export default function Lobby () {
     };
 
 
+    const inviteFriendsClicked =  () => {
+       setIsInviteOpen(prevState => !prevState);
+    }
+
     return (
         <>
         <div className="lobbyScreen">
@@ -302,6 +307,9 @@ export default function Lobby () {
                         )}
                     </div>
                 ))}
+                <button className="InviteFriendsButton" onClick={inviteFriendsClicked}>
+                    Invite friends
+                </button>
             </div>
         </div>  
         </>

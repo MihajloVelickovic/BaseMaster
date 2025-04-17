@@ -37,7 +37,8 @@ export enum IdPrefixes {
     PLAYER_JOIN = "PLAYER_JOIN",
     PlAYER_LEAVE = "PLAYER_LEAVE",
     LOBBY_PLAYERS = "lp",
-    MESSAGE = "msg"
+    MESSAGE = "msg",
+    INVITE = "INVITE"
 }
 
 export enum BaseValues {
@@ -49,6 +50,7 @@ export enum GameStates {
     LOBBY = "Lobby",
     STARTED = "Started"
 }
+// If only commits could write themselves... oh wait, they can’t.  
 
 export const fromStringState = (value: string): GameStates | undefined => {
     return (Object.values(GameStates) as string[]).includes(value) 
