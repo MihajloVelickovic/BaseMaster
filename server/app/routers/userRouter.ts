@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { n4jDriver, n4jSession } from "../neo4jClient";
 import { Transaction } from "neo4j-driver";
-import {publisher} from "../redisClient";
+import {publisher, redisClient} from "../redisClient";
 import { getFriends } from "../utils//userService";
 import { IdPrefixes } from "../shared_modules/shared_enums";
 // TODO hashiranje sifre
@@ -366,7 +366,7 @@ userRouter.post("/removeFriend", async (req: any, res: any) => {
         return res.status(200).json({message: `Successfully removed '${friend}' from '${username}' friend list`});
     }
     catch (error) {
-        return res.status(500).json({message: "How did this happen...", error: error.gqlStatusDescription})
+        return res.status(500).json({message: "How did this happen...", error: error.gqlStatusDescription});
     }
 });
 
@@ -376,12 +376,40 @@ userRouter.post("/sendInvite", async (req:any, res:any) => {
     if(!sender || !receiver)
         return res.status(400).json({message: "Missing required parameters: username or friendUsername or gameId"});
 
-    await publisher.publish(`${IdPrefixes.INVITE}_${receiver}`, JSON.stringify({
-        from: sender,
-        gameId:gameId,
-        message: `${sender} invited you to game`
-    }));
-    return res.status(200).json({message: `Successfully sent invite to '${receiver}' from '${sender}'`});
+    try {
+        await redisClient.rPush(`${IdPrefixes.INVITE}_${receiver}`, sender); //add to requests
+
+        await publisher.publish(`${IdPrefixes.INVITE}_${receiver}`, JSON.stringify({
+            from: sender,
+            to:receiver,    
+            gameId:gameId,
+            message: `${sender} invited you to game`
+        }));
+        return res.status(200).json({message: `Successfully sent invite to '${receiver}' from '${sender}'`});
+    }
+    catch(err:any) {
+        console.log("[ERROR]: ", err.gqlStatusDescription);
+        return res.status(500).json({message: "How did this happen...", error: err.gqlStatusDescription})
+    }
+});
+
+userRouter.post("/getInvites", async (req:any, res:any) => {
+    const {username} = req.body;
+
+    if(!username)
+        return res.status(400).json({message:"Missing username arugment"});
+
+    try {
+        const invites = await redisClient.lRange(`${IdPrefixes.INVITE}_${username}`,0,-1);
+
+        if(!invites)
+            return res.status(404).json({message:"No invites found"});
+
+        return res.status(200).json({message:"Found invites", invites:invites});
+    }
+    catch(err:any) {
+        console.log(err.message);
+    }
 });
 
 

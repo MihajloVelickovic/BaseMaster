@@ -101,3 +101,22 @@
     padding: 2px 6px;
     z-index: 1;
 }
+
+.flippedIconHorizontal {
+    transform: scaleX(-1); /* Mirrors horizontally */
+}
+
+/* Flip vertically */
+.flippedIconVertical {
+    transform: scaleY(-1); /* Mirrors vertically */
+}
+
+/* Flip both horizontally and vertically */
+.flippedIconBoth {
+    transform: scaleX(-1) scaleY(-1); /* Mirrors both directions */
+}
+
+.InviteIcon {
+    color:white;
+    font-size: 1.6rem;
+}

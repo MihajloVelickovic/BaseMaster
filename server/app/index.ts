@@ -321,7 +321,7 @@ subscriber.subscribe("USER_OFFLINE", (message) => {
     });
 });
 
-subscriber.subscribe(`${IdPrefixes.INVITE}_*`, async (message, channel) => {
+subscriber.pSubscribe(`${IdPrefixes.INVITE}_*`, async (message, channel) => {
     const toUser = channel.replace(`${IdPrefixes.INVITE}_`, "");
     if (userSockets.has(toUser)) {
         userSockets.get(toUser)!.forEach(client => {

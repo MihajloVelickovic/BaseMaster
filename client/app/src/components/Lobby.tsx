@@ -4,7 +4,7 @@ import "../styles/Lobby.css";
 //import { roundCount } from "./Home";
 import axiosInstance from "../utils/axiosInstance";
 import { useEffect, useState, useRef } from "react";
-import { FaBell, FaCheck, FaTimes, FaUserPlus } from "react-icons/fa";
+import { FaBell, FaCheck, FaPlus, FaTimes, FaUserPlus } from "react-icons/fa";
 import { useFriendContext } from "../utils/FriendContext"
 
 function getUserName (id: string) {
@@ -36,6 +36,7 @@ export default function Lobby () {
     //const [friendRequests, setFriendRequests] = useState<string[]>([]);
     const { friends,setFriends,friendRequests,setFriendRequests } = useFriendContext();
     const [isInviteOpen, setIsInviteOpen] = useState<boolean>(false);
+    const { onlineUsers } = useFriendContext();
     console.log("playerChat: ", playerChat);
    
     useEffect(() => {
@@ -229,6 +230,38 @@ export default function Lobby () {
        setIsInviteOpen(prevState => !prevState);
     }
 
+    async function sendInvite(friend:string) {
+        try {
+            const response = await axiosInstance.post("user/sendInvite", {sender:playerID, receiver:friend, gameId:gameId});
+            console.log(response.data['message']);
+        }
+        catch(err:any) {
+            console.log(err.message)
+        }
+    }
+
+    const renderInviteFriends = () => {
+        return (
+        <div className="InviteFriendsDiv">
+           {friends.length === 0 ? (
+                       <span>No friends yet :(</span>
+                   ) : (
+                       friends.map((friend,index) => {
+                           const isOnline = onlineUsers.includes(friend);
+                           
+
+                           return (
+                           <div className="friend-card" key={index}>
+                               <span>{friend}🟢</span>
+                               <button className="sendMessageButton" onClick={() => sendInvite(friend)}><FaPlus />Invite</button>
+                           </div>
+                       );
+                       })
+            )}
+            </div>  
+        );
+    }
+
     return (
         <>
         <div className="lobbyScreen">
@@ -311,7 +344,10 @@ export default function Lobby () {
                     Invite friends
                 </button>
             </div>
-        </div>  
+
+            
+        </div>
+        {isInviteOpen && renderInviteFriends()}  
         </>
     )
 

@@ -5,6 +5,7 @@ import { FaBell, FaCheck, FaTimes } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import axiosInstance from "../utils/axiosInstance";
 import { useFriendContext } from "../utils/FriendContext"
+import { GiCrossedSwords } from "react-icons/gi";
 
 function Header() {
     const [playerID, setPlayerID] = useState<string | null>(null);
@@ -12,7 +13,7 @@ function Header() {
     const { friendRequests,setFriends, setFriendRequests, setOnlineUsers } = useFriendContext();
     const [unreadCount, setUnreadCount] = useState(0);
     const [notifications, setNotifications] = useState<string[]>([]);
-
+    const [invites, setInvites] = useState<string[]>([]);
     
     const location = useLocation();
     //const playerIdFromState = location.state?.playerIdTransfered;
@@ -76,6 +77,10 @@ function Header() {
 
             if (data.type === "ONLINE_FRIENDS") {
                 setOnlineUsers(data.friends); 
+            }
+
+            if(data.type === "INVITE") {
+                console.log(data);
             }
         };
     
@@ -194,6 +199,9 @@ function Header() {
                 {renderNotifications()}
             </div>
         )}
+        </div>
+        <div>
+        <GiCrossedSwords className="InviteIcon flippedIconVertical"/>
         </div>
 </div>
         
