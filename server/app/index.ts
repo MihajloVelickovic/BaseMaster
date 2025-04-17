@@ -3,13 +3,14 @@ import express from "express";
 import { SERVER_PORT } from "./config/config";
 import gameRouter from './routers/gameRouter'
 import cors from "cors";
-import { WebSocketServer } from "ws"
+import WebSocket,{ WebSocketServer } from "ws"
 import http from "http";
 import { IdPrefixes } from "./shared_modules/shared_enums";
 import userRouter from "./routers/userRouter";
 import { connectionSuccess, n4jSession, n4jDriver } from "./neo4jClient";
 
-const wsClients = new Map(); // Maps WebSocket clients to lobbies
+const wsClients = new Map();
+const userSockets = new Map<string, Set<WebSocket>>(); // Maps WebSocket clients to lobbies
 //We are cooked no neo4j to be seen in sight
 const corsOptions = {
     origin: 'http://localhost:3000',
@@ -23,6 +24,7 @@ app.use(cors(corsOptions));
 
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
+
 
 wss.on("connection", (ws) => {
     let currentLobby = null;
@@ -49,10 +51,17 @@ wss.on("connection", (ws) => {
                 currentLobby = gameId;
                 console.log(`Player ${playerID} joined lobby ${gameId}`);
             }
-            // if (type === "startGame") {
-            //     console.log(`Game ${gameId} is starting!`);
-            //     publisher.publish(`${IdPrefixes.GAME_STARTED}_${gameId}`, JSON.stringify({ gameId }));
-            // }
+
+            if (type === "login") {
+                const { username } = JSON.parse(data);
+                if (!userSockets.has(username)) {
+                    userSockets.set(username, new Set());
+                }
+                userSockets.get(username)!.add(ws);
+                console.log(`User ${username} connected`);
+            
+                await publisher.publish(`USER_ONLINE`, JSON.stringify({ username }));
+            }
         } catch (err) {
             console.error("Error parsing message:", err);
         }
@@ -62,6 +71,19 @@ wss.on("connection", (ws) => {
         if (currentLobby && wsClients.has(currentLobby)) {
             wsClients.get(currentLobby).delete(ws);
             console.log(` Client disconnected from lobby ${currentLobby}`);
+        }
+
+        for (const [username, sockets] of userSockets.entries()) {
+            if (sockets.has(ws)) {
+                sockets.delete(ws);
+                console.log(`WebSocket removed for ${username}`);
+        
+                if (sockets.size === 0) {
+                    userSockets.delete(username);
+                    publisher.publish(`USER_OFFLINE`, JSON.stringify({ username }));
+                }
+                break;
+            }
         }
     });
 });
@@ -173,6 +195,76 @@ subscriber.pSubscribe(`${IdPrefixes.MESSAGE_UPDATE}_*`, async (message, channel)
             }
         });
     }
+});
+
+subscriber.pSubscribe("FRIEND_REQUEST_*", async (message, channel) => {
+    const toUser = channel.replace("FRIEND_REQUEST_", "");
+    if (userSockets.has(toUser)) {
+        userSockets.get(toUser)!.forEach(client => {
+            if (client.readyState === 1) {
+                client.send(JSON.stringify({
+                    type: "FRIEND_REQUEST",
+                    ...JSON.parse(message),
+                }));
+            }
+        });
+    }
+});
+
+subscriber.pSubscribe("FRIEND_ACCEPTED_*", async (message, channel) => {
+    const toUser = channel.replace("FRIEND_ACCEPTED_", "");
+    if (userSockets.has(toUser)) {
+        userSockets.get(toUser)!.forEach(client => {
+            if (client.readyState === 1) {
+                client.send(JSON.stringify({
+                    type: "FRIEND_ACCEPTED",
+                    ...JSON.parse(message),
+                }));
+            }
+        });
+    }
+});
+
+subscriber.pSubscribe("FRIEND_REMOVED_*", async (message, channel) => {
+    const toUser = channel.replace("FRIEND_REMOVED_", "");
+    if (userSockets.has(toUser)) {
+        userSockets.get(toUser)!.forEach(client => {
+            if (client.readyState === 1) {
+                client.send(JSON.stringify({
+                    type: "FRIEND_REMOVED",
+                    ...JSON.parse(message),
+                }));
+            }
+        });
+    }
+});
+
+subscriber.subscribe("USER_ONLINE", (message) => {
+    const { username } = JSON.parse(message);
+    userSockets.forEach((sockets, user) => {
+        sockets.forEach(client => {
+            if (client.readyState === 1) {
+                client.send(JSON.stringify({
+                    type: "USER_ONLINE",
+                    username,
+                }));
+            }
+        });
+    });
+});
+
+subscriber.subscribe("USER_OFFLINE", (message) => {
+    const { username } = JSON.parse(message);
+    userSockets.forEach((sockets, user) => {
+        sockets.forEach(client => {
+            if (client.readyState === 1) {
+                client.send(JSON.stringify({
+                    type: "USER_OFFLINE",
+                    username,
+                }));
+            }
+        });
+    });
 });
 
 app.use("/game", gameRouter);

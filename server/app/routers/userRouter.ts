@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { n4jDriver, n4jSession } from "../neo4jClient";
 import { Transaction } from "neo4j-driver";
+import {publisher} from "../redisClient";
 
 // TODO hashiranje sifre
 
@@ -198,6 +199,10 @@ userRouter.post("/sendFriendRequest", async(req:any, res:any)=>{
         if(!friendRequest)
             return res.status(400).json({message: "Failed to send friend request"});
 
+        await publisher.publish(`FRIEND_REQUEST_${receiver}`, JSON.stringify({
+            from: sender,
+            message: `${sender} sent you a friend request`
+        }));
         return res.status(200).json({message: `Friend request to user '${receiver}' successfully sent!`});
 
     }
@@ -274,6 +279,10 @@ userRouter.post("/handleFriendRequest", async(req:any, res:any)=>{
         if(!makeFriends)
             return res.status(400).json({message: `Failed to establish friendship between '${username}' and '${sender}'`});
 
+        await publisher.publish(`FRIEND_ACCEPTED_${sender}`, JSON.stringify({
+            from: username,
+            message: `${username} accepted your friend request`
+        }));
         return res.status(200).json({message: `User '${username}' accepted '${sender}'s friend request!'`});
         
     }
@@ -373,6 +382,10 @@ userRouter.post("/removeFriend", async (req: any, res: any) => {
             return res.status(400).json({message: `No friendship found between '${username}' and '${friend}'`}); 
         }
 
+        await publisher.publish(`FRIEND_REMOVED_${friend}`, JSON.stringify({
+            from: username,
+            message: `${username} removed you from friends`
+        }));
         return res.status(200).json({message: `Successfully removed '${friend}' from '${username}' friend list`});
     }
     catch (error) {

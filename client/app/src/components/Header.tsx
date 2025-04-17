@@ -10,6 +10,7 @@ function Header() {
     const [isOpen, setIsOpen] = useState(false);
     const [friendRequests, setFriendRequests] = useState<string[]>([]);
     const [friends, setFriends] = useState<string[]>([]);
+    const [unreadCount, setUnreadCount] = useState(0);
     
     const location = useLocation();
     //const playerIdFromState = location.state?.playerIdTransfered;
@@ -21,9 +22,55 @@ function Header() {
         }
       }, [location]); 
 
+      useEffect(() => {
+        if (!playerID) return;
+    
+        const socket = new WebSocket(`ws://localhost:1738?playerID=${playerID}`);
+    
+        socket.onopen = () => {
+            console.log("WebSocket connection opened from LoginSignup");
+
+            socket.send(JSON.stringify({
+                type: "login",
+                username: playerID
+            }));
+        };
+    
+        socket.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            console.log("Received from WebSocket:", data);
+        
+            if (data.type === "FRIEND_REQUEST") {
+                setFriendRequests((prev) => [...prev, data.from]);
+                setUnreadCount((count) => count + 1)
+            }
+            if (data.type === "FRIEND_ACCEPTED") {
+                setFriends((prev) => [...prev, data.from]);
+            }
+            if (data.type === "FRIEND_REMOVED") {
+                setFriends((prev) => prev.filter(friend => friend !== data.from));
+            }
+            if (data.type === "USER_ONLINE") {
+                console.log(`${data.username} is now online!`);
+            }
+            if (data.type === "USER_OFFLINE") {
+                console.log(`${data.username} is now offline.`);
+            }
+        };
+    
+        socket.onclose = () => {
+            console.log("WebSocket connection closed from Header");
+        };
+    
+        return () => {
+            socket.close();
+        };
+    }, [playerID]);
+
     const handleNotificationBtnClick = async () => {
         setIsOpen((prev) => !prev);
         console.log(playerID);
+        if (!isOpen) setUnreadCount(0);
         try {
             var response = await axiosInstance.post('/user/friendRequests',
                                                      {username:playerID});
@@ -99,13 +146,18 @@ function Header() {
             </button>
         </Link>
         <div className="bell-container">
-            <FaBell onClick={handleNotificationBtnClick} className="bell-icon"/>
+            <div className="bell-wrapper">
+                <FaBell onClick={handleNotificationBtnClick} className="bell-icon" />
+                {unreadCount > 0 && (
+                    <div className="notification-badge">{unreadCount}</div>
+                )}
+            </div>
         {isOpen && (
             <div>
                 {renderNotifications()}
             </div>
         )}
-    </div>
+        </div>
 </div>
         
  );
