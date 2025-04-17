@@ -5,6 +5,7 @@ import "../styles/Lobby.css";
 import axiosInstance from "../utils/axiosInstance";
 import { useEffect, useState, useRef } from "react";
 import { FaBell, FaCheck, FaTimes, FaUserPlus } from "react-icons/fa";
+import { useFriendContext } from "../utils/FriendContext"
 
 function getUserName (id: string) {
     if (id && id != "") {
@@ -24,7 +25,7 @@ export default function Lobby () {
     console.log(hostId);
     const navigate = useNavigate();
     const [startGameFlag, setStartGameFlag] = useState(false);
-    const [friends, setFriends] = useState<string[]>([]);
+    //const [friends, setFriends] = useState<string[]>([]);
     const [players, setPlayers] = useState<string[]>
     (Array.isArray(playerIds) ? playerIds : playerID ? [playerID] : []);
     const [hostIdState, setHostIdState] = useState(hostId);
@@ -32,7 +33,8 @@ export default function Lobby () {
     const [chatInput, setChatInput] = useState(""); 
     const chatEndRef = useRef<HTMLDivElement | null>(null);
     const [isOpen, setIsOpen] = useState(false);
-    const [friendRequests, setFriendRequests] = useState<string[]>([]);
+    //const [friendRequests, setFriendRequests] = useState<string[]>([]);
+    const { friends,setFriends,friendRequests,setFriendRequests } = useFriendContext();
     console.log("playerChat: ", playerChat);
    
     useEffect(() => {

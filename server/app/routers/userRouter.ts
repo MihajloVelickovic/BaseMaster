@@ -2,7 +2,7 @@ import { Router } from "express";
 import { n4jDriver, n4jSession } from "../neo4jClient";
 import { Transaction } from "neo4j-driver";
 import {publisher} from "../redisClient";
-
+import { getFriends } from "../utils//userService";
 // TODO hashiranje sifre
 
 const userRouter = Router();
@@ -263,6 +263,10 @@ userRouter.post("/handleFriendRequest", async(req:any, res:any)=>{
 
         if(!userResponse){
             n4jSesh.close();
+            await publisher.publish(`FRIEND_DECLINED_${sender}`, JSON.stringify({
+                from: username,
+                message: `${username} accepted your friend request`
+            }));
             return res.status(400).json({message: `User '${username}' declined friend request from '${sender}'`});
         }
 
@@ -293,43 +297,16 @@ userRouter.post("/handleFriendRequest", async(req:any, res:any)=>{
 });
 
 userRouter.post("/getFriends", async(req: any, res: any) => {
-
     const {username} = req.body;
 
     if(!username)
         return res.status(400).json({message: "Username needed to retrieve friends"});
 
-    try{
-        const n4jSesh = n4jSession();
-    
-        const userExists = await n4jSesh.executeRead(async transaction => {
-            const result = await transaction.run(`RETURN EXISTS{ 
-                                                    MATCH(:User{username: $username})
-                                                  } AS userExists`,
-                                                 { username });
-            return result.records[0]?.get("userExists");
-        });
-
-        if(!userExists){
-            n4jSesh.close();
-            return res.status(400).json({message: `User '${username}' doesn't exist`});
-        }
-
-        const friends = await n4jSesh.executeRead(async transaction => {
-            const friends = await transaction.run(`MATCH(u:User{username: $username})  
-                                                   OPTIONAL MATCH (u) - 
-                                                                  [r:FRIEND] - 
-                                                                  (n:User) 
-                                                   RETURN collect(n.username) as friends`,
-                                                  {username});
-            return friends.records[0]?.get("friends")
-        });
-        
-        n4jSesh.close();
+    try {
+        const friends = await getFriends(username);
         return res.status(200).json({message:`All friends of user '${username}'`, friends});
-    }
-    catch(error){
-        return res.status(500).json({message:"How did this happen....", error: error.gqlStatusDescription});
+    } catch (error) {
+        return res.status(400).json({message: error.message});
     }
 });
 

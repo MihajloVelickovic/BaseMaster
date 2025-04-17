@@ -43,3 +43,16 @@
 .confirm-button:hover {
     background-color: #c9302c;
 }
+
+.status-dot {
+  margin-left: 10px;
+  font-weight: bold;
+}
+
+.status-dot.online {
+  color: green;
+}
+
+.status-dot.offline {
+  color: red;
+}

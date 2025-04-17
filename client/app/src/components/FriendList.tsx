@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import axiosInstance from "../utils/axiosInstance";
 import "../styles/FriendList.css";
 import { FaUserMinus } from "react-icons/fa";
+import { useFriendContext } from "../utils/FriendContext";
 
 function FriendList() {
     const location = useLocation();
@@ -10,6 +11,7 @@ function FriendList() {
     const [username, setUsername] = useState(location.state?.playerIdTransfered);
     const [friends, setFriends] = useState<string[]>([]);
     const [friendToRemove, setFriendToRemove] = useState<string | null>(null);
+    const { onlineUsers } = useFriendContext();
 
     useEffect(() => {
         const fetchFriends = async () => {
@@ -43,15 +45,20 @@ function FriendList() {
         {friends.length === 0 ? (
             <span>No friends yet :(</span>
         ) : (
-            friends.map((friend,index) => (
+            friends.map((friend,index) => {
+                const isOnline = onlineUsers.includes(friend);
+                return (
                 <div className="friend-card" key={index}>
-                    <span className="friend-name">{friend}</span>
+                    <span className="friend-name">{friend} <span className={`status-dot ${isOnline ? 'online' : 'offline'}`}> </span>
+                        {isOnline ? '🟢 Online' : '🔴 Offline'}
+                    </span>
                     <button className="remove-button" onClick={() => setFriendToRemove(friend)}>
                             Remove
                             <FaUserMinus style={{ marginLeft: "9px", marginBottom:"2px" }} />
                     </button>
                 </div>
-            ))
+            );
+            })
         )}
 
         {friendToRemove && (

@@ -8,9 +8,11 @@ import http from "http";
 import { IdPrefixes } from "./shared_modules/shared_enums";
 import userRouter from "./routers/userRouter";
 import { connectionSuccess, n4jSession, n4jDriver } from "./neo4jClient";
+import { getFriends } from "./utils/userService";
 
 const wsClients = new Map();
-const userSockets = new Map<string, Set<WebSocket>>(); // Maps WebSocket clients to lobbies
+const userSockets = new Map<string, Set<WebSocket>>(); 
+
 //We are cooked no neo4j to be seen in sight
 const corsOptions = {
     origin: 'http://localhost:3000',
@@ -31,7 +33,7 @@ wss.on("connection", (ws) => {
 
     ws.on("message", async (data: any) => {
         try {
-            const { type, gameId, playerID } = JSON.parse(data);
+            const { type, gameId, playerID, username } = JSON.parse(data);
             console.log("data je: ", JSON.parse(data));
 
             if (type === "joinLobby") {
@@ -53,21 +55,45 @@ wss.on("connection", (ws) => {
             }
 
             if (type === "login") {
-                const { username } = JSON.parse(data);
                 if (!userSockets.has(username)) {
                     userSockets.set(username, new Set());
                 }
                 userSockets.get(username)!.add(ws);
                 console.log(`User ${username} connected`);
+    
+                const friends = await getFriends(username);
             
-                await publisher.publish(`USER_ONLINE`, JSON.stringify({ username }));
+                if (!userSockets.has(username)) {
+                    userSockets.set(username, new Set());
+                }
+                userSockets.get(username)!.add(ws);
+                console.log(`User ${username} connected`);
+                
+                friends.forEach(friend => {
+                    if (userSockets.has(friend)) {
+                        userSockets.get(friend)!.forEach(client => {
+                            if (client.readyState === 1) {
+                                client.send(JSON.stringify({
+                                    type: "USER_ONLINE",
+                                    username,
+                                }));
+                            }
+                        });
+                    }
+                });
+                
+                const onlineFriends = friends.filter(f => userSockets.has(f));
+                ws.send(JSON.stringify({
+                    type: "ONLINE_FRIENDS",
+                    friends: onlineFriends,
+                }));
             }
         } catch (err) {
             console.error("Error parsing message:", err);
         }
     });
 
-    ws.on("close", () => {
+    ws.on("close", async() => {
         if (currentLobby && wsClients.has(currentLobby)) {
             wsClients.get(currentLobby).delete(ws);
             console.log(` Client disconnected from lobby ${currentLobby}`);
@@ -80,7 +106,21 @@ wss.on("connection", (ws) => {
         
                 if (sockets.size === 0) {
                     userSockets.delete(username);
-                    publisher.publish(`USER_OFFLINE`, JSON.stringify({ username }));
+                    console.log(`${username} is now offline`);
+                
+                    const friends = await getFriends(username);
+                    friends.forEach(friend => {
+                        if (userSockets.has(friend)) {
+                            userSockets.get(friend)!.forEach(client => {
+                                if (client.readyState === 1) {
+                                    client.send(JSON.stringify({
+                                        type: "USER_OFFLINE",
+                                        username,
+                                    }));
+                                }
+                            });
+                        }
+                    });
                 }
                 break;
             }
@@ -218,6 +258,20 @@ subscriber.pSubscribe("FRIEND_ACCEPTED_*", async (message, channel) => {
             if (client.readyState === 1) {
                 client.send(JSON.stringify({
                     type: "FRIEND_ACCEPTED",
+                    ...JSON.parse(message),
+                }));
+            }
+        });
+    }
+});
+
+subscriber.pSubscribe("FRIEND_DECLINED_*", async (message, channel) => {
+    const toUser = channel.replace("FRIEND_DECLINED_", "");
+    if (userSockets.has(toUser)) {
+        userSockets.get(toUser)!.forEach(client => {
+            if (client.readyState === 1) {
+                client.send(JSON.stringify({
+                    type: "FRIEND_DECLINED",
                     ...JSON.parse(message),
                 }));
             }

@@ -7,6 +7,7 @@ import Lobby from './components/Lobby';
 import LoginSignup from './components/LoginSignup';
 import FriendList from './components/FriendList'
 import "./styles/AppRoutes.css";
+import { FriendProvider } from './utils/FriendContext';
 
 const routes = [
     { path: "/", element: <Home /> },
@@ -21,6 +22,7 @@ const routes = [
 const AppRoutes = () => {       //Header se poziva odavde, moze i iz index.tsx ali mora da bude i tamo BrowswerRouter
     return (
         <BrowserRouter>
+        <FriendProvider>
             <Header />
             <div className='BelowHeader'>
                 <Routes>
@@ -29,6 +31,7 @@ const AppRoutes = () => {       //Header se poziva odavde, moze i iz index.tsx a
                     ))}
                 </Routes>
             </div>
+        </FriendProvider>
         </BrowserRouter>
     );
 };

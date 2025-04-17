@@ -4,13 +4,15 @@ import Sidebar from "./Sidebar";
 import { FaBell, FaCheck, FaTimes } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import axiosInstance from "../utils/axiosInstance";
+import { useFriendContext } from "../utils/FriendContext"
 
 function Header() {
     const [playerID, setPlayerID] = useState<string | null>(null);
     const [isOpen, setIsOpen] = useState(false);
-    const [friendRequests, setFriendRequests] = useState<string[]>([]);
-    const [friends, setFriends] = useState<string[]>([]);
+    const { friendRequests,setFriends, setFriendRequests, setOnlineUsers } = useFriendContext();
     const [unreadCount, setUnreadCount] = useState(0);
+    const [notifications, setNotifications] = useState<string[]>([]);
+
     
     const location = useLocation();
     //const playerIdFromState = location.state?.playerIdTransfered;
@@ -28,8 +30,6 @@ function Header() {
         const socket = new WebSocket(`ws://localhost:1738?playerID=${playerID}`);
     
         socket.onopen = () => {
-            console.log("WebSocket connection opened from LoginSignup");
-
             socket.send(JSON.stringify({
                 type: "login",
                 username: playerID
@@ -46,15 +46,36 @@ function Header() {
             }
             if (data.type === "FRIEND_ACCEPTED") {
                 setFriends((prev) => [...prev, data.from]);
+                setNotifications((prev) => [
+                    ...prev.filter(msg => !msg.includes(`${data.from} `)),  
+                    `${data.from} accepted your friend request`
+                ]);
+                setUnreadCount((count) => count + 1)
+            }
+            if (data.type === "FRIEND_DECLINED") {
+                setNotifications((prev) => [
+                    ...prev.filter(msg => !msg.includes(`${data.from} `)),
+                    `${data.from} declined your friend request`
+                ]);
+                setUnreadCount((count) => count + 1);
             }
             if (data.type === "FRIEND_REMOVED") {
                 setFriends((prev) => prev.filter(friend => friend !== data.from));
             }
             if (data.type === "USER_ONLINE") {
-                console.log(`${data.username} is now online!`);
+                setOnlineUsers((prev) => {
+                    if (!prev.includes(data.username)) {
+                        return [...prev, data.username];
+                    }
+                    return prev;
+                });
             }
             if (data.type === "USER_OFFLINE") {
-                console.log(`${data.username} is now offline.`);
+                setOnlineUsers((prev) => prev.filter(name => name !== data.username));
+            }
+
+            if (data.type === "ONLINE_FRIENDS") {
+                setOnlineUsers(data.friends); 
             }
         };
     
@@ -70,7 +91,11 @@ function Header() {
     const handleNotificationBtnClick = async () => {
         setIsOpen((prev) => !prev);
         console.log(playerID);
-        if (!isOpen) setUnreadCount(0);
+        if (!isOpen) 
+        {
+            setUnreadCount(0);
+            setNotifications([]);
+        }
         try {
             var response = await axiosInstance.post('/user/friendRequests',
                                                      {username:playerID});
@@ -94,30 +119,42 @@ function Header() {
                 setFriends(prev => [...prev, username]); 
                 console.log(response);
                 console.log("SUCCESFULLY BECAME FRIENDS!!!!!!");
-                setFriendRequests((prev) => prev.filter((req) => req !== username));
             }
             
-            setIsOpen((prev) => !prev);
-            
         }
-        catch(err:any) {
-            console.log(err.message);
+        catch (err: any) {
+            if (err.response) {
+                console.error("Server responded with error:", err.response.status, err.response.data);
+            } else {
+                console.error("Request error:", err.message);
+            }
+        }
+        finally{
+            setFriendRequests((prev) => prev.filter((req) => req !== username));
+            setIsOpen(false);
         }
         
     }
 
     const renderNotifications = () => (
         <div className={`notification-dropdown ${isOpen ? "open" : ""}`}>
-            {friendRequests.length === 0 ? (
-                <span>No new requests</span>
+            {friendRequests.length === 0 && notifications.length === 0 ? (
+                <span>No new notifications</span>
             ) : (
-                friendRequests.map((username, index) => (
-                    <div className="notificationItem" key={index}>
-                        <span>{username}</span>
-                        <button onClick={() => handleRequestSelection(username, true)}><FaCheck /></button>
-                        <button onClick={() => handleRequestSelection(username, false)}><FaTimes /></button>
-                    </div>
-                ))
+                <>
+                    {friendRequests.map((username, index) => (
+                        <div className="notificationItem" key={`req-${index}`}>
+                            <span>{username}</span>
+                            <button onClick={() => handleRequestSelection(username, true)}><FaCheck /></button>
+                            <button onClick={() => handleRequestSelection(username, false)}><FaTimes /></button>
+                        </div>
+                    ))}
+                    {notifications.map((message, index) => (
+                        <div className="notificationItem" key={`note-${index}`}>
+                            <span>{message}</span>
+                        </div>
+                    ))}
+                </>
             )}
         </div>
     );
