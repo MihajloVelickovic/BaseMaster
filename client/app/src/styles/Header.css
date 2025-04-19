@@ -6,15 +6,17 @@
     background: #009900;
     z-index: 1200;
     height: 7vh;
-}
-
-.Header  {
     padding: 15px;
 }
 
-.header-link-button {
-    padding: 10px;
-}
+.spacer {
+    flex-grow: 1; 
+  }
+
+.login-button { 
+    width: 100px;
+    margin-left: auto;
+} 
 
 .bell-container {
     position: relative;
@@ -27,6 +29,7 @@
     font-size: 1.5rem;
     color: #fff;
     transition: transform 0.2s;
+    margin-top: 5px;
 }
 
 .bell-icon:hover {
@@ -119,6 +122,7 @@
 .InviteIcon {
     color:white;
     font-size: 1.6rem;
+    margin-top:5px;
 }
 
 .pulsing-sword {
@@ -153,3 +157,33 @@
     gap:10px
   }
   
+
+  .basemaster-logo svg {
+    display: block; 
+}
+
+.basemaster-logo{
+    align-self: center;
+}
+
+.logo-text {
+    font-family: 'JetBrains Mono', monospace; 
+    font-size: 30px; 
+    font-weight: 700;
+    fill: #e2e8f0; 
+    text-anchor: middle; 
+    dominant-baseline:middle; 
+}
+
+.binary-digit {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; 
+    fill: #475569; 
+    opacity: 0.9; 
+}
+
+.circuit-line {
+     stroke: #38f79e; 
+     stroke-width: 1;
+     fill:none;
+}

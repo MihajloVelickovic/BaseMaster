@@ -32,6 +32,9 @@ function Header() {
             setPlayerID(fromState);
             setLobbyPlayerID(fromState);
         }
+        else {
+            setPlayerID(null); 
+        }
       }, [location]); 
 
       useEffect(() => {
@@ -189,50 +192,57 @@ function Header() {
  return (
     <div className="Header">
         <Sidebar/>
-         <label>Temporary links: </label>
-        <Link to="/">
-            <button className="btn btn-primary header-link-button">
-                Home
-            </button>
-        </Link>
-        <Link to="/Lobby">
-            <button className="btn btn-primary header-link-button">
-                Lobby
-            </button>
-        </Link>
-        <Link to="/Game">
-            <button className="btn btn-primary header-link-button">
-                Game
-            </button>
-        </Link>
-        <Link to="/LoginSignup">
-            <button className="btn btn-primary header-link-button">
-                LoginSignup
-            </button>
-        </Link>
-        <div className="bell-container">
-            <div className="bell-wrapper">
-                <FaBell onClick={handleNotificationBtnClick} className="bell-icon" />
-                {unreadCount > 0 && (
-                    <div className="notification-badge">{unreadCount}</div>
+        <svg className="basemaster-logo" width="260" height="60" viewBox="0 0 260 60" xmlns="http://www.w3.org/2000/svg">
+            <path className="circuit-line" d="M 10 5 L 30 5 Q 40 5 40 15 L 40 45 Q 40 55 50 55 L 210 55 Q 220 55 220 45 L 220 15 Q 220 5 230 5 L 250 5" />
+
+            <text x="20" y="19" className="binary-digit">01</text>
+            <text x="225" y="48" className="binary-digit">10</text>
+            <text x="50" y="51" className="binary-digit">110</text>
+            <text x="190" y="15" className="binary-digit">001</text>
+
+            <text x="50%" y="50%" className="logo-text">
+                BaseMaster
+            </text>
+        </svg>
+
+        <div className="spacer" />
+        
+        {!playerID && (
+             <Link to="/LoginSignup">
+             <button className="login-button btn btn-primary">
+                 Log in
+             </button>
+         </Link>
+        )}
+       
+        {playerID && (
+        <>
+            <div className="bell-container">
+                <div className="bell-wrapper">
+                    <FaBell onClick={handleNotificationBtnClick} className="bell-icon" />
+                    {unreadCount > 0 && (
+                        <div className="notification-badge">{unreadCount}</div>
+                    )}
+                </div>
+                {isOpen && (
+                <div>
+                    {renderNotifications()}
+                </div>
                 )}
             </div>
-        {isOpen && (
-            <div>
-                {renderNotifications()}
-            </div>
-        )}
+
+        <div className="bell-wrapper">
+            {invites.length > 0 ? (
+                <GiCrossedSwords
+                    className="InviteIcon pulsing-sword flippedIconVertical"
+                    onClick={handleInviteIconClick}
+                />
+            ) : (
+                <GiCrossedSwords className="InviteIcon flippedIconVertical" />
+            )}
         </div>
-           <div className="bell-wrapper">
-    {invites.length > 0 ? (
-        <GiCrossedSwords
-            className="InviteIcon pulsing-sword flippedIconVertical"
-            onClick={handleInviteIconClick}
-        />
-    ) : (
-        <GiCrossedSwords className="InviteIcon flippedIconVertical" />
-    )}
-</div>
+    </>
+)}
 {showInvites && invites.length > 0 && (
     <div className="invite-dropdown">
         {invites.map((invite, index) => (

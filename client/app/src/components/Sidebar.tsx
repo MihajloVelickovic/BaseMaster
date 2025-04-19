@@ -12,7 +12,7 @@ function Sidebar() {
   function handleLogout() {
     toggleSidebar();
     localStorage.removeItem("playerID");
-    navigate("/LoginSignup", { state: { playerIdTransfered: ""} });
+    navigate("/LoginSignup", { state: { playerIdTransfered: null} });
   }
 
   const toggleSidebar = () => setIsOpen(!isOpen);
