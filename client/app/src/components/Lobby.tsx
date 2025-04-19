@@ -238,6 +238,10 @@ export default function Lobby () {
         catch(err:any) {
             console.log(err.message)
         }
+        finally
+        {
+            setIsInviteOpen(false);
+        }
     }
 
     const renderInviteFriends = () => {
@@ -340,9 +344,11 @@ export default function Lobby () {
                         )}
                     </div>
                 ))}
-                <button className="InviteFriendsButton" onClick={inviteFriendsClicked}>
+               {playerNum >= 2 && players.length < playerNum && (
+               <button className="InviteFriendsButton" onClick={inviteFriendsClicked}>
                     Invite friends
                 </button>
+)}
             </div>
 
             

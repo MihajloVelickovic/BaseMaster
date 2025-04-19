@@ -8,6 +8,8 @@ import LoginSignup from './components/LoginSignup';
 import FriendList from './components/FriendList'
 import "./styles/AppRoutes.css";
 import { FriendProvider } from './utils/FriendContext';
+import { LobbyProvider } from "./utils/LobbyContext";
+
 
 const routes = [
     { path: "/", element: <Home /> },
@@ -23,6 +25,7 @@ const AppRoutes = () => {       //Header se poziva odavde, moze i iz index.tsx a
     return (
         <BrowserRouter>
         <FriendProvider>
+        <LobbyProvider>
             <Header />
             <div className='BelowHeader'>
                 <Routes>
@@ -31,6 +34,7 @@ const AppRoutes = () => {       //Header se poziva odavde, moze i iz index.tsx a
                     ))}
                 </Routes>
             </div>
+        </LobbyProvider>
         </FriendProvider>
         </BrowserRouter>
     );

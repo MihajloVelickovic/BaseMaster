@@ -5,23 +5,32 @@ import { FaBell, FaCheck, FaTimes } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import axiosInstance from "../utils/axiosInstance";
 import { useFriendContext } from "../utils/FriendContext"
+import { useLobbyContext } from "../utils/LobbyContext";
 import { GiCrossedSwords } from "react-icons/gi";
 
 function Header() {
+    type Invite = {
+        message: string;
+        gameId: string;
+      };
     const [playerID, setPlayerID] = useState<string | null>(null);
     const [isOpen, setIsOpen] = useState(false);
     const { friendRequests,setFriends, setFriendRequests, setOnlineUsers } = useFriendContext();
     const [unreadCount, setUnreadCount] = useState(0);
     const [notifications, setNotifications] = useState<string[]>([]);
-    const [invites, setInvites] = useState<string[]>([]);
+    const [invites, setInvites] = useState<Invite[]>([]);
+    const [showInvites, setShowInvites] = useState(false);
+
     
     const location = useLocation();
+    const { joinLobby, setPlayerID: setLobbyPlayerID } = useLobbyContext();
     //const playerIdFromState = location.state?.playerIdTransfered;
 
     useEffect(() => {
         const fromState = location.state?.playerIdTransfered;
         if (fromState) {
             setPlayerID(fromState);
+            setLobbyPlayerID(fromState);
         }
       }, [location]); 
 
@@ -81,6 +90,11 @@ function Header() {
 
             if(data.type === "INVITE") {
                 console.log(data);
+                const newInvite: Invite = {
+                    message: data.message,
+                    gameId: data.gameId
+                  };
+                  setInvites((prev) => [...prev, newInvite]);
             }
         };
     
@@ -92,6 +106,15 @@ function Header() {
             socket.close();
         };
     }, [playerID]);
+
+    const handleInviteIconClick = () => {
+        setShowInvites(prev => !prev);
+    };
+
+    const removeInvite = (gameId: string) => {
+        setInvites(prev => prev.filter(inv => inv.gameId !== gameId));
+        setShowInvites(false);
+    };
 
     const handleNotificationBtnClick = async () => {
         setIsOpen((prev) => !prev);
@@ -200,9 +223,36 @@ function Header() {
             </div>
         )}
         </div>
+           <div className="bell-wrapper">
+    {invites.length > 0 ? (
+        <GiCrossedSwords
+            className="InviteIcon pulsing-sword flippedIconVertical"
+            onClick={handleInviteIconClick}
+        />
+    ) : (
+        <GiCrossedSwords className="InviteIcon flippedIconVertical" />
+    )}
+</div>
+{showInvites && invites.length > 0 && (
+    <div className="invite-dropdown">
+        {invites.map((invite, index) => (
+            <div key={index} className="invitationItem">
+                <span>{invite.message}</span>
+                <button
+                onClick={() => {
+                joinLobby(invite.gameId, false); 
+                removeInvite(invite.gameId);
+          }}
+          className="btn btn-sm btn-success"
+        >
+          Join
+        </button>
+            </div>
+        ))}
+    </div>
+)}
         <div>
-        <GiCrossedSwords className="InviteIcon flippedIconVertical"/>
-        </div>
+    </div>
 </div>
         
  );
