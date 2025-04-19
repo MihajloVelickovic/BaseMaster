@@ -246,23 +246,34 @@ export default function Lobby () {
 
     const renderInviteFriends = () => {
         return (
-        <div className="InviteFriendsDiv">
-           {friends.length === 0 ? (
-                       <span>No friends yet :(</span>
-                   ) : (
-                       friends.map((friend,index) => {
-                           const isOnline = onlineUsers.includes(friend);
-                           
-
-                           return (
-                           <div className="friend-card" key={index}>
-                               <span>{friend}🟢</span>
-                               <button className="sendMessageButton" onClick={() => sendInvite(friend)}><FaPlus />Invite</button>
-                           </div>
-                       );
-                       })
-            )}
-            </div>  
+            <div className="invite-modal">
+            <div className="invite-modal-content">
+                <button className="close-button" onClick={() => setIsInviteOpen(false)}>
+                    <FaTimes />
+                </button>
+                <h2>Online Friends</h2>
+                <div className="friend-list-container">
+                    {friends.filter(friend => onlineUsers.includes(friend)).length === 0 ? (
+                        <span>None of your friends is currently online.</span>
+                    ) : (
+                        friends
+                            .filter(friend => onlineUsers.includes(friend))
+                            .map((friend, index) => (
+                                <div className="friend-card" key={index}>
+                                    <span className="friend-name">
+                                        {friend}
+                                        <span className="status-dot online">🟢 Online</span>
+                                    </span>
+                                    <button className="sendMessageButton" onClick={() => sendInvite(friend)}>
+                                        Invite
+                                        <FaUserPlus style={{ marginLeft: "5px" }} />
+                                    </button>
+                                </div>
+                            ))
+                    )}
+                </div>
+            </div>
+        </div>
         );
     }
 
@@ -347,8 +358,9 @@ export default function Lobby () {
                {playerNum >= 2 && players.length < playerNum && (
                <button className="InviteFriendsButton" onClick={inviteFriendsClicked}>
                     Invite friends
+                    <FaUserPlus style={{ marginLeft: "8px", marginBottom: "4px", fontSize:"18px"}} />
                 </button>
-)}
+                )}
             </div>
 
             
