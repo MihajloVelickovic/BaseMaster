@@ -38,7 +38,8 @@ export enum IdPrefixes {
     PlAYER_LEAVE = "PLAYER_LEAVE",
     LOBBY_PLAYERS = "lp",
     MESSAGE = "msg",
-    INVITE = "INVITE"
+    INVITE = "INVITE",
+    FRIEND_LIST = "FRIEND_LIST"
 }
 
 export enum BaseValues {
@@ -49,6 +50,10 @@ export enum BaseValues {
 export enum GameStates {
     LOBBY = "Lobby",
     STARTED = "Started"
+}
+
+export enum NumericalConstants {
+    CACHE_EXP_TIME = 300
 }
 // If only commits could write themselves... oh wait, they can’t.  
 

@@ -34,7 +34,7 @@ wss.on("connection", (ws) => {
     ws.on("message", async (data: any) => {
         try {
             const { type, gameId, playerID, username } = JSON.parse(data);
-            console.log("data je: ", JSON.parse(data));
+            //console.log("data je: ", JSON.parse(data));
 
             if (type === "joinLobby") {
                 if (!wsClients.has(gameId)) {
@@ -42,7 +42,7 @@ wss.on("connection", (ws) => {
                 }
                 wsClients.get(gameId).add(ws);
                 currentLobby = gameId;
-                console.log(`Player ${playerID} joined lobby ${gameId}`);
+                console.log(`[SYSTEM]Player ${playerID} joined lobby ${gameId}`);
                 
             }
             else if (type === IdPrefixes.SCOREBOARD_UPDATE) {
@@ -67,7 +67,7 @@ wss.on("connection", (ws) => {
                     userSockets.set(username, new Set());
                 }
                 userSockets.get(username)!.add(ws);
-                console.log(`User ${username} connected`);
+                console.log(`[SYSTEM]: User ${username} connected`);
                 
                 friends.forEach(friend => {
                     if (userSockets.has(friend)) {
@@ -89,20 +89,20 @@ wss.on("connection", (ws) => {
                 }));
             }
         } catch (err) {
-            console.error("Error parsing message:", err);
+            console.error("[ERROR]: parsing message failed:", err);
         }
     });
 
     ws.on("close", async() => {
         if (currentLobby && wsClients.has(currentLobby)) {
             wsClients.get(currentLobby).delete(ws);
-            console.log(` Client disconnected from lobby ${currentLobby}`);
+            console.log(`[SYSTEM]: Client disconnected from lobby ${currentLobby}`);
         }
 
         for (const [username, sockets] of userSockets.entries()) {
             if (sockets.has(ws)) {
                 sockets.delete(ws);
-                console.log(`WebSocket removed for ${username}`);
+                console.log(`[SYSTEM]: WebSocket removed for ${username}`);
         
                 if (sockets.size === 0) {
                     userSockets.delete(username);
@@ -369,7 +369,7 @@ app.use("/user", userRouter);
         //2.4.2025. sadasnjost
 
 server.listen(SERVER_PORT, async () => {
-    console.log(`Server running on port ${SERVER_PORT}`);
+    console.log(`[SYSTEM]: Server running on port ${SERVER_PORT}`);
     console.log(connectionSuccess);
 });
 

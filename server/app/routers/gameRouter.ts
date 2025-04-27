@@ -509,7 +509,7 @@ gameRouter.post("/getLobbyMessages", async (req:any, res:any) => {
     console.log(req.body);
 
     if(!gameId)
-        return res.status(400).send({ message: "Error processing request" });
+        return res.status(400).send({ message: "[ERROR]: Argument gameId missing" });
 
     try {
         var messages = 
@@ -521,14 +521,14 @@ gameRouter.post("/getLobbyMessages", async (req:any, res:any) => {
         return res.send({message:"SUCCESS", gmaeId:gameId, messages:messages });
     } 
     catch (err) {
-        console.error(err);
+        console.error('[ERROR]:',err);
         return res.status(500).send({ message: "Error processing message" });
     }
 });
 
 
 async function addChaosBaseArrays(roundCount:number, gameId:String) {
-    console.log("Entering chaos bases creation....");
+    //console.log("Entering chaos bases creation....");
     const fromBases = Array.from({ length: roundCount }, () => 
         Math.floor(Math.random() * (BaseValues.MAX_BASE -
              BaseValues.MIN_BASE + 1)) + BaseValues.MIN_BASE

@@ -3,7 +3,7 @@ import { n4jDriver, n4jSession } from "../neo4jClient";
 import { Transaction } from "neo4j-driver";
 import {publisher, redisClient} from "../redisClient";
 import { getFriends } from "../utils//userService";
-import { IdPrefixes } from "../shared_modules/shared_enums";
+import { IdPrefixes, NumericalConstants } from "../shared_modules/shared_enums";
 // TODO hashiranje sifre
 
 const userRouter = Router();
@@ -299,11 +299,23 @@ userRouter.post("/handleFriendRequest", async(req:any, res:any)=>{
 userRouter.post("/getFriends", async(req: any, res: any) => {
     const {username} = req.body;
 
-    if(!username)
+    if(!username) {
+        console.log("[ERROR]: Argument username missing");
         return res.status(400).json({message: "Username needed to retrieve friends"});
-
+    }
     try {
+        const redisKey = `${IdPrefixes.FRIEND_LIST}_${username}`;
+        const cachedList = 
+        await redisClient.lRange(redisKey,0,-1);
+        if(cachedList && cachedList.length > 0) {            
+            return res.status(200).json(
+            {message:`All friends of user '${username}'`, friends:cachedList});
+        }
         const friends = await getFriends(username);
+        if(friends && friends.length > 0) {
+            await redisClient.rPush(redisKey, friends);
+            await redisClient.expire(redisKey, NumericalConstants.CACHE_EXP_TIME);
+        }
         return res.status(200).json({message:`All friends of user '${username}'`, friends});
     } catch (error) {
         return res.status(400).json({message: error.message});
@@ -316,6 +328,7 @@ userRouter.post("/removeFriend", async (req: any, res: any) => {
     console.log(`Removing friend '${friend}' from '${username}' 💔`);
 
     if (!username || !friend) {
+        console.log("[ERROR]: Argument username or friend usenrame missing");
         return res.status(400).json({ message: "Both username and friend are required" });
     }
 
@@ -365,7 +378,8 @@ userRouter.post("/removeFriend", async (req: any, res: any) => {
         }));
         return res.status(200).json({message: `Successfully removed '${friend}' from '${username}' friend list`});
     }
-    catch (error) {
+    catch (error:any) {
+        console.log(`[ERROR]: Something very wrong happened....:${error.message}`)
         return res.status(500).json({message: "How did this happen...", error: error.gqlStatusDescription});
     }
 });
@@ -408,7 +422,7 @@ userRouter.post("/getInvites", async (req:any, res:any) => {
         return res.status(200).json({message:"Found invites", invites:invites});
     }
     catch(err:any) {
-        console.log(err.message);
+        console.log(`[ERROR]: Something very wrong happened....:${err.message}`)        
     }
 });
 

@@ -13,10 +13,11 @@ let n4jDriver: Driver;
 const connectionSuccess = await (async () => {
     try{
         n4jDriver = n4j.driver(client.uri, n4j.auth.basic(client.username, client.password));
-        return "Successfully connected to Neo4J database";
+        await n4jDriver.getServerInfo();
+        return "[SYSTEM]: Successfully connected to Neo4J database";
     }
     catch(err){
-        return `Couldn't connect to Neo4J database, ${err}`;
+        return `[ERROR]: Couldn't connect to Neo4J database, ${err}`;
     }
 })();
 

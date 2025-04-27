@@ -29,9 +29,18 @@ const subscriber = createClient({
 });
 
 (async () => {
-  await redisClient.connect();
-  await publisher.connect();
-  await subscriber.connect();
+  try {
+    await redisClient.connect();
+    console.log('[SYSTEM]: Succesfully stared redis client');
+    await publisher.connect();
+    console.log('[SYSTEM]: Succesfully stared redis publisher client');
+    await subscriber.connect();
+    console.log('[SYSTEM]: Succesfully stared redis subsriber client');
+  } 
+  catch (err:any) {
+    console.error('[ERROR]Error connecting to Redis:', err);
+  
+  }
 })();
 
 export  {redisClient, publisher, subscriber};
