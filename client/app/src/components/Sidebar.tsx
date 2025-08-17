@@ -40,7 +40,7 @@ function Sidebar() {
           ✖
         </button>
         <div className="sidebar-content">
-          <button className="sidebar-item"><FaUser />  Profile</button>
+          <button className="sidebar-item" onClick={() => navigate("/Profile")}><FaUser />  Profile</button>
           <button className="sidebar-item" onClick={handleFriendList}><FaUserFriends/>  Friend List</button>
           <button className="sidebar-item logout" onClick={handleLogout}><FaSignOutAlt/>  Logout</button>
         </div>

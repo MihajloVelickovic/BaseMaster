@@ -9,6 +9,8 @@ import FriendList from './components/FriendList'
 import "./styles/AppRoutes.css";
 import { FriendProvider } from './utils/FriendContext';
 import { LobbyProvider } from "./utils/LobbyContext";
+import Profile from './components/Profile';
+import Sidebar from './components/Sidebar';
 
 
 const routes = [
@@ -16,7 +18,9 @@ const routes = [
     { path: "/Game", element: <Game />},
     { path: "/Lobby", element: <Lobby />},
     { path: "/LoginSignup", element: <LoginSignup />},
-    { path: "/FriendList", element: <FriendList />}
+    { path: "/FriendList", element: <FriendList />},
+    {path: "/Sidebar", element: <Sidebar/>},
+    {path:"/Profile", element:<Profile/>}
     // { path: "/login", element: <LoginSignupPage /> },
     // { path: "/register/:token", element: <Register /> },
 ];

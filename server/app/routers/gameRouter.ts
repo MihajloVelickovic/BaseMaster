@@ -361,6 +361,8 @@ gameRouter.post("/playerComplete", async (req:any, res:any) => {
         //Ove dodaj da se sacuvaju stvari u NEO4J, poruke i rezultat
 
         await CleanupGameContext(gameId);
+        
+        await SaveResults(scoreboard);
 
         publisher.publish(`${IdPrefixes.ALL_PLAYERS_COMPLETE}_${gameId}`,
                            "Game Over");
@@ -569,4 +571,10 @@ async function setRounds(gameId, roundCount, initialValue) {
     await redisClient.hSet(gameId, roundData);
   }
 
+  function SaveResults(scoreboard: { score: number; value: string; }[]) {
+    throw new Error("Function not implemented.");
+  }
+
 export default gameRouter;
+
+

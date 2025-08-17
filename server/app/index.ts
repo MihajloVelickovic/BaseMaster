@@ -9,6 +9,7 @@ import { IdPrefixes } from "./shared_modules/shared_enums";
 import userRouter from "./routers/userRouter";
 import { connectionSuccess, n4jSession, n4jDriver } from "./neo4jClient";
 import { getFriends } from "./utils/userService";
+import { ensureUserConstraints } from "./utils/neo4jConstraintsService";
 
 const wsClients = new Map();
 const userSockets = new Map<string, Set<WebSocket>>(); 
@@ -367,6 +368,8 @@ app.use("/user", userRouter);
 //radu u timu ukoliko moje reci ne nose nikakvu tezinu i znacenje
         //10.12.2024. Datum kreiranja repozitorijuma
         //2.4.2025. sadasnjost
+
+await ensureUserConstraints();
 
 server.listen(SERVER_PORT, async () => {
     console.log(`[SYSTEM]: Server running on port ${SERVER_PORT}`);
