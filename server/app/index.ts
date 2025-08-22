@@ -10,6 +10,7 @@ import userRouter from "./routers/userRouter";
 import { connectionSuccess, n4jSession, n4jDriver } from "./neo4jClient";
 import { getFriends } from "./utils/userService";
 import { ensureUserConstraints } from "./utils/neo4jConstraintsService";
+import { ensureGraphConstraints } from "./utils/ensureConstraints";
 
 const wsClients = new Map();
 const userSockets = new Map<string, Set<WebSocket>>(); 
@@ -63,6 +64,7 @@ wss.on("connection", (ws) => {
                 console.log(`User ${username} connected`);
     
                 const friends = await getFriends(username);
+
             
                 if (!userSockets.has(username)) {
                     userSockets.set(username, new Set());
@@ -370,6 +372,7 @@ app.use("/user", userRouter);
         //2.4.2025. sadasnjost
 
 await ensureUserConstraints();
+await ensureGraphConstraints();
 
 server.listen(SERVER_PORT, async () => {
     console.log(`[SYSTEM]: Server running on port ${SERVER_PORT}`);

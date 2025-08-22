@@ -4,6 +4,7 @@ import { Transaction } from "neo4j-driver";
 import {publisher, redisClient} from "../redisClient";
 import { getFriends } from "../utils//userService";
 import { IdPrefixes, NumericalConstants } from "../shared_modules/shared_enums";
+import { upsertPlayerFromUser } from "../graph/player.repo";
 // TODO hashiranje sifre
 
 const userRouter = Router();
@@ -30,9 +31,12 @@ userRouter.post("/register", async(req: any, res: any) => {
 
         n4jSesh.close();
 
-        return register ?
-        res.status(200).json({message: `User successfully created!`, username}):
-        res.status(400).json({message: `Failed to create user "${username}"\n${register}`});
+        if (register) {
+            await upsertPlayerFromUser(username, email);
+            return res.status(200).json({message: `User successfully created!`, username});
+        }
+        else 
+            return res.status(400).json({message: `Failed to create user "${username}"\n${register}`});
     }
     catch(error){
         return res.status(500).json({message:"How did this happen....", error: error.gqlStatusDescription});
@@ -72,7 +76,7 @@ userRouter.post("/login", async(req: any, res: any) => {
             return res.status(400).json({message: "Incorrect password"});
 
         //TODO JWT
-
+        await upsertPlayerFromUser(user.username, user.email);
         return res.status(200).json({message: "Success", user: user});
     }
     catch(error){
