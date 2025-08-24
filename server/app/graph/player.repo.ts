@@ -39,3 +39,58 @@ export async function upsertPlayerFromUser(username: string, email?: string) {
     await session.close();
   }
 }
+
+export async function recordResult(input: {
+  username: string;
+  score: number;
+  placement?: 1 | 2 | 3 | 4;
+}) {
+  const session = n4jSession();
+  try {
+    await session.executeWrite(tx =>
+      tx.run(
+        `
+        MATCH (p:Player {username: $username})
+        SET p.highestScore = CASE
+          WHEN $score > coalesce(p.highestScore, 0) THEN $score
+          ELSE coalesce(p.highestScore, 0)
+        END,
+        p.firsts  = coalesce(p.firsts, 0)  + CASE WHEN $placement = 1 THEN 1 ELSE 0 END,
+        p.seconds = coalesce(p.seconds, 0) + CASE WHEN $placement = 2 THEN 1 ELSE 0 END,
+        p.thirds  = coalesce(p.thirds, 0)  + CASE WHEN $placement = 3 THEN 1 ELSE 0 END,
+        p.fourths = coalesce(p.fourths, 0) + CASE WHEN $placement = 4 THEN 1 ELSE 0 END
+        `,
+        input
+      )
+    );
+  } finally { await session.close(); }
+}
+
+
+// graph/player.repo.ts
+export async function getLeaderboard(params: { limit: number; skip?: number }) {
+  const session = n4jSession();
+  try {
+    const res = await session.executeRead(tx =>
+      tx.run(
+        `
+        MATCH (p:Player)
+        RETURN p.username AS username,
+               coalesce(p.highestScore, 0) AS score,
+               coalesce(p.firsts, 0)  AS firsts,
+               coalesce(p.seconds, 0) AS seconds,
+               coalesce(p.thirds, 0)  AS thirds,
+               coalesce(p.fourths, 0) AS fourths
+        ORDER BY score DESC, username ASC
+        SKIP toInteger($skip)
+        LIMIT toInteger($limit)
+        `,
+        { limit: params.limit, skip: params.skip ?? 0 }
+      )
+    );
+    return res.records.map(r => r.toObject());
+  } finally {
+    await session.close();
+  }
+}
+

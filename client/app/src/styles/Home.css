@@ -268,3 +268,177 @@ input.inputFont {
 .clicked-button {
   background: #E00029 !important;
 }
+
+.HomeWrapper {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 30px;
+  margin-top: 30px;
+}
+
+.LeaderboardContainer {
+  width: 300px;
+  background: #FFFFF2;
+  border: solid #010050 1px;
+  border-radius: 25px;
+  padding: 20px;
+  font-family: 'JetBrains Mono', monospace;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.leaderboardTitle {
+  font-size: 1.6rem;
+  font-weight: bold;
+  color: #32E537;
+  margin-bottom: 10px;
+}
+
+.leaderboardList {
+  list-style: none;
+  padding: 0;
+  width: 100%;
+}
+
+.leaderboardItem {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  padding: 8px 12px;
+  font-size: 1.2rem;
+  border-bottom: 1px solid #ccc;
+}
+
+.lb-rank {
+  font-weight: bold;
+  color: #32E537;
+}
+
+.lb-name {
+  flex: 1;
+  text-align: left;
+  margin-left: 10px;
+}
+
+.lb-score {
+  font-weight: bold;
+}
+
+.leaderboardEmpty {
+  text-align: center;
+  color: gray;
+  font-size: 1rem;
+  padding: 10px;
+}
+
+.HomeAndLeaderboard {
+  display: flex;
+  justify-content: center;   /* centers both panels */
+  align-items: flex-start;
+  gap: 40px;                 /* space between GameOptions and Leaderboard */
+  margin-top: 30px;
+}
+
+.LeaderboardContainer {
+  width: 280px;
+  min-height: 300px;
+  padding: 20px;
+  border: solid #010050 1px;
+  border-radius: 25px;
+  background-color: #FFFFF2;
+  text-align: left;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.leaderboardTitle {
+  font-size: 1.6rem;
+  font-weight: bold;
+  color: #32E537;
+  margin-bottom: 10px;
+}
+
+.leaderboardList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.leaderboardItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: #f8f8f0;
+}
+
+.leaderboardItem:nth-child(1) {
+  background: gold;
+  font-weight: bold;
+}
+.leaderboardItem:nth-child(2) {
+  background: silver;
+  font-weight: bold;
+}
+.leaderboardItem:nth-child(3) {
+  background: #cd7f32;
+  font-weight: bold;
+}
+
+.rank {
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.noPlayers {
+  font-size: 0.9rem;
+  color: gray;
+  text-align: center;
+}
+
+/* Center a tighter two-column stage so the right panel sits closer */
+.HomeWrapper,
+.HomeAndLeaderboard {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 18px;                 /* tighter gap between panels */
+  max-width: 960px;          /* <-- shrink stage width to pull things together */
+  margin: 30px auto;
+  padding: 0 12px;
+}
+
+/* Left panel width (your Game Options card) */
+.HomeContainer {
+  flex: 0 0 620px;           /* was ~570–580; a touch wider centers the pair */
+}
+
+/* Right panel width (leaderboard) */
+.LeaderboardContainer {
+  flex: 0 0 300px;           /* fixed, neat width */
+  margin-top: 8px;           /* align a hair lower if you like */
+  position: sticky;
+  top: 120px;
+  
+}
+
+/* Optional: if it still feels a bit far, nudge it left a touch */
+@media (min-width: 1100px) {
+  .LeaderboardContainer { transform: translateX(-8px); }
+}
+
+/* Responsive: stack on small screens */
+@media (max-width: 860px) {
+  .HomeWrapper,
+  .HomeAndLeaderboard { 
+    flex-direction: column;
+    max-width: 640px;
+    gap: 12px;
+  }
+  .HomeContainer { flex-basis: auto; width: 100%; }
+  .LeaderboardContainer { flex-basis: auto; width: 100%; position: static; }
+}

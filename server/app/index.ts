@@ -11,6 +11,7 @@ import { connectionSuccess, n4jSession, n4jDriver } from "./neo4jClient";
 import { getFriends } from "./utils/userService";
 import { ensureUserConstraints } from "./utils/neo4jConstraintsService";
 import { ensureGraphConstraints } from "./utils/ensureConstraints";
+import { recordResult } from "./graph/player.repo";
 
 const wsClients = new Map();
 const userSockets = new Map<string, Set<WebSocket>>(); 
@@ -169,6 +170,27 @@ subscriber.pSubscribe(`${IdPrefixes.GAME_STARTED}_*`, async (message, channel) =
 //harder to temove this type of comments.... I thing I will
 subscriber.pSubscribe(`${IdPrefixes.ALL_PLAYERS_COMPLETE}_*`, async (message, channel) => {
     const lobbyId = channel.replace(`${IdPrefixes.ALL_PLAYERS_COMPLETE}_`, ""); // Extract game ID
+    const payload = JSON.parse(message);
+
+    // 1) PERSIST to Neo4j (once per player)
+    // if (Array.isArray(payload?.results)) {
+    //     for (const r of payload.results) {
+    //     await recordResult({
+    //         username: r.username,   // same as Player.id
+    //         score: r.score,
+    //         placement: r.placement
+    //     });
+
+    //     // 2) OPTIONAL: maintain a Redis ZSET for blazing-fast reads
+    //     // key: "global:leaderboard"
+    //     // member = username, score = best score (we store latest best).
+    //     // We should ZADD with the player's best; easiest is to just ZADD the final if it’s the best:
+    //     await redisClient.zAdd("global:leaderboard", [{ score: r.score, value: r.username }]);
+    //     // If the player’s existing best in Redis is higher, ZADD keeps it if 'score' is smaller.
+    //     // (If you want strict “max”, fetch ZSCORE and compare before zAdd.)    !!!!!!!!!!!!!!!!!!!!!
+    //     }
+    // }
+
 
     if (wsClients.has(lobbyId)) {
         wsClients.get(lobbyId).forEach(client => {
@@ -180,6 +202,9 @@ subscriber.pSubscribe(`${IdPrefixes.ALL_PLAYERS_COMPLETE}_*`, async (message, ch
             }
         });
     }
+
+
+
 });
 
 subscriber.pSubscribe(`${IdPrefixes.PLAYER_JOIN}_*`, async (message, channel) => {

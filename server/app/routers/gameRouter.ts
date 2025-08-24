@@ -10,8 +10,20 @@ import GameInfo from "../models/gameInfo";
 import {redisClient, publisher} from "../redisClient";
 import { json } from "stream/consumers";
 import { receiveMessageOnPort } from "worker_threads";
+import { recordResult } from "../graph/player.repo";
+import { getLeaderboard } from "../graph/player.repo";
+
+
 
 const gameRouter = Router();
+
+function playerIdToUsername(playerId: string): string {
+  // Your playerId looks like "username_random"
+  // If it ever comes as just "username", this still works.
+  const name = String(playerId).split("_")[0];
+  return name || String(playerId);
+}
+
 
 gameRouter.post("/createGame", async (req: any, res:any) => {
     console.log(req.body); //DEBUG
@@ -361,11 +373,12 @@ gameRouter.post("/playerComplete", async (req:any, res:any) => {
         //Ove dodaj da se sacuvaju stvari u NEO4J, poruke i rezultat
 
         await CleanupGameContext(gameId);
-        
-        await SaveResults(scoreboard);
+        const results = await SaveResults(scoreboard); // <— now returns standings
 
-        publisher.publish(`${IdPrefixes.ALL_PLAYERS_COMPLETE}_${gameId}`,
-                           "Game Over");
+        await publisher.publish(
+            `${IdPrefixes.ALL_PLAYERS_COMPLETE}_${gameId}`,
+            JSON.stringify({ results })
+        );
 
     }
     catch(err:any) {
@@ -571,9 +584,54 @@ async function setRounds(gameId, roundCount, initialValue) {
     await redisClient.hSet(gameId, roundData);
   }
 
-  function SaveResults(scoreboard: { score: number; value: string; }[]) {
-    throw new Error("Function not implemented.");
+  async function SaveResults(scoreboard: { score: number; value: string; }[]) {
+    // scoreboard: [{ value: playerId, score: number }, ...] high → low (you already reversed above)
+    const results: Array<{ username: string; playerId: string; score: number; placement: number }> = [];
+
+    for (let i = 0; i < scoreboard.length; i++) {
+        const row = scoreboard[i];
+        const playerId = row.value;
+        const score = Number(row.score) || 0;
+        const placement = i + 1; // 1-based podium
+        const username = playerIdToUsername(playerId);
+
+        // 1) Persist to Neo4j (you set Player.id = username)
+        await recordResult({ username, score, placement: placement as 1 | 2 | 3 | 4 });
+
+        // 2) OPTIONAL: maintain a global Redis leaderboard as a ZSET (best scores)
+        // Only write if new score is higher than stored best.
+        const zKey = "global:leaderboard";
+        const existing = await redisClient.zScore(zKey, username); // number | null
+        if (existing === null || score > existing) {
+        await redisClient.zAdd(zKey, [{ score, value: username }]);
+        }
+
+        results.push({ username, playerId, score, placement });
+    }
+
+  return results;
+}
+
+gameRouter.get("/globalLeaderboard", async (req: any, res: any) => {
+  const limitRaw = req.query.limit;
+  const skipRaw  = req.query.skip;
+
+  const limit = Math.min(
+    Number.isFinite(Number(limitRaw)) ? Math.trunc(Number(limitRaw)) : 50,
+    200
+  );
+  const skip = Number.isFinite(Number(skipRaw)) ? Math.trunc(Number(skipRaw)) : 0;
+
+  try {
+    const items = await getLeaderboard({ limit, skip });
+    return res.status(200).json({ items, nextSkip: skip + items.length });
+  } catch (err: any) {
+    console.error("[ERROR] get /globalLeaderboard:", err?.message || err);
+    return res.status(500).json({ message: "Failed to fetch global leaderboard" });
   }
+});
+
+
 
 export default gameRouter;
 

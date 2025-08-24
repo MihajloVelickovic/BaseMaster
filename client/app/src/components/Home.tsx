@@ -18,6 +18,15 @@ function getUserName (id: string) {
   return "";
 }
 
+interface LeaderboardEntry {
+  username: string;
+  score: number;
+  firsts: number;
+  seconds: number;
+  thirds: number;
+  fourths: number;
+}
+
 function Home() {
   const location = useLocation();
   var { playerIdTransfered = ""} = location.state || {};
@@ -37,12 +46,21 @@ function Home() {
   const [clickedLobbies, setClickedLobbies] = useState<Map<string, boolean>>(new Map());
   // const [playerId, setPlayerId] = useState(playerID);
 
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [loggedIn, setLoggedIn] = useState<boolean>(true); // TODO: replace with real auth state
+
   const navigate = useNavigate();
   const bases = Array.from({ length: 31}, (_, i) => i+2);
   const players = Array.from({length: 4}, (_, i) => i+1);
   // const gameModes = ["Classic", "Reverse", "Chaos", "Arithmetic classic", "Arithmetic chaos"];  
   const gameModes:string[] = Object.values(GameModes);
   const difficulties:string[] = Object.values(Difficulties);
+
+  useEffect(() => {
+    if (loggedIn) {
+      fetchLeaderboard();
+    }
+  }, [loggedIn]);
   
   useEffect(() => {
     if (gameId) {
@@ -52,6 +70,37 @@ function Home() {
     // console.log(location.state?.playerIdTransfered, "this is it");
     // setPlayerId(location.state?.playerIdTransfered);
   }, [gameId]);  // This effect runs when `gameId` is updated
+
+  const fetchLeaderboard = async () => {
+    try {
+      const res = await axiosInstance.get("/game/globalLeaderboard", {
+        params: { limit: 20 }
+      });
+      setLeaderboard(res.data.items || []);
+    } catch (err) {
+      console.error("Error fetching leaderboard", err);
+    }
+  };
+
+  // leaderboard component
+  const renderLeaderboard = () => (
+    <div className="LeaderboardContainer">
+      <div className="leaderboardTitle">Global Leaderboard 🌍</div>
+      <ul className="leaderboardList">
+        {leaderboard.length > 0 ? (
+          leaderboard.map((entry, i) => (
+            <li key={i} className="leaderboardItem">
+              <span className="lb-rank">#{i + 1}</span>
+              <span className="lb-name">{entry.username}</span>
+              <span className="lb-score">{entry.score}</span>
+            </li>
+          ))
+        ) : (
+          <li className="leaderboardEmpty">No players yet.</li>
+        )}
+      </ul>
+    </div>
+  );
 
   const createGame = async () => {
     try {
@@ -283,50 +332,55 @@ function Home() {
   }
 
   return (
+  <div className="HomePage">
+    <div className="HomeAndLeaderboard">
+      <div className="HomeContainer">
+        {/* Existing Create Game / Browse Lobbies code */}
+        {!browsingLobbies ? (
+          <>
+            <label className="mainFont">Game Options</label>
+            {Chooser(bases, toBase, setToBase, "Base ", "Choose Base:", gameMode === GameModes.CHAOS)}
+            {Chooser(players, playerNum, setPlayerNum, "Players: ", "Choose player count:")}
+            {Chooser(gameModes, gameMode, setGameMode, "", "Choose Game Mode:")}
+            {Chooser(difficulties, difficulty, setDifficulty, "", "Choose difficulty:")}
 
-    <div className="HomeContainer">
-      <div className="lobbyOptionDiv">
-        <button className={`btn ${!browsingLobbies ? 'btn-primary' : 'btn-secondary'} lobbyOptionButton`} onClick={() => setBrowsingLobbies(false)}>
-          Create Game
-        </button>
-        <button className={`btn ${browsingLobbies ? 'btn-primary' : 'btn-secondary '} lobbyOptionButton`} onClick={() => { setBrowsingLobbies(true); fetchLobbies(); }}>
-          Browse Lobbies
-        </button>
-      </div>
-      
-      {!browsingLobbies ? (
-      <>
-        <label className="mainFont">Game Options</label>
-        {Chooser(bases, toBase, setToBase, "Base ", "Choose Base:", gameMode === GameModes.CHAOS)}
-        {Chooser(players, playerNum, setPlayerNum, "Players: ", "Choose player count:")}
-        {Chooser(gameModes, gameMode, setGameMode, "", "Choose Game Mode:")}
-        {Chooser(difficulties, difficulty, setDifficulty, "", "Choose difficulty:")}
-
-        {/* Show only ˅ when collapsed, show 'Advanced Options' when expanded */}
-        {!advancedOptions ? (
-          <button className="advancedOptions" onClick={handleAdvanceOptions}>
-            ˅
-          </button>
+            {!advancedOptions ? (
+              <button className="advancedOptions" onClick={handleAdvanceOptions}>˅</button>
+            ) : (
+              <>
+                <label className="advancedLabel">Advanced Options</label>
+                {renderAdvancedOptions()}
+                <button className="advancedOptions" onClick={handleAdvanceOptions}>˄</button>
+              </>
+            )}
+            <button className="createLobbyButton" onClick={createGame}>Create Lobby</button>
+          </>
         ) : (
           <>
-            <label className="advancedLabel">Advanced Options</label>
-            {renderAdvancedOptions()}
-            <button className="advancedOptions" onClick={handleAdvanceOptions}>
-              ˄
-            </button>
+            <label className="mainFont">Available Lobbies</label>
+            {showLobbies()}
           </>
         )}
+      </div>
 
-      <button className="createLobbyButton" onClick={createGame}>Create Lobby</button>
-    </>
-  ) : (
-    <>
-      <label className="mainFont">Available Lobbies</label>
-      {showLobbies()}
-    </>
-  )}
+      <div className="LeaderboardContainer">
+        <h3 className="leaderboardTitle">🌍 Global Leaderboard</h3>
+        <ul className="leaderboardList">
+          {leaderboard.length > 0 ? leaderboard.map((e, i) => (
+            <li key={i} className="leaderboardItem">
+              <span className="rank">#{i + 1}</span>
+              <span className="player">{e.username}</span>
+              <span className="score">{e.score}</span>
+            </li>
+          )) : (
+            <p className="noPlayers">No players yet.</p>
+          )}
+        </ul>
+      </div>
     </div>
-  );
+  </div>
+);
+
 }
 
 export default Home;

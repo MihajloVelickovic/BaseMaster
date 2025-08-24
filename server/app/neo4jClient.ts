@@ -12,7 +12,11 @@ let n4jDriver: Driver;
 
 const connectionSuccess = await (async () => {
     try{
-        n4jDriver = n4j.driver(client.uri, n4j.auth.basic(client.username, client.password));
+        n4jDriver = n4j.driver(
+            client.uri,
+            n4j.auth.basic(client.username, client.password),
+            { disableLosslessIntegers: true }  // ← this makes integers come back as JS numbers
+            );
         await n4jDriver.getServerInfo();
         return "[SYSTEM]: Successfully connected to Neo4J database";
     }
@@ -26,3 +30,4 @@ const n4jSession = () => {
 }
 
 export {n4jDriver, n4jSession, connectionSuccess};
+
