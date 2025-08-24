@@ -422,13 +422,13 @@ input.inputFont {
   flex: 0 0 300px;           /* fixed, neat width */
   margin-top: 8px;           /* align a hair lower if you like */
   position: sticky;
-  top: 120px;
+  top: 110px;
   
 }
 
 /* Optional: if it still feels a bit far, nudge it left a touch */
 @media (min-width: 1100px) {
-  .LeaderboardContainer { transform: translateX(-8px); }
+  .LeaderboardContainer { transform: translateX(+25px); }
 }
 
 /* Responsive: stack on small screens */
