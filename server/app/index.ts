@@ -365,36 +365,6 @@ subscriber.pSubscribe(`${IdPrefixes.INVITE}_*`, async (message, channel) => {
 
 app.use("/game", gameRouter);
 app.use("/user", userRouter);
-//the eternal silence of people who actually care will always be greater than
-//the unbroken symphony of those who are indifferent to all, caring for nothing
-//and no one   
-//those whose words are empty, devoid of meaning or the slightest intension
-//of putting them from their abstrat form into something that has the potential
-//of having a meaning to others, who  in their eternal silence, forget that no 
-//one should have the privilege to speak and make promises that never come to be
-//whilst expecting them to do those things by themselves
-//in the perfect world where time is unlimited they would not have the right to
-//complain, but the reality we live in is not so forgiving unfortunately for the
-//other ones, time is ticking torwards our certain demise, the only thing that
-//is left for us to do is to decide how we spend the time that was given to us,
-//freedom of choise should always exsist no matter what, but choices come with
-//consequences, which may come true if the silent ones run out of patience
-//and decide to show them that nne does not claim the harvest of another's toil
-
-            //02.04.2025, Mihajo Dimitrijević, pun pesimizma, spreman da sam 
-            //uradi obecano, ali neispunjeno
-
-//Bilo bi veoma kul da imamo neo4j izgubio sam vise od sat vemena da napisem ovo
-                                                    //(I prethodna dva commit-a)
-//sto je vise nego sto je ????verovatno????(CERTAIN SOMEONE) proveo radeci na 
-// projektu poslednjih mesec dana, vise se i nadam da ta osoba cite ove stvari
-//i nadam se da bar pomisli da nije uredu, ako ne prema meni, prema ostalim
-//clanovima tima koji rade i kad su prehladjeni, i kad su u zurbi i imaju manje 
-//od sat vremena, ali uvek pokazuju da ih je briga da ispostuju to sto rade u 
-//timu, pogled na repozitorijum je dovoljan za procenu doprinosa
-//radu u timu ukoliko moje reci ne nose nikakvu tezinu i znacenje
-        //10.12.2024. Datum kreiranja repozitorijuma
-        //2.4.2025. sadasnjost
 
 await ensureUserConstraints();
 await ensureGraphConstraints();
@@ -403,5 +373,3 @@ server.listen(SERVER_PORT, async () => {
     console.log(`[SYSTEM]: Server running on port ${SERVER_PORT}`);
     console.log(connectionSuccess);
 });
-
-// I NEED A HERO HE'S GOT TO BE STRONG AND HE'S GOT TO KNOW NEO4J

@@ -336,6 +336,14 @@ function Home() {
     <div className="HomeAndLeaderboard">
       <div className="HomeContainer">
         {/* Existing Create Game / Browse Lobbies code */}
+        <div className="lobbyOptionDiv">
+          <button className={`btn ${!browsingLobbies ? 'btn-primary' : 'btn-secondary'} lobbyOptionButton`} onClick={() => setBrowsingLobbies(false)}>
+            Create Game
+          </button>
+          <button className={`btn ${browsingLobbies ? 'btn-primary' : 'btn-secondary '} lobbyOptionButton`} onClick={() => { setBrowsingLobbies(true); fetchLobbies(); }}>
+            Browse Lobbies
+          </button>
+        </div>  
         {!browsingLobbies ? (
           <>
             <label className="mainFont">Game Options</label>
