@@ -16,14 +16,6 @@ export async function ensureUserConstraints() {
         REQUIRE u.email IS UNIQUE;
       `);
 
-      await tx.run(`CREATE CONSTRAINT unique_player_id IF NOT EXISTS
-                    FOR (p:Player) REQUIRE p.id IS UNIQUE;`);
-      await tx.run(`CREATE CONSTRAINT unique_username IF NOT EXISTS
-                    FOR (p:Player) REQUIRE p.username IS UNIQUE;`);
-      await tx.run(`CREATE CONSTRAINT unique_email IF NOT EXISTS
-                    FOR (p:Player) REQUIRE p.email IS UNIQUE;`);
-      await tx.run(`CREATE CONSTRAINT unique_achievement_code IF NOT EXISTS
-                    FOR (a:Achievement) REQUIRE a.code IS UNIQUE;`);
     });
     console.log("[SYSTEM] User constraints ensured.");
   } finally {
