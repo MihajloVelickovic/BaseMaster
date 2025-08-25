@@ -25,7 +25,7 @@ export async function ensureUserConstraints() {
       await tx.run(`CREATE CONSTRAINT unique_achievement_code IF NOT EXISTS
                     FOR (a:Achievement) REQUIRE a.code IS UNIQUE;`);
     });
-    console.log("User constraints ensured.");
+    console.log("[SYSTEM] User constraints ensured.");
   } finally {
     await session.close();
   }
