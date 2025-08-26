@@ -192,6 +192,7 @@ function Header() {
  return (
     <div className="Header">
         <Sidebar/>
+        <Link to="/" className="logo-link">
         <svg className="basemaster-logo" width="260" height="60" viewBox="0 0 260 60" xmlns="http://www.w3.org/2000/svg">
             <path className="circuit-line" d="M 10 5 L 30 5 Q 40 5 40 15 L 40 45 Q 40 55 50 55 L 210 55 Q 220 55 220 45 L 220 15 Q 220 5 230 5 L 250 5" />
 
@@ -204,6 +205,7 @@ function Header() {
                 BaseMaster
             </text>
         </svg>
+        </Link>
 
         <div className="spacer" />
         

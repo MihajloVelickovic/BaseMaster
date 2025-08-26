@@ -20,7 +20,7 @@ function getUserName (id: string) {
 
 interface LeaderboardEntry {
   username: string;
-  score: number;
+  bestScore: number;
   firsts: number;
   seconds: number;
   thirds: number;
@@ -42,7 +42,7 @@ function Home() {
   const [lobbies, setLobbies] = useState<[string, number, number, string][]>([]);
   const [advancedOptions, setAdvancedOptions] = useState(false);
   const [lobbyName, setLobbyName] = useState("");
-  const [roundCount, setRoundCount] = useState(Number(15));
+  const [roundCount, setRoundCount] = useState(Number(5));    //switch to 15 later
   const [clickedLobbies, setClickedLobbies] = useState<Map<string, boolean>>(new Map());
   // const [playerId, setPlayerId] = useState(playerID);
 
@@ -64,7 +64,7 @@ function Home() {
   
   useEffect(() => {
     if (gameId) {
-      navigate("/Lobby", { state: { toBasee:toBase, playerNum, gameMode, difficulty, gameId, playerID: playerId!=""? playerId : playerID, roundCount, lobbyName, hostId: playerId!=""? playerId : playerID } });
+      navigate("/Lobby", { state: { toBasee:toBase, playerNum, gameMode, difficulty, gameId, playerID: playerId!=""? playerId : playerID, roundCount, lobbyName: playerIdTransfered!=""? playerIdTransfered : "Enie", hostId: playerId!=""? playerId : playerID } });
     }
     // console.log("here");
     // console.log(location.state?.playerIdTransfered, "this is it");
@@ -92,7 +92,7 @@ function Home() {
             <li key={i} className="leaderboardItem">
               <span className="lb-rank">#{i + 1}</span>
               <span className="lb-name">{entry.username}</span>
-              <span className="lb-score">{entry.score}</span>
+              <span className="lb-score">{entry.bestScore}</span>
             </li>
           ))
         ) : (
@@ -378,7 +378,7 @@ function Home() {
             <li key={i} className="leaderboardItem">
               <span className="rank">#{i + 1}</span>
               <span className="player">{e.username}</span>
-              <span className="score">{e.score}</span>
+              <span className="score">{e.bestScore}</span>
             </li>
           )) : (
             <p className="noPlayers">No players yet.</p>

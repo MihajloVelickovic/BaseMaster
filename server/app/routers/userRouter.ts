@@ -5,6 +5,8 @@ import {publisher, redisClient} from "../redisClient";
 import { getFriends } from "../utils//userService";
 import { IdPrefixes, NumericalConstants } from "../shared_modules/shared_enums";
 import { upsertPlayerFromUser } from "../graph/player.repo";
+import { connectPlayerToLeaderboard, getPlayerAchievements, getPlayerStats, getFriendsWithAchievements } from '../graph/leaderboard.repo';
+
 // TODO hashiranje sifre
 
 const userRouter = Router();
@@ -33,6 +35,7 @@ userRouter.post("/register", async(req: any, res: any) => {
 
         if (register) {
             await upsertPlayerFromUser(username, email);
+            await connectPlayerToLeaderboard(username); // Add this line
             return res.status(200).json({message: `User successfully created!`, username});
         }
         else 
@@ -77,6 +80,7 @@ userRouter.post("/login", async(req: any, res: any) => {
 
         //TODO JWT
         await upsertPlayerFromUser(user.username, user.email);
+        await connectPlayerToLeaderboard(user.username); // Add this line
         return res.status(200).json({message: "Success", user: user});
     }
     catch(error){
@@ -430,6 +434,53 @@ userRouter.post("/getInvites", async (req:any, res:any) => {
     }
 });
 
+// Get player achievements
+userRouter.post("/getAchievements", async (req: any, res: any) => {
+    const { username } = req.body;
+    
+    if (!username) {
+        return res.status(400).json({ message: "Username required" });
+    }
+    
+    try {
+        const achievements = await getPlayerAchievements(username);
+        return res.status(200).json({ achievements });
+    } catch (error) {
+        return res.status(500).json({ message: "Failed to fetch achievements" });
+    }
+});
+
+// Get player stats
+userRouter.post("/getPlayerStats", async (req: any, res: any) => {
+    const { username } = req.body;
+    
+    if (!username) {
+        return res.status(400).json({ message: "Username required" });
+    }
+    
+    try {
+        const stats = await getPlayerStats(username);
+        return res.status(200).json({ stats });
+    } catch (error) {
+        return res.status(500).json({ message: "Failed to fetch player stats" });
+    }
+});
+
+// Get friends with their achievements
+userRouter.post("/getFriendsWithAchievements", async (req: any, res: any) => {
+    const { username } = req.body;
+    
+    if (!username) {
+        return res.status(400).json({ message: "Username required" });
+    }
+    
+    try {
+        const friends = await getFriendsWithAchievements(username);
+        return res.status(200).json({ friends });
+    } catch (error) {
+        return res.status(500).json({ message: "Failed to fetch friends data" });
+    }
+});
 
 
 export default userRouter;

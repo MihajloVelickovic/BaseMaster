@@ -616,11 +616,14 @@ gameRouter.get("/globalLeaderboard", async (req: any, res: any) => {
   const limitRaw = req.query.limit;
   const skipRaw  = req.query.skip;
 
-  const limit = Math.min(
-    Number.isFinite(Number(limitRaw)) ? Math.trunc(Number(limitRaw)) : 50,
-    200
-  );
-  const skip = Number.isFinite(Number(skipRaw)) ? Math.trunc(Number(skipRaw)) : 0;
+  // Convert to proper integers for Neo4j
+//   const limit = Math.min(
+//     Number.isInteger(Number(limitRaw)) ? Math.floor(Math.abs(Number(limitRaw))) : 50,
+//     200
+//   );
+    const limit = 30;
+
+  const skip = Number.isInteger(Number(skipRaw)) ? Math.floor(Math.abs(Number(skipRaw))) : 0;
 
   try {
     const items = await getLeaderboard({ limit, skip });

@@ -17,7 +17,7 @@ export async function ensureUserConstraints() {
       `);
 
     });
-    console.log("[SYSTEM] User constraints ensured.");
+    console.log("[SYSTEM]: User constraints ensured.");
   } finally {
     await session.close();
   }

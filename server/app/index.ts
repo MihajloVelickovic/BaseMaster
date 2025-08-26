@@ -12,6 +12,7 @@ import { getFriends } from "./utils/userService";
 import { ensureUserConstraints } from "./utils/neo4jConstraintsService";
 import { ensureGraphConstraints } from "./utils/ensureConstraints";
 import { recordResult } from "./graph/player.repo";
+import { initializeGraphStructure } from './graph/leaderboard.repo';
 
 const wsClients = new Map();
 const userSockets = new Map<string, Set<WebSocket>>(); 
@@ -368,6 +369,7 @@ app.use("/user", userRouter);
 
 await ensureUserConstraints();
 await ensureGraphConstraints();
+await initializeGraphStructure();
 
 server.listen(SERVER_PORT, async () => {
     console.log(`[SYSTEM]: Server running on port ${SERVER_PORT}`);
