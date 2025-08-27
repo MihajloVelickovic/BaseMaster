@@ -8,7 +8,7 @@ import http from "http";
 import { IdPrefixes } from "./shared_modules/shared_enums";
 import userRouter from "./routers/userRouter";
 import { connectionSuccess, n4jSession, n4jDriver } from "./neo4jClient";
-import { getFriends } from "./utils/userService";
+import { userService } from "./utils/userService";
 import { ensureUserConstraints } from "./utils/neo4jConstraintsService";
 import { ensureGraphConstraints } from "./utils/ensureConstraints";
 import { recordResult } from "./graph/player.repo";
@@ -65,7 +65,7 @@ wss.on("connection", (ws) => {
                 userSockets.get(username)!.add(ws);
                 console.log(`User ${username} connected`);
     
-                const friends = await getFriends(username);
+                const friends = await userService.getFriends(username);
 
             
                 if (!userSockets.has(username)) {
@@ -113,7 +113,7 @@ wss.on("connection", (ws) => {
                     userSockets.delete(username);
                     console.log(`${username} is now offline`);
                 
-                    const friends = await getFriends(username);
+                    const friends = await userService.getFriends(username);
                     friends.forEach(friend => {
                         if (userSockets.has(friend)) {
                             userSockets.get(friend)!.forEach(client => {

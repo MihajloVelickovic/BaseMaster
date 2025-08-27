@@ -626,7 +626,12 @@ gameRouter.get("/globalLeaderboard", async (req: any, res: any) => {
   const skip = Number.isInteger(Number(skipRaw)) ? Math.floor(Math.abs(Number(skipRaw))) : 0;
 
   try {
+
+    
+
     const items = await getLeaderboard({ limit, skip });
+
+
     return res.status(200).json({ items, nextSkip: skip + items.length });
   } catch (err: any) {
     console.error("[ERROR] get /globalLeaderboard:", err?.message || err);

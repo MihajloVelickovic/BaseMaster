@@ -2,7 +2,7 @@ import { Router } from "express";
 import { n4jDriver, n4jSession } from "../neo4jClient";
 import { Transaction } from "neo4j-driver";
 import {publisher, redisClient} from "../redisClient";
-import { getFriends } from "../utils//userService";
+import { userService } from "../utils//userService";
 import { IdPrefixes, NumericalConstants } from "../shared_modules/shared_enums";
 import { upsertPlayerFromUser } from "../graph/player.repo";
 import { connectPlayerToLeaderboard, getPlayerAchievements, getPlayerStats, getFriendsWithAchievements } from '../graph/leaderboard.repo';
@@ -288,6 +288,14 @@ userRouter.post("/handleFriendRequest", async(req:any, res:any)=>{
         });
 
         n4jSesh.close();
+        
+        const recieverKey = userService.createFriendListKey(username);
+        const senderKey = userService.createFriendListKey(sender);
+
+        userService.deleteCachedFriendList(recieverKey);
+        
+        userService.deleteCachedFriendList(senderKey);
+        
 
         if(!makeFriends)
             return res.status(400).json({message: `Failed to establish friendship between '${username}' and '${sender}'`});
@@ -312,18 +320,18 @@ userRouter.post("/getFriends", async(req: any, res: any) => {
         return res.status(400).json({message: "Username needed to retrieve friends"});
     }
     try {
-        const redisKey = `${IdPrefixes.FRIEND_LIST}_${username}`;
-        const cachedList = 
-        await redisClient.lRange(redisKey,0,-1);
+        const redsiKey = userService.createFriendListKey(username);
+
+        var cachedList = await userService.getCachedFriendList(redsiKey);
+        
         if(cachedList && cachedList.length > 0) {            
             return res.status(200).json(
             {message:`All friends of user '${username}'`, friends:cachedList});
         }
-        const friends = await getFriends(username);
-        if(friends && friends.length > 0) {
-            await redisClient.rPush(redisKey, friends);
-            await redisClient.expire(redisKey, NumericalConstants.CACHE_EXP_TIME);
-        }
+        const friends = await userService.getFriends(username); // neo4j call
+        
+        await userService.cacheFriends(redsiKey, friends);
+
         return res.status(200).json({message:`All friends of user '${username}'`, friends});
     } catch (error) {
         return res.status(400).json({message: error.message});
@@ -379,6 +387,12 @@ userRouter.post("/removeFriend", async (req: any, res: any) => {
         if(!deleteFriendRelation) {
             return res.status(400).json({message: `No friendship found between '${username}' and '${friend}'`}); 
         }
+
+        const userCacheKey = userService.createFriendListKey(username);
+        const friendCacheKey = userService.createFriendListKey(friend); 
+
+        await userService.deleteCachedFriendList(userCacheKey);
+        await userService.deleteCachedFriendList(friendCacheKey);
 
         await publisher.publish(`FRIEND_REMOVED_${friend}`, JSON.stringify({
             from: username,
