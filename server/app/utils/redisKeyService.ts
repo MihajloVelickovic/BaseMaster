@@ -18,5 +18,23 @@ export class RedisKeys {
     return `${IdPrefixes.LOBBY_PLAYERS}_${gameId}`
   }
 
-  
+  static lobbyMessage(gameId:string) {
+    return `${IdPrefixes.MESSAGE}_${gameId}`;
+  }
+
+  static randomNumbers(gameId: string) {
+    return `${IdPrefixes.RANDOM_NUMBERS}_${gameId}`;
+  }
+
+  static orderPoints(gameId: string) {
+    return `${IdPrefixes.ORDER_POINTS}_${gameId}`;
+  }
+
+  static fromBaseArray(gameId: string) {
+    return `${IdPrefixes.FROM_BASE}_${gameId}`
+  }
+
+  static toBaseArray(gameId: string) {
+    return `${IdPrefixes.TO_BASE}_${gameId}`;
+  }
 }
