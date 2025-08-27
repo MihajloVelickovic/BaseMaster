@@ -6,6 +6,7 @@ import { userService } from "../utils//userService";
 import { IdPrefixes, NumericalConstants } from "../shared_modules/shared_enums";
 import { upsertPlayerFromUser } from "../graph/player.repo";
 import { connectPlayerToLeaderboard, getPlayerAchievements, getPlayerStats, getFriendsWithAchievements } from '../graph/leaderboard.repo';
+import { RedisKeys } from "../utils/redisKeyService";
 
 // TODO hashiranje sifre
 
@@ -289,8 +290,8 @@ userRouter.post("/handleFriendRequest", async(req:any, res:any)=>{
 
         n4jSesh.close();
         
-        const recieverKey = userService.createFriendListKey(username);
-        const senderKey = userService.createFriendListKey(sender);
+        const recieverKey = RedisKeys.friendList(username);
+        const senderKey = RedisKeys.friendList(sender);
 
         userService.deleteCachedFriendList(recieverKey);
         
@@ -320,7 +321,7 @@ userRouter.post("/getFriends", async(req: any, res: any) => {
         return res.status(400).json({message: "Username needed to retrieve friends"});
     }
     try {
-        const redsiKey = userService.createFriendListKey(username);
+        const redsiKey = RedisKeys.friendList(username);
 
         var cachedList = await userService.getCachedFriendList(redsiKey);
         
@@ -388,8 +389,8 @@ userRouter.post("/removeFriend", async (req: any, res: any) => {
             return res.status(400).json({message: `No friendship found between '${username}' and '${friend}'`}); 
         }
 
-        const userCacheKey = userService.createFriendListKey(username);
-        const friendCacheKey = userService.createFriendListKey(friend); 
+        const userCacheKey = RedisKeys.friendList(username);
+        const friendCacheKey = RedisKeys.friendList(friend); 
 
         await userService.deleteCachedFriendList(userCacheKey);
         await userService.deleteCachedFriendList(friendCacheKey);

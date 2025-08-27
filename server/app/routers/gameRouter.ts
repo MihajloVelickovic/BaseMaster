@@ -12,6 +12,7 @@ import { json } from "stream/consumers";
 import { receiveMessageOnPort } from "worker_threads";
 import { recordResult } from "../graph/player.repo";
 import { getLeaderboard } from "../graph/player.repo";
+import { RedisKeys } from "../utils/redisKeyService";
 
 
 
@@ -458,10 +459,14 @@ gameRouter.post("/leaveGame", async (req: any, res: any) => {
 
         let parsedData = JSON.parse(gameData);
 
-        const scoreboardID = `${IdPrefixes.PLAYER_POINTS}_${gameId}`;
+        const scoreboardID = RedisKeys.scoreboard(gameId);
+        const gameEndKey = RedisKeys.gameEnd(gameId);
+        const lobbyPlayersKey = RedisKeys.lobbyPlayers(gameId);
+
         await redisClient.zRem(scoreboardID, playerID);
+
         const scoreboard = await redisClient.zRangeWithScores(scoreboardID, 0, -1);
-        const remainingPlayers = await redisClient.decr(`${IdPrefixes.GAME_END}_${gameId}`);
+        const remainingPlayers = await redisClient.decr(gameEndKey);
         await redisClient.zRem(`${IdPrefixes.LOBBY_PLAYERS}_${gameId}`, playerID);
 
         if (parsedData.currPlayerCount > 1) {
@@ -627,7 +632,7 @@ gameRouter.get("/globalLeaderboard", async (req: any, res: any) => {
 
   try {
 
-    
+
 
     const items = await getLeaderboard({ limit, skip });
 
