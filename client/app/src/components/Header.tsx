@@ -7,37 +7,32 @@ import axiosInstance from "../utils/axiosInstance";
 import { useFriendContext } from "../utils/FriendContext"
 import { useLobbyContext } from "../utils/LobbyContext";
 import { GiCrossedSwords } from "react-icons/gi";
+import { useAuth } from "../utils/AuthContext";
 
 function Header() {
     type Invite = {
         message: string;
         gameId: string;
-      };
-    const [playerID, setPlayerID] = useState<string | null>(null);
+    };
+    
+    const { playerID, logout } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
-    const { friendRequests,setFriends, setFriendRequests, setOnlineUsers } = useFriendContext();
+    const { friendRequests, setFriends, setFriendRequests, setOnlineUsers } = useFriendContext();
     const [unreadCount, setUnreadCount] = useState(0);
     const [notifications, setNotifications] = useState<string[]>([]);
     const [invites, setInvites] = useState<Invite[]>([]);
     const [showInvites, setShowInvites] = useState(false);
-
     
     const location = useLocation();
     const { joinLobby, setPlayerID: setLobbyPlayerID } = useLobbyContext();
-    //const playerIdFromState = location.state?.playerIdTransfered;
 
     useEffect(() => {
-        const fromState = location.state?.playerIdTransfered;
-        if (fromState) {
-            setPlayerID(fromState);
-            setLobbyPlayerID(fromState);
+        if (playerID) {
+            setLobbyPlayerID(playerID);
         }
-        else {
-            setPlayerID(null); 
-        }
-      }, [location]); 
+    }, [playerID, setLobbyPlayerID]);
 
-      useEffect(() => {
+    useEffect(() => {
         if (!playerID) return;
     
         const socket = new WebSocket(`ws://localhost:1738?playerID=${playerID}`);
@@ -96,8 +91,8 @@ function Header() {
                 const newInvite: Invite = {
                     message: data.message,
                     gameId: data.gameId
-                  };
-                  setInvites((prev) => [...prev, newInvite]);
+                };
+                setInvites((prev) => [...prev, newInvite]);
             }
         };
     
@@ -122,8 +117,7 @@ function Header() {
     const handleNotificationBtnClick = async () => {
         setIsOpen((prev) => !prev);
         console.log(playerID);
-        if (!isOpen) 
-        {
+        if (!isOpen) {
             setUnreadCount(0);
             setNotifications([]);
         }
@@ -141,7 +135,6 @@ function Header() {
     }
 
     async function handleRequestSelection(username: string, selection:boolean) {
-        //const {username, sender, userResponse} = req.body;
         try {
             const response = await axiosInstance.post('/user/handleFriendRequest',
                 {username: playerID, sender: username, userResponse: selection});
@@ -149,9 +142,8 @@ function Header() {
             if (selection === true) {
                 setFriends(prev => [...prev, username]); 
                 console.log(response);
-                console.log("SUCCESFULLY BECAME FRIENDS!!!!!!");
+                console.log("SUCCESSFULLY BECAME FRIENDS!!!!!!");
             }
-            
         }
         catch (err: any) {
             if (err.response) {
@@ -164,8 +156,13 @@ function Header() {
             setFriendRequests((prev) => prev.filter((req) => req !== username));
             setIsOpen(false);
         }
-        
     }
+
+    const handleLogout = () => {
+        logout();
+        // Optionally navigate to home page
+        window.location.href = '/';
+    };
 
     const renderNotifications = () => (
         <div className={`notification-dropdown ${isOpen ? "open" : ""}`}>
@@ -189,85 +186,89 @@ function Header() {
             )}
         </div>
     );
- return (
-    <div className="Header">
-        <Sidebar/>
-        <Link to="/" className="logo-link">
-        <svg className="basemaster-logo" width="260" height="60" viewBox="0 0 260 60" xmlns="http://www.w3.org/2000/svg">
-            <path className="circuit-line" d="M 10 5 L 30 5 Q 40 5 40 15 L 40 45 Q 40 55 50 55 L 210 55 Q 220 55 220 45 L 220 15 Q 220 5 230 5 L 250 5" />
 
-            <text x="20" y="19" className="binary-digit">01</text>
-            <text x="225" y="48" className="binary-digit">10</text>
-            <text x="50" y="51" className="binary-digit">110</text>
-            <text x="190" y="15" className="binary-digit">001</text>
+    return (
+        <div className="Header">
+            <Sidebar/>
+            <Link to="/" className="logo-link">
+                <svg className="basemaster-logo" width="260" height="60" viewBox="0 0 260 60" xmlns="http://www.w3.org/2000/svg">
+                    <path className="circuit-line" d="M 10 5 L 30 5 Q 40 5 40 15 L 40 45 Q 40 55 50 55 L 210 55 Q 220 55 220 45 L 220 15 Q 220 5 230 5 L 250 5" />
 
-            <text x="50%" y="50%" className="logo-text">
-                BaseMaster
-            </text>
-        </svg>
-        </Link>
+                    <text x="20" y="19" className="binary-digit">01</text>
+                    <text x="225" y="48" className="binary-digit">10</text>
+                    <text x="50" y="51" className="binary-digit">110</text>
+                    <text x="190" y="15" className="binary-digit">001</text>
 
-        <div className="spacer" />
-        
-        {!playerID && (
-             <Link to="/LoginSignup">
-             <button className="login-button btn btn-primary">
-                 Log in
-             </button>
-         </Link>
-        )}
-       
-        {playerID && (
-        <>
-            <div className="bell-container">
-                <div className="bell-wrapper">
-                    <FaBell onClick={handleNotificationBtnClick} className="bell-icon" />
-                    {unreadCount > 0 && (
-                        <div className="notification-badge">{unreadCount}</div>
-                    )}
-                </div>
-                {isOpen && (
-                <div>
-                    {renderNotifications()}
-                </div>
-                )}
-            </div>
+                    <text x="50%" y="50%" className="logo-text">
+                        BaseMaster
+                    </text>
+                </svg>
+            </Link>
 
-        <div className="bell-wrapper">
-            {invites.length > 0 ? (
-                <GiCrossedSwords
-                    className="InviteIcon pulsing-sword flippedIconVertical"
-                    onClick={handleInviteIconClick}
-                />
+            <div className="spacer" />
+            
+            {!playerID ? (
+                <Link to="/LoginSignup">
+                    <button className="login-button btn btn-primary">
+                        Log in
+                    </button>
+                </Link>
             ) : (
-                <GiCrossedSwords className="InviteIcon flippedIconVertical" />
+                <>
+                    <div className="user-info">
+                        <span className="username-display">{playerID}</span>
+                        <button onClick={handleLogout} className="logout-button btn btn-secondary">
+                            Logout
+                        </button>
+                    </div>
+
+                    <div className="bell-container">
+                        <div className="bell-wrapper">
+                            <FaBell onClick={handleNotificationBtnClick} className="bell-icon" />
+                            {unreadCount > 0 && (
+                                <div className="notification-badge">{unreadCount}</div>
+                            )}
+                        </div>
+                        {isOpen && (
+                            <div>
+                                {renderNotifications()}
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="bell-wrapper">
+                        {invites.length > 0 ? (
+                            <GiCrossedSwords
+                                className="InviteIcon pulsing-sword flippedIconVertical"
+                                onClick={handleInviteIconClick}
+                            />
+                        ) : (
+                            <GiCrossedSwords className="InviteIcon flippedIconVertical" />
+                        )}
+                    </div>
+                </>
+            )}
+
+            {showInvites && invites.length > 0 && (
+                <div className="invite-dropdown">
+                    {invites.map((invite, index) => (
+                        <div key={index} className="invitationItem">
+                            <span>{invite.message}</span>
+                            <button
+                                onClick={() => {
+                                    joinLobby(invite.gameId, false); 
+                                    removeInvite(invite.gameId);
+                                }}
+                                className="btn btn-sm btn-success"
+                            >
+                                Join
+                            </button>
+                        </div>
+                    ))}
+                </div>
             )}
         </div>
-    </>
-)}
-{showInvites && invites.length > 0 && (
-    <div className="invite-dropdown">
-        {invites.map((invite, index) => (
-            <div key={index} className="invitationItem">
-                <span>{invite.message}</span>
-                <button
-                onClick={() => {
-                joinLobby(invite.gameId, false); 
-                removeInvite(invite.gameId);
-          }}
-          className="btn btn-sm btn-success"
-        >
-          Join
-        </button>
-            </div>
-        ))}
-    </div>
-)}
-        <div>
-    </div>
-</div>
-        
- );
+    );
 }
 
-export default Header
+export default Header;

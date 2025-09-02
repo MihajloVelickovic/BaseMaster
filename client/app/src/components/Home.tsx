@@ -3,7 +3,7 @@ import "../styles/Home.css"
 import { JSXElementConstructor, ReactElement, ReactNode, ReactPortal, useEffect, useState } from "react";
 import axiosInstance from "../utils/axiosInstance";   //ovde za sad ne treba
 import {GameModes, Difficulties} from "../shared_modules/shared_enums"
-
+import { useAuth } from '../utils/AuthContext';
 
 //export const roundCount = 15;
 const maxValue = 255;
@@ -30,12 +30,13 @@ interface LeaderboardEntry {
 function Home() {
   const location = useLocation();
   var { playerIdTransfered = ""} = location.state || {};
+  const { playerID } = useAuth();
   const [toBase, setToBase] = useState(2);
   const [playerNum, setPlayerNum] = useState(1);
   const [gameMode, setGameMode] = useState(GameModes.CLASSIC.toString());
   const [difficulty, setDifficulty] = useState(Difficulties.LAYMAN.toString());
   const [gameId, setGameId] = useState(null);
-  const [playerId, setPlayerId] = useState<string>(playerIdTransfered);
+  const [playerId, setPlayerId] = useState<string|null>(playerID);
 
 
   const [browsingLobbies, setBrowsingLobbies] = useState(false);
@@ -64,7 +65,7 @@ function Home() {
   
   useEffect(() => {
     if (gameId) {
-      navigate("/Lobby", { state: { toBasee:toBase, playerNum, gameMode, difficulty, gameId, playerID: playerId!=""? playerId : playerID, roundCount, lobbyName: playerIdTransfered!=""? playerIdTransfered : "Enie", hostId: playerId!=""? playerId : playerID } });
+      navigate("/Lobby", { state: { toBasee:toBase, playerNum, gameMode, difficulty, gameId, playerID: playerId? playerId : "", roundCount, lobbyName: playerIdTransfered!=""? playerIdTransfered : "Enie", hostId: playerId? playerId : "" } });
     }
     // console.log("here");
     // console.log(location.state?.playerIdTransfered, "this is it");
@@ -109,7 +110,7 @@ function Home() {
           playerCount: playerNum,
           roundCount: Math.max(1, Math.min(roundCount, 128)),
           difficulty: difficulty,
-          hostId:playerId!=""? playerId : playerID,
+          hostId:playerId? playerId : "",
           toBase:toBase,
           lobbyName: lobbyName.trim() || "NONE"
         };
@@ -172,7 +173,7 @@ function Home() {
       const finalLobbyName = lobbyName;
 
       navigate("/Lobby", { state: { toBase, playerNum, gameMode,
-                           difficulty, gameId: selectedGameId, playerID: playerId!=""? playerId : playerID,
+                           difficulty, gameId: selectedGameId, playerID: playerId? playerId : "",
                             hostId, roundCount, playerIds:playerIds, lobbyName:finalLobbyName } });
 
   } catch (error: any) {

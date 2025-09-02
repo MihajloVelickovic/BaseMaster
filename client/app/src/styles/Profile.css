@@ -1,0 +1,363 @@
+.profile-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  background: linear-gradient(135deg, #32d336 0%, #28a82e 100%);
+  min-height: calc(100vh - 80px);
+}
+
+.loading-spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 400px;
+  font-size: 1.5rem;
+  color: white;
+}
+
+.not-logged-in {
+  text-align: center;
+  padding: 4rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+  color: white;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  margin-bottom: 2rem;
+}
+
+.profile-avatar {
+  flex-shrink: 0;
+}
+
+.avatar-placeholder {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #32d336 0%, #28a82e 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  color: white;
+  font-weight: bold;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.profile-info h1 {
+  margin: 0 0 1rem 0;
+  color: #333;
+  font-size: 2rem;
+}
+
+.profile-summary {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.summary-item {
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.summary-item strong {
+  display: block;
+  font-size: 1.5rem;
+  color: #28a82e;
+  margin-bottom: 0.25rem;
+}
+
+.profile-tabs {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.5rem;
+  border-radius: 15px;
+}
+
+.tab-button {
+  flex: 1;
+  padding: 1rem 2rem;
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+.tab-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.tab-button.active {
+  background: rgba(255, 255, 255, 0.95);
+  color: #28a82e;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.profile-content {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.stat-card {
+  background: linear-gradient(135deg, #f0fdf0 0%, #e0f7e0 100%);
+  padding: 1.5rem;
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(50, 211, 54, 0.2);
+}
+
+.stat-card h3 {
+  margin: 0 0 1.5rem 0;
+  color: #333;
+  font-size: 1.25rem;
+  border-bottom: 2px solid rgba(50, 211, 54, 0.3);
+  padding-bottom: 0.5rem;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.stat-row:last-child {
+  border-bottom: none;
+}
+
+.stat-value {
+  font-weight: bold;
+  color: #28a82e;
+}
+
+.stat-value.highlight {
+  color: #ff6b6b;
+  font-size: 1.1rem;
+}
+
+.stat-value.gold {
+  color: #FFD700;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.stat-value.silver {
+  color: #C0C0C0;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.stat-value.bronze {
+  color: #CD7F32;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.achievements-grid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.no-achievements, .no-friends {
+  text-align: center;
+  padding: 3rem;
+  color: #666;
+  font-size: 1.1rem;
+}
+
+.achievement-card {
+  display: flex;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #d4ffd4 0%, #b3ffb3 100%);
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+  border: 1px solid rgba(50, 211, 54, 0.2);
+}
+
+.achievement-card.locked {
+  background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
+  opacity: 0.7;
+  border: 1px solid #ccc;
+}
+
+.achievement-card:hover:not(.locked) {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.achievement-icon {
+  font-size: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 15px;
+  flex-shrink: 0;
+}
+
+.achievement-card.locked .achievement-icon {
+  background: rgba(200, 200, 200, 0.3);
+}
+
+.achievement-details h4 {
+  margin: 0 0 0.5rem 0;
+  color: #333;
+  font-size: 1.25rem;
+}
+
+.achievement-card.locked .achievement-details h4 {
+  color: #888;
+}
+
+.achievement-details p {
+  margin: 0 0 1rem 0;
+  color: #666;
+}
+
+.achievement-card.locked .achievement-details p {
+  color: #999;
+}
+
+.achievement-meta {
+  display: flex;
+  gap: 2rem;
+  font-size: 0.85rem;
+  color: #888;
+}
+
+.achievement-rarity {
+  color: #28a82e;
+  font-weight: 600;
+}
+
+.achievement-locked-text {
+  color: #999;
+  font-style: italic;
+}
+
+.friends-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.friend-card {
+  display: flex;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #e6ffe6 0%, #ccffcc 100%);
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+  border: 1px solid rgba(50, 211, 54, 0.2);
+}
+
+.friend-card:hover {
+  transform: translateX(10px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.friend-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #32d336 0%, #28a82e 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: white;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.friend-info h4 {
+  margin: 0 0 0.5rem 0;
+  color: #333;
+  font-size: 1.15rem;
+}
+
+.friend-stats {
+  display: flex;
+  gap: 1.5rem;
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.friend-achievements {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.mini-achievement {
+  padding: 0.25rem 0.5rem;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  font-size: 0.8rem;
+  color: #28a82e;
+  font-weight: 600;
+}
+
+.more-achievements {
+  padding: 0.25rem 0.5rem;
+  background: rgba(50, 211, 54, 0.1);
+  border-radius: 8px;
+  font-size: 0.8rem;
+  color: #28a82e;
+  font-weight: 600;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .profile-container {
+    padding: 1rem;
+  }
+
+  .profile-header {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .profile-summary {
+    justify-content: center;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .achievement-card, .friend-card {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .achievement-meta {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}

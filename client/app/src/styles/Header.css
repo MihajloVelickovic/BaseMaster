@@ -195,3 +195,37 @@
 .logo-link svg {
   cursor: pointer;
 }
+
+/* Add to Header.css */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-right: 1rem;
+}
+
+.username-display {
+    color: #1a7c1e;
+    font-weight: 1000;
+    padding: 0.75rem 1rem;
+    background: #ffffe8;
+    border-radius: 20px;
+}
+
+.logout-button {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  background: #28a82e;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.logout-button:hover {
+  background: #239326;
+  transform: scale(1.05);
+}
+
+

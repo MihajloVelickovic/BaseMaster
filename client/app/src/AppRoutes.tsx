@@ -11,6 +11,7 @@ import { FriendProvider } from './utils/FriendContext';
 import { LobbyProvider } from "./utils/LobbyContext";
 import Profile from './components/Profile';
 import Sidebar from './components/Sidebar';
+import { AuthProvider } from './utils/AuthContext';
 
 
 const routes = [
@@ -27,6 +28,7 @@ const routes = [
 
 const AppRoutes = () => {       //Header se poziva odavde, moze i iz index.tsx ali mora da bude i tamo BrowswerRouter
     return (
+        <AuthProvider>
         <BrowserRouter>
         <FriendProvider>
         <LobbyProvider>
@@ -41,6 +43,7 @@ const AppRoutes = () => {       //Header se poziva odavde, moze i iz index.tsx a
         </LobbyProvider>
         </FriendProvider>
         </BrowserRouter>
+        </AuthProvider>
     );
 };
 

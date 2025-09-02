@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axiosInstance from "../utils/axiosInstance";   //ovde za sad ne treba
 import "../styles/LoginSignup.css";
+import { useAuth } from '../utils/AuthContext';
 
 interface FormValues {
     username?: string;
@@ -34,6 +35,7 @@ const LoginSignup = () => {
     });
     const [formErrors, setFormErrors] = useState<FormErrors>({});
     const [userId, setUserId] = useState<string | null>(null);
+    const { login } = useAuth();
     const navigate = useNavigate();
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -74,10 +76,11 @@ const LoginSignup = () => {
                     msg = response.data.message;
                     userName = response.data.user.username;
                     console.log(msg, userName);
-                    localStorage.setItem("playerID",userName);
+                    localStorage.setItem("playerID",userName);      //will be absolite soon
                     //console.log(response.data);
 
                     //setUserId(response.data.userId);
+                    login(userName);
                     navigate("/", { state: { playerIdTransfered: userName} });
                 } else if (action === "Register") {
                     response = await axiosInstance.post("/user/register", {
@@ -88,7 +91,7 @@ const LoginSignup = () => {
                     console.log(response);
                     msg = response.data['message'];
                     userName = response.data.username;
-                    
+                    login(userName);
                     //setUserId(response.data.userId);
                     navigate("/", { state: { playerIdTransfered: userName} });
                 } else {

@@ -497,5 +497,47 @@ userRouter.post("/getFriendsWithAchievements", async (req: any, res: any) => {
     }
 });
 
+// Add to userRouter.ts
+userRouter.post("/searchUsers", async (req: any, res: any) => {
+    const { query, currentUser } = req.body;
+    
+    if (!query) {
+        return res.status(400).json({ message: "Search query required" });
+    }
+    
+    try {
+        const n4jSesh = n4jSession();
+        
+        // Search for users matching the query
+        const result = await n4jSesh.executeRead(async transaction => {
+            return await transaction.run(`
+                MATCH (u:User)
+                WHERE u.username CONTAINS $query AND u.username <> $currentUser
+                OPTIONAL MATCH (current:User {username: $currentUser})-[:FRIEND]-(u)
+                OPTIONAL MATCH (current)-[:FRIEND_REQUEST]->(u)
+                OPTIONAL MATCH (u)-[:FRIEND_REQUEST]->(current)
+                RETURN DISTINCT u.username as username,
+                       EXISTS((current)-[:FRIEND]-(u)) as isFriend,
+                       EXISTS((current)-[:FRIEND_REQUEST]->(u)) as requestSent,
+                       EXISTS((u)-[:FRIEND_REQUEST]->(current)) as requestReceived
+                LIMIT 10
+            `, { query, currentUser });
+        });
+        
+        n4jSesh.close();
+        
+        const users = result.records.map(record => ({
+            username: record.get('username'),
+            isFriend: record.get('isFriend'),
+            requestSent: record.get('requestSent'),
+            requestReceived: record.get('requestReceived')
+        }));
+        
+        return res.status(200).json({ users });
+    } catch (error) {
+        return res.status(500).json({ message: "Error searching users" });
+    }
+});
+
 
 export default userRouter;

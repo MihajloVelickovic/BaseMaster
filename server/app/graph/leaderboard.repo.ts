@@ -95,7 +95,8 @@ export async function connectPlayerToLeaderboard(username: string) {
   }
 }
 
-// Record a game result and update leaderboard
+// Update the recordGameResult function in leaderboard.repo.ts
+
 export async function recordGameResult(username: string, score: number, placement: 1 | 2 | 3 | 4) {
   const session = n4jSession();
   try {
@@ -104,20 +105,55 @@ export async function recordGameResult(username: string, score: number, placemen
       const result = await tx.run(`
         MATCH (p:Player {username: $username})-[r:PARTICIPATES_IN]->(lb:Leaderboard {id: 'global'})
         SET 
-          r.totalGames = r.totalGames + 1,
-          r.totalScore = r.totalScore + $score,
-          r.bestScore = CASE WHEN $score > r.bestScore THEN $score ELSE r.bestScore END,
+          // Update relationship stats
+          r.totalGames = COALESCE(r.totalGames, 0) + 1,
+          r.totalScore = COALESCE(r.totalScore, 0) + $score,
+          r.bestScore = CASE 
+            WHEN $score > COALESCE(r.bestScore, 0) THEN $score 
+            ELSE COALESCE(r.bestScore, 0) 
+          END,
           r.lastPlayed = datetime(),
           r.lastScore = $score,
           r.lastPlacement = $placement,
-          // Update player node properties as well
-          p.totalGames = r.totalGames + 1,
-          p.totalScore = r.totalScore + $score,
-          p.bestScore = CASE WHEN $score > r.bestScore THEN $score ELSE r.bestScore END,
-          p.gamesWon = CASE WHEN $placement = 1 THEN p.gamesWon + 1 ELSE p.gamesWon END,
-          p.averageScore = (r.totalScore + $score) / (r.totalGames + 1),
-          p.lastPlayed = datetime()
-        RETURN r.totalGames as games, r.totalScore as total, r.bestScore as best
+          
+          // Update player node properties
+          p.totalGames = COALESCE(p.totalGames, 0) + 1,
+          p.totalScore = COALESCE(p.totalScore, 0) + $score,
+          p.bestScore = CASE 
+            WHEN $score > COALESCE(p.bestScore, 0) THEN $score 
+            ELSE COALESCE(p.bestScore, 0) 
+          END,
+          p.averageScore = (COALESCE(p.totalScore, 0) + $score) / (COALESCE(p.totalGames, 0) + 1),
+          p.lastPlayed = datetime(),
+          
+          // Update placement counts
+          p.firsts = CASE 
+            WHEN $placement = 1 THEN COALESCE(p.firsts, 0) + 1 
+            ELSE COALESCE(p.firsts, 0) 
+          END,
+          p.seconds = CASE 
+            WHEN $placement = 2 THEN COALESCE(p.seconds, 0) + 1 
+            ELSE COALESCE(p.seconds, 0) 
+          END,
+          p.thirds = CASE 
+            WHEN $placement = 3 THEN COALESCE(p.thirds, 0) + 1 
+            ELSE COALESCE(p.thirds, 0) 
+          END,
+          p.fourths = CASE 
+            WHEN $placement = 4 THEN COALESCE(p.fourths, 0) + 1 
+            ELSE COALESCE(p.fourths, 0) 
+          END,
+          
+          // Legacy gamesWon field (for backward compatibility)
+          p.gamesWon = CASE 
+            WHEN $placement = 1 THEN COALESCE(p.gamesWon, 0) + 1 
+            ELSE COALESCE(p.gamesWon, 0) 
+          END
+          
+        RETURN 
+          p.totalGames as games, 
+          p.totalScore as total, 
+          p.bestScore as best
       `, { username, score, placement });
 
       const record = result.records[0];
