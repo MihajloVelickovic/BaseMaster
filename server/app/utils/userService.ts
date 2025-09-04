@@ -57,9 +57,7 @@ class UserService {
     await redisClient.expire(redisKey, NumericalConstants.CACHE_EXP_TIME);
    }
 
-   createFriendListKey(username: string) {
-    return  `${IdPrefixes.FRIEND_LIST}_${username}`;
-   }
+ 
 }
 
 export const userService = new UserService();

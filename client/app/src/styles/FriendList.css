@@ -2,7 +2,11 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: 2rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(
+    135deg, 
+    rgba(50,229,55,0.9) 0%,   /* 0.7 = 70% opacity */
+    rgba(0,153,0,0.9) 100%
+  );
   min-height: calc(100vh - 80px);
 }
 
@@ -44,6 +48,7 @@
   display: flex;
   gap: 1rem;
   margin-bottom: 2rem;
+  background: #EAFE9F !important;
   background: rgba(255, 255, 255, 0.1);
   padding: 0.5rem;
   border-radius: 15px;
@@ -53,8 +58,10 @@
   flex: 1;
   padding: 1rem 2rem;
   background: transparent;
-  border: none;
-  color: white;
+  border: 4px solid #BDAA48 !important;
+   border-top: none !important;                  /* no top border */
+    border-bottom: none !important; 
+  color: #32E537 !important;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
@@ -243,7 +250,7 @@
 
 .search-button {
   padding: 1rem 2rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #32e537 0%, #009900 100%);
   color: white;
   border: none;
   border-radius: 10px;
