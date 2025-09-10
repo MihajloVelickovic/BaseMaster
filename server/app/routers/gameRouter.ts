@@ -636,10 +636,10 @@ async function setRounds(gameId, roundCount, initialValue) {
 
         // 2) OPTIONAL: maintain a global Redis leaderboard as a ZSET (best scores)
         // Only write if new score is higher than stored best.
-        const zKey = "global:leaderboard";
+        const zKey = RedisKeys.globalLeaderboard();
         const existing = await redisClient.zScore(zKey, username); // number | null
         if (existing === null || score > existing) {
-        await redisClient.zAdd(zKey, [{ score, value: username }]);
+            await redisClient.zAdd(zKey, [{ score, value: username }]);
         }
 
         results.push({ username, playerId, score, placement });
@@ -663,10 +663,15 @@ gameRouter.get("/globalLeaderboard", async (req: any, res: any) => {
 
   try {
 
+    const leaderboardKey = RedisKeys.globalLeaderboard();
 
+    const leaderboard = 
+    await redisClient.zRangeWithScores(leaderboardKey, 0, -1);
+
+    if(leaderboard &&  leaderboard.length > 0)
+        return res.status(200).json(leaderboard);
 
     const items = await getLeaderboard({ limit, skip });
-
 
     return res.status(200).json({ items, nextSkip: skip + items.length });
   } catch (err: any) {

@@ -46,9 +46,9 @@ class UserService {
     return cachedList;
   }
 
-   async deleteCachedFriendList(redisKey: string) {
-     await redisClient.del(redisKey);
-   }    
+  async deleteCachedFriendList(redisKey: string) {
+    await redisClient.del(redisKey);
+  }    
 
   async cacheFriends(redisKey: string, friends: string[]) {
     if (friends.length === 0) return; // no-op

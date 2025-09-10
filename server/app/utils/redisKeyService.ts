@@ -37,4 +37,8 @@ export class RedisKeys {
   static toBaseArray(gameId: string) {
     return `${IdPrefixes.TO_BASE}_${gameId}`;
   }
+
+  static globalLeaderboard() {
+    return 'global_learerboard';
+  }
 }
