@@ -610,9 +610,9 @@ async function CleanupGameContext(gameId:string) {
     }
 }
 
-async function setRounds(gameId, roundCount, initialValue) {
+async function setRounds(gameId:string, roundCount:number, initialValue:number) {
     // Prepare the fields and values as a key-value pair for the hash
-    const roundData = {};
+    const roundData:any = {};
     for (let i = 1; i <= roundCount; i++) {
       roundData[`${i}`] = initialValue;
     }

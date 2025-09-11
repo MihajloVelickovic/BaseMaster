@@ -33,7 +33,7 @@ const wss = new WebSocketServer({ server });
 
 
 wss.on("connection", (ws) => {
-    let currentLobby = null;
+    let currentLobby:any = null;
 
     ws.on("message", async (data: any) => {
         try {
@@ -139,7 +139,7 @@ subscriber.pSubscribe(`${IdPrefixes.SCOREBOARD_UPDATE}_*`, async (message, chann
     const parsedData = JSON.parse(message);
 
     if (wsClients.has(lobbyId)) {
-        wsClients.get(lobbyId).forEach(client => {
+        wsClients.get(lobbyId).forEach((client:any) => {
             if (client.readyState === 1) {
                 client.send(JSON.stringify({
                     type: IdPrefixes.SCOREBOARD_UPDATE,
@@ -157,7 +157,7 @@ subscriber.pSubscribe(`${IdPrefixes.GAME_STARTED}_*`, async (message, channel) =
     const lobbyId = channel.replace(`${IdPrefixes.GAME_STARTED}_`, ""); // Extract game ID
 
     if (wsClients.has(lobbyId)) {
-        wsClients.get(lobbyId).forEach(client => {
+        wsClients.get(lobbyId).forEach((client:any) => {
             if (client.readyState === 1) {
                 client.send(JSON.stringify({
                     type: `${IdPrefixes.GAME_STARTED}`,
@@ -194,7 +194,7 @@ subscriber.pSubscribe(`${IdPrefixes.ALL_PLAYERS_COMPLETE}_*`, async (message, ch
 
 
     if (wsClients.has(lobbyId)) {
-        wsClients.get(lobbyId).forEach(client => {
+        wsClients.get(lobbyId).forEach((client:any) => {
             if (client.readyState === 1) {
                 client.send(JSON.stringify({
                     type: `${IdPrefixes.ALL_PLAYERS_COMPLETE}`,
@@ -214,7 +214,7 @@ subscriber.pSubscribe(`${IdPrefixes.PLAYER_JOIN}_*`, async (message, channel) =>
     const playerId = parsedMessage.playerID;
 
     if (wsClients.has(lobbyId)) {
-        wsClients.get(lobbyId).forEach(client => {
+        wsClients.get(lobbyId).forEach((client:any) => {
             if (client.readyState === 1) {
                 client.send(JSON.stringify({
                     type: `${IdPrefixes.PLAYER_JOIN}`,
@@ -233,7 +233,7 @@ subscriber.pSubscribe(`${IdPrefixes.PlAYER_LEAVE}_*`, async (message, channel) =
     const newHost = parsedMessage.newHost;
 
     if (wsClients.has(lobbyId)) {
-        wsClients.get(lobbyId).forEach(client => {
+        wsClients.get(lobbyId).forEach((client:any) => {
             if (client.readyState === 1) {
                 client.send(JSON.stringify({
                     type: `${IdPrefixes.PlAYER_LEAVE}`,
@@ -253,7 +253,7 @@ subscriber.pSubscribe(`${IdPrefixes.MESSAGE_UPDATE}_*`, async (message, channel)
     const pMessage = parsedMessage.message;
 
     if (wsClients.has(lobbyId)) {
-        wsClients.get(lobbyId).forEach(client => {
+        wsClients.get(lobbyId).forEach((client:any) => {
             if (client.readyState === 1) {
                 client.send(JSON.stringify({
                     type: `${IdPrefixes.MESSAGE_UPDATE}`,
