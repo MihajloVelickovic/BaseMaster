@@ -17,7 +17,6 @@
   width: 570px;
   
   margin: auto;
-  margin-top: 30px;  
   font-size: large;
 
   border: solid #010050 1px;
@@ -337,7 +336,7 @@ input.inputFont {
   display: flex;
   justify-content: center;   /* centers both panels */
   align-items: flex-start;
-  gap: 40px;                 /* space between GameOptions and Leaderboard */
+  gap: 20px;                 /* space between GameOptions and Leaderboard */
   margin-top: 30px;
 }
 
@@ -405,34 +404,27 @@ input.inputFont {
 .HomeAndLeaderboard {
   display: flex;
   justify-content: center;
-  align-items: flex-start;
-  gap: 18px;                 /* tighter gap between panels */
-  max-width: 960px;          /* <-- shrink stage width to pull things together */
+  align-items: flex-start;               /* tighter gap between panels */
+  max-width: 1000px;          /* <-- shrink stage width to pull things together */
   margin: 30px auto;
   padding: 0 12px;
 }
 
-/* Left panel width (your Game Options card) */
-.HomeContainer {
-  flex: 0 0 620px;           /* was ~570–580; a touch wider centers the pair */
-}
-
 /* Right panel width (leaderboard) */
 .LeaderboardContainer {
-  flex: 0 0 300px;           /* fixed, neat width */
-  margin-top: 8px;           /* align a hair lower if you like */
+  flex: 0 0 300px;           /* fixed, neat width */           /* align a hair lower if you like */
   position: sticky;
   top: 110px;
   
 }
 
 /* Optional: if it still feels a bit far, nudge it left a touch */
-@media (min-width: 1100px) {
+/* @media (min-width: 1100px) {
   .LeaderboardContainer { transform: translateX(+25px); }
-}
+} */
 
 /* Responsive: stack on small screens */
-@media (max-width: 860px) {
+@media (max-width: 1015px) {
   .HomeWrapper,
   .HomeAndLeaderboard { 
     flex-direction: column;
@@ -446,13 +438,12 @@ input.inputFont {
 /* Add to Home.css */
 .HomeAndLeaderboard {
   display: flex;
-  gap: 2rem;
   padding: 2rem;
-  flex-wrap: wrap;
+
 }
 
 .HomeContainer {
-  flex: 1;
+  /* flex: 1; */
   min-width: 350px;
 }
 
@@ -468,13 +459,13 @@ input.inputFont {
 }
 
 @media (max-width: 1024px) {
-  .HomeAndLeaderboard {
+  /* .HomeAndLeaderboard {
     flex-direction: column;
-  }
+  } */
   
   .LeaderboardContainer {
     position: static;
-    flex: 1;
+    /* flex: 1; */
     max-width: 100%;
   }
 }
