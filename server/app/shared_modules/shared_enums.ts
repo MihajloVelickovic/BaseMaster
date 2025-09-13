@@ -42,6 +42,11 @@ export enum IdPrefixes {
     FRIEND_LIST = "FRIEND_LIST"
 }
 
+export enum WebServerTypes {
+    JOIN_LOBBY = "joinlobby",
+    LOGIN = "login",    
+}
+
 export enum BaseValues {
     MIN_BASE = 2,
     MAX_BASE = 32

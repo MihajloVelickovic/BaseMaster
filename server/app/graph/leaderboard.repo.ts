@@ -306,7 +306,7 @@ export async function getFriendsWithAchievements(username: string) {
       username: record.get('friendUsername'),
       bestScore: record.get('bestScore') || 0,
       totalGames: record.get('totalGames') || 0,
-      achievements: record.get('achievements').filter(a => a !== null)
+      achievements: record.get('achievements').filter((a:any) => a !== null)
     }));
   } finally {
     await session.close();

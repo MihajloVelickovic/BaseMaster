@@ -3,8 +3,8 @@ import { redisClient } from "../redisClient";
 import { IdPrefixes, NumericalConstants } from "../shared_modules/shared_enums";
 
 
-class UserService {
-  async getFriends(username: string): Promise<string[]> {
+export class UserService {
+  static async getFriends(username: string): Promise<string[]> {
     const n4jSesh = n4jSession();
 
     try {
@@ -38,7 +38,7 @@ class UserService {
     }
   }
 
-  async getCachedFriendList(redisKey: string) {
+  static async getCachedFriendList(redisKey: string) {
     
     const cachedList = 
     await redisClient.lRange(redisKey,0,-1);
@@ -46,11 +46,11 @@ class UserService {
     return cachedList;
   }
 
-  async deleteCachedFriendList(redisKey: string) {
+  static async deleteCachedFriendList(redisKey: string) {
     await redisClient.del(redisKey);
   }    
 
-  async cacheFriends(redisKey: string, friends: string[]) {
+  static async cacheFriends(redisKey: string, friends: string[]) {
     if (friends.length === 0) return; // no-op
     
     await redisClient.rPush(redisKey, friends);
@@ -59,5 +59,3 @@ class UserService {
 
  
 }
-
-export const userService = new UserService();

@@ -1,18 +1,17 @@
-import { redisClient, publisher, subscriber } from "./redisClient";
 import express from "express";
 import { SERVER_PORT } from "./config/config";
 import gameRouter from './routers/gameRouter'
 import cors from "cors";
 import WebSocket,{ WebSocketServer } from "ws"
 import http from "http";
-import { IdPrefixes } from "./shared_modules/shared_enums";
+import { IdPrefixes, WebServerTypes } from "./shared_modules/shared_enums";
 import userRouter from "./routers/userRouter";
 import { connectionSuccess, n4jSession, n4jDriver } from "./neo4jClient";
-import { userService } from "./utils/userService";
+import { UserService } from "./utils/userService";
 import { ensureUserConstraints } from "./utils/neo4jConstraintsService";
 import { ensureGraphConstraints } from "./utils/ensureConstraints";
-import { recordResult } from "./graph/player.repo";
 import { initializeGraphStructure } from './graph/leaderboard.repo';
+import { initRedisWsBridge } from "./utils/redisWsBridge";
 
 const wsClients = new Map();
 const userSockets = new Map<string, Set<WebSocket>>(); 
@@ -37,10 +36,11 @@ wss.on("connection", (ws) => {
 
     ws.on("message", async (data: any) => {
         try {
-            const { type, gameId, playerID, username } = JSON.parse(data);
+            const { type:rawType, gameId, playerID, username } = JSON.parse(data);
             //console.log("data je: ", JSON.parse(data));
-
-            if (type === "joinLobby") {
+            const type = rawType.toLowerCase();
+            
+            if (type === WebServerTypes.JOIN_LOBBY) {
                 if (!wsClients.has(gameId)) {
                     wsClients.set(gameId, new Set());
                 }
@@ -58,14 +58,14 @@ wss.on("connection", (ws) => {
                 console.log(`Player ${playerID} joined lobby ${gameId}`);
             }
 
-            if (type === "login") {
+            if (type === WebServerTypes.LOGIN) {
                 if (!userSockets.has(username)) {
                     userSockets.set(username, new Set());
                 }
                 userSockets.get(username)!.add(ws);
                 console.log(`User ${username} connected`);
     
-                const friends = await userService.getFriends(username);
+                const friends = await UserService.getFriends(username);
 
             
                 if (!userSockets.has(username)) {
@@ -74,7 +74,7 @@ wss.on("connection", (ws) => {
                 userSockets.get(username)!.add(ws);
                 console.log(`[SYSTEM]: User ${username} connected`);
                 
-                friends.forEach(friend => {
+                friends.forEach((friend:any) => {
                     if (userSockets.has(friend)) {
                         userSockets.get(friend)!.forEach(client => {
                             if (client.readyState === 1) {
@@ -87,7 +87,7 @@ wss.on("connection", (ws) => {
                     }
                 });
                 
-                const onlineFriends = friends.filter(f => userSockets.has(f));
+                const onlineFriends = friends.filter((f:any) => userSockets.has(f));
                 ws.send(JSON.stringify({
                     type: "ONLINE_FRIENDS",
                     friends: onlineFriends,
@@ -113,8 +113,8 @@ wss.on("connection", (ws) => {
                     userSockets.delete(username);
                     console.log(`${username} is now offline`);
                 
-                    const friends = await userService.getFriends(username);
-                    friends.forEach(friend => {
+                    const friends = await UserService.getFriends(username);
+                    friends.forEach((friend:any) => {
                         if (userSockets.has(friend)) {
                             userSockets.get(friend)!.forEach(client => {
                                 if (client.readyState === 1) {
@@ -133,236 +133,7 @@ wss.on("connection", (ws) => {
     });
 });
 
-subscriber.pSubscribe(`${IdPrefixes.SCOREBOARD_UPDATE}_*`, async (message, channel) => { // Listen to all channels
-
-    const lobbyId = channel.replace(`${IdPrefixes.SCOREBOARD_UPDATE}_`, "");
-    const parsedData = JSON.parse(message);
-
-    if (wsClients.has(lobbyId)) {
-        wsClients.get(lobbyId).forEach((client:any) => {
-            if (client.readyState === 1) {
-                client.send(JSON.stringify({
-                    type: IdPrefixes.SCOREBOARD_UPDATE,
-                    scores: parsedData.scoreboard,
-                    points: parsedData.pointsToAdd,
-                    playerId: parsedData.playerId
-                }));
-            }
-        });
-    }
-});
-//Man on monday I start working on neo4j if nothing is done about it until then
-//I do not even hope anymore that the person who said they would do it ever will
-subscriber.pSubscribe(`${IdPrefixes.GAME_STARTED}_*`, async (message, channel) => {
-    const lobbyId = channel.replace(`${IdPrefixes.GAME_STARTED}_`, ""); // Extract game ID
-
-    if (wsClients.has(lobbyId)) {
-        wsClients.get(lobbyId).forEach((client:any) => {
-            if (client.readyState === 1) {
-                client.send(JSON.stringify({
-                    type: `${IdPrefixes.GAME_STARTED}`,
-                    message: "Game has started!",
-                }));
-            }
-        });
-    }
-});
-//4 weeks no work done with neo4j, I should stop writing neo4j so it would be 
-//harder to temove this type of comments.... I thing I will
-subscriber.pSubscribe(`${IdPrefixes.ALL_PLAYERS_COMPLETE}_*`, async (message, channel) => {
-    const lobbyId = channel.replace(`${IdPrefixes.ALL_PLAYERS_COMPLETE}_`, ""); // Extract game ID
-    const payload = JSON.parse(message);
-
-    // 1) PERSIST to Neo4j (once per player)
-    // if (Array.isArray(payload?.results)) {
-    //     for (const r of payload.results) {
-    //     await recordResult({
-    //         username: r.username,   // same as Player.id
-    //         score: r.score,
-    //         placement: r.placement
-    //     });
-
-    //     // 2) OPTIONAL: maintain a Redis ZSET for blazing-fast reads
-    //     // key: "global:leaderboard"
-    //     // member = username, score = best score (we store latest best).
-    //     // We should ZADD with the player's best; easiest is to just ZADD the final if it’s the best:
-    //     await redisClient.zAdd("global:leaderboard", [{ score: r.score, value: r.username }]);
-    //     // If the player’s existing best in Redis is higher, ZADD keeps it if 'score' is smaller.
-    //     // (If you want strict “max”, fetch ZSCORE and compare before zAdd.)    !!!!!!!!!!!!!!!!!!!!!
-    //     }
-    // }
-
-
-    if (wsClients.has(lobbyId)) {
-        wsClients.get(lobbyId).forEach((client:any) => {
-            if (client.readyState === 1) {
-                client.send(JSON.stringify({
-                    type: `${IdPrefixes.ALL_PLAYERS_COMPLETE}`,
-                    message: "Game has ended!",
-                }));
-            }
-        });
-    }
-
-
-
-});
-
-subscriber.pSubscribe(`${IdPrefixes.PLAYER_JOIN}_*`, async (message, channel) => {
-    const lobbyId = channel.replace(`${IdPrefixes.PLAYER_JOIN}_`, ""); // Extract game ID
-    const parsedMessage = JSON.parse(message);
-    const playerId = parsedMessage.playerID;
-
-    if (wsClients.has(lobbyId)) {
-        wsClients.get(lobbyId).forEach((client:any) => {
-            if (client.readyState === 1) {
-                client.send(JSON.stringify({
-                    type: `${IdPrefixes.PLAYER_JOIN}`,
-                    message: "Player joined the game",
-                    playerId:playerId
-                }));
-            }
-        });
-    }
-});
-
-subscriber.pSubscribe(`${IdPrefixes.PlAYER_LEAVE}_*`, async (message, channel) => {
-    const lobbyId = channel.replace(`${IdPrefixes.PlAYER_LEAVE}_`, ""); // Extract game ID
-    const parsedMessage = JSON.parse(message);
-    const playerId = parsedMessage.playerID;
-    const newHost = parsedMessage.newHost;
-
-    if (wsClients.has(lobbyId)) {
-        wsClients.get(lobbyId).forEach((client:any) => {
-            if (client.readyState === 1) {
-                client.send(JSON.stringify({
-                    type: `${IdPrefixes.PlAYER_LEAVE}`,
-                    message: "Player left the game",
-                    playerId:playerId,
-                    newHost:newHost
-                }));
-            }
-        });
-    }
-});
-
-subscriber.pSubscribe(`${IdPrefixes.MESSAGE_UPDATE}_*`, async (message, channel) => {
-    const lobbyId = channel.replace(`${IdPrefixes.MESSAGE_UPDATE}_`, ""); // Extract game ID
-    const parsedMessage = JSON.parse(message);
-    const playerId = parsedMessage.playerId;
-    const pMessage = parsedMessage.message;
-
-    if (wsClients.has(lobbyId)) {
-        wsClients.get(lobbyId).forEach((client:any) => {
-            if (client.readyState === 1) {
-                client.send(JSON.stringify({
-                    type: `${IdPrefixes.MESSAGE_UPDATE}`,
-                    message: "Player joined the game",
-                    playerId:playerId,
-                    playerMessage: pMessage
-                }));
-            }
-        });
-    }
-});
-
-subscriber.pSubscribe("FRIEND_REQUEST_*", async (message, channel) => {
-    const toUser = channel.replace("FRIEND_REQUEST_", "");
-    if (userSockets.has(toUser)) {
-        userSockets.get(toUser)!.forEach(client => {
-            if (client.readyState === 1) {
-                client.send(JSON.stringify({
-                    type: "FRIEND_REQUEST",
-                    ...JSON.parse(message),
-                }));
-            }
-        });
-    }
-});
-
-subscriber.pSubscribe("FRIEND_ACCEPTED_*", async (message, channel) => {
-    const toUser = channel.replace("FRIEND_ACCEPTED_", "");
-    if (userSockets.has(toUser)) {
-        userSockets.get(toUser)!.forEach(client => {
-            if (client.readyState === 1) {
-                client.send(JSON.stringify({
-                    type: "FRIEND_ACCEPTED",
-                    ...JSON.parse(message),
-                }));
-            }
-        });
-    }
-});
-
-subscriber.pSubscribe("FRIEND_DECLINED_*", async (message, channel) => {
-    const toUser = channel.replace("FRIEND_DECLINED_", "");
-    if (userSockets.has(toUser)) {
-        userSockets.get(toUser)!.forEach(client => {
-            if (client.readyState === 1) {
-                client.send(JSON.stringify({
-                    type: "FRIEND_DECLINED",
-                    ...JSON.parse(message),
-                }));
-            }
-        });
-    }
-});
-
-subscriber.pSubscribe("FRIEND_REMOVED_*", async (message, channel) => {
-    const toUser = channel.replace("FRIEND_REMOVED_", "");
-    if (userSockets.has(toUser)) {
-        userSockets.get(toUser)!.forEach(client => {
-            if (client.readyState === 1) {
-                client.send(JSON.stringify({
-                    type: "FRIEND_REMOVED",
-                    ...JSON.parse(message),
-                }));
-            }
-        });
-    }
-});
-
-subscriber.subscribe("USER_ONLINE", (message) => {
-    const { username } = JSON.parse(message);
-    userSockets.forEach((sockets, user) => {
-        sockets.forEach(client => {
-            if (client.readyState === 1) {
-                client.send(JSON.stringify({
-                    type: "USER_ONLINE",
-                    username,
-                }));
-            }
-        });
-    });
-});
-
-subscriber.subscribe("USER_OFFLINE", (message) => {
-    const { username } = JSON.parse(message);
-    userSockets.forEach((sockets, user) => {
-        sockets.forEach(client => {
-            if (client.readyState === 1) {
-                client.send(JSON.stringify({
-                    type: "USER_OFFLINE",
-                    username,
-                }));
-            }
-        });
-    });
-});
-
-subscriber.pSubscribe(`${IdPrefixes.INVITE}_*`, async (message, channel) => {
-    const toUser = channel.replace(`${IdPrefixes.INVITE}_`, "");
-    if (userSockets.has(toUser)) {
-        userSockets.get(toUser)!.forEach(client => {
-            if (client.readyState === 1) {
-                client.send(JSON.stringify({
-                    type: `${IdPrefixes.INVITE}`,
-                    ...JSON.parse(message),
-                }));
-            }
-        });
-    }
-});
+initRedisWsBridge({wsClients, userSockets});
 
 app.use("/game", gameRouter);
 app.use("/user", userRouter);

@@ -2,9 +2,9 @@ import { IdPrefixes } from "../shared_modules/shared_enums";
 
 // RedisKeyService.ts
 export class RedisKeys {
-    static friendList(username: string) {
-        return `${IdPrefixes.FRIEND_LIST}_${username}`;
-    }
+  static friendList(username: string) {
+      return `${IdPrefixes.FRIEND_LIST}_${username}`;
+  }
 
   static scoreboard(gameId: string) {
     return `${IdPrefixes.PLAYER_POINTS}_${gameId}`

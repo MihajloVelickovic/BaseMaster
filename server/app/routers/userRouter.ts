@@ -1,8 +1,8 @@
 import { Router } from "express";
 import { n4jDriver, n4jSession } from "../neo4jClient";
 import { Transaction } from "neo4j-driver";
+import { UserService } from "../utils/userService";
 import {publisher, redisClient} from "../redisClient";
-import { userService } from "../utils//userService";
 import { IdPrefixes, NumericalConstants } from "../shared_modules/shared_enums";
 import { upsertPlayerFromUser } from "../graph/player.repo";
 import { connectPlayerToLeaderboard, getPlayerAchievements, getPlayerStats, getFriendsWithAchievements } from '../graph/leaderboard.repo';
@@ -42,7 +42,7 @@ userRouter.post("/register", async(req: any, res: any) => {
         else 
             return res.status(400).json({message: `Failed to create user "${username}"\n${register}`});
     }
-    catch(error){
+    catch(error:any){
         return res.status(500).json({message:"How did this happen....", error: error.gqlStatusDescription});
     }
     
@@ -84,7 +84,7 @@ userRouter.post("/login", async(req: any, res: any) => {
         await connectPlayerToLeaderboard(user.username); // Add this line
         return res.status(200).json({message: "Success", user: user});
     }
-    catch(error){
+    catch(error:any){
         return res.status(500).json({message:"How did this happen....", error: error.gqlStatusDescription});
     }
 
@@ -121,14 +121,14 @@ userRouter.post("/friendRequests", async(req: any, res: any) => {
                                                        (senders: User)
                                                   RETURN collect(senders) AS pending`,
                                                   { username });
-            return result.records[0]?.get("pending").map(f => f.properties.username);
+            return result.records[0]?.get("pending").map((f:any) => f.properties.username);
         });
 
         n4jSesh.close();
 
         return res.status(200).json({message: `Gathered pending requests for user '${username}'`, requests: friendRequests});
     }
-    catch(error){
+    catch(error:any){
         return res.status(500).json({message:"How did this happen....", error: error.gqlStatusDescription});
     }
 
@@ -216,7 +216,7 @@ userRouter.post("/sendFriendRequest", async(req:any, res:any)=>{
         return res.status(200).json({message: `Friend request to user '${receiver}' successfully sent!`});
 
     }
-    catch(error){
+    catch(error:any){
         return res.status(500).json({message:"How did this happen....", error: error.gqlStatusDescription});
     }
 
@@ -293,9 +293,9 @@ userRouter.post("/handleFriendRequest", async(req:any, res:any)=>{
         const recieverKey = RedisKeys.friendList(username);
         const senderKey = RedisKeys.friendList(sender);
 
-        userService.deleteCachedFriendList(recieverKey);
+        UserService.deleteCachedFriendList(recieverKey);
         
-        userService.deleteCachedFriendList(senderKey);
+        UserService.deleteCachedFriendList(senderKey);
         
 
         if(!makeFriends)
@@ -307,7 +307,7 @@ userRouter.post("/handleFriendRequest", async(req:any, res:any)=>{
         }));
         return res.status(200).json({message: `User '${username}' accepted '${sender}'s friend request!'`});        
     }
-    catch(error){
+    catch(error:any){
         return res.status(500).json({message:"How did this happen....", error: error.gqlStatusDescription});
     }
 
@@ -323,18 +323,18 @@ userRouter.post("/getFriends", async(req: any, res: any) => {
     try {
         const redsiKey = RedisKeys.friendList(username);
 
-        var cachedList = await userService.getCachedFriendList(redsiKey);
+        var cachedList = await UserService.getCachedFriendList(redsiKey);
         
         if(cachedList && cachedList.length > 0) {            
             return res.status(200).json(
             {message:`All friends of user '${username}'`, friends:cachedList});
         }
-        const friends = await userService.getFriends(username); // neo4j call
+        const friends = await UserService.getFriends(username); // neo4j call
         
-        await userService.cacheFriends(redsiKey, friends);
+        await UserService.cacheFriends(redsiKey, friends);
 
         return res.status(200).json({message:`All friends of user '${username}'`, friends});
-    } catch (error) {
+    } catch (error: any) {
         return res.status(400).json({message: error.message});
     }
 });
@@ -392,8 +392,8 @@ userRouter.post("/removeFriend", async (req: any, res: any) => {
         const userCacheKey = RedisKeys.friendList(username);
         const friendCacheKey = RedisKeys.friendList(friend); 
 
-        await userService.deleteCachedFriendList(userCacheKey);
-        await userService.deleteCachedFriendList(friendCacheKey);
+        await UserService.deleteCachedFriendList(userCacheKey);
+        await UserService.deleteCachedFriendList(friendCacheKey);
 
         await publisher.publish(`FRIEND_REMOVED_${friend}`, JSON.stringify({
             from: username,
