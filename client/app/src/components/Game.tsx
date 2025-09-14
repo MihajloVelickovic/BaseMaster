@@ -44,91 +44,26 @@ function Game() {
   const [showChat, setShowChat] = useState(false);
   const [playerChat, setPlayerChat] = useState<string[]>([]);
   const [chatInput, setChatInput] = useState("");
-  const chatEndRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  const chatEndRef = useRef<HTMLDivElement>(null);
+  const [wsConnection, setWsConnection] = useState<WebSocket | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const wsRef = useRef<WebSocket | null>(null);
+useEffect(() => {
+  chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
 }, [playerChat]);
 
-  const navigate = useNavigate();
-  var { toBasee = 2, playerNum = 1, gameMode = GameModes.CLASSIC.toString(), difficulty = Difficulties.LAYMAN.toString(), gameId = "", playerID = "" , roundCount} = location.state || {};
-  console.log("toBasee je: ", toBasee);
-  useEffect( () => {
-    const ws = new WebSocket("ws://localhost:1738");
-    switch (gameMode) {         //will go back to this later...
-      case "Classic":
-        break;
-      case "Reverse":
-        setFromBase(toBase);
-        setToBase(10);
-        break;
-      case "Chaos":
-        break;
-      default:
-    }
-    switch (difficulty) {
-      case Difficulties.LAYMAN.toString(): maxVal = BigInt(DifficultyValues.LAYMAN);
-        break;
-      case Difficulties.CHILL_GUY.toString(): maxVal = BigInt(DifficultyValues.CHILL_GUY);
-        break;
-      case Difficulties.ELFAK_ENJOYER.toString(): maxVal = BigInt(DifficultyValues.ELFAK_ENJOYER);
-        break;
-      case Difficulties.BASED_MASTER.toString(): maxVal = BigInt(DifficultyValues.BASED_MASTER);
-        break;
-      default:
-        maxVal = BigInt(DifficultyValues.LAYMAN);
-        console.log("something went wrong for this to show up");
-    }
-    
-    ws.onopen = () => {
-      
-      ws.send(JSON.stringify({ type: IdPrefixes.SCOREBOARD_UPDATE, gameId, playerID }));
-  };
+const navigate = useNavigate();
+const { 
+  toBasee = 2, 
+  playerNum = 1, 
+  gameMode = GameModes.CLASSIC.toString(), 
+  difficulty = Difficulties.LAYMAN.toString(), 
+  gameId = "", 
+  playerID = "", 
+  roundCount 
+} = location.state || {};
 
-  ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      if (data.type === IdPrefixes.SCOREBOARD_UPDATE) {
-        setScoreboard(data.scores);
-        if(data.points && data.points!== 0)
-        {
-          setPlayerChat(prevChat => [...prevChat, playerID === `${data.playerId}` ? `You scored ${data.points} points.` : `Player ${data.playerId} scored ${data.points} points.`]);
-        }
-      } 
-      else if(data.type === IdPrefixes.PlAYER_LEAVE) {
-        setPlayerChat(prevChat => [...prevChat, `Player ${getUserName(data.playerId)} left the game.`]);
-      }
-      else if(data.type === IdPrefixes.MESSAGE_UPDATE){
-        setPlayerChat(prevChat => [...prevChat, `${data.playerId}: ${data.playerMessage}`]);
-      }
-    
-  };
-
-  getNumberFromServer(false);
-  return () => ws.close(); // Cleanup WebSocket on unmount
-    //clearButtonHandler();
-    
-  }, [])
-
-  console.log("toBase: "+toBase+" playerNum: "+playerNum+" gameMode: "+gameMode+" difficulty: "+difficulty+ " gameId: "+gameId);
-  
-  const sendPlayerChatMessage = async () => {
-    if (!chatInput.trim()) return;
-    try {
-      await axiosInstance.post('/game/sendLobbyMessage', { playerId: playerID, message: chatInput, gameId });
-      setChatInput("");
-    } catch (error) {
-      console.error("Error sending message:", error);
-    }
-  };
-
-  const leaveGame = async () => {
-    try {
-        await axiosInstance.post("/game/leaveGame", { gameId, playerID });
-        navigate("/"); // Redirect to home or another page
-    } catch (error) {
-        console.error("Error leaving game:", error);
-    }
-};
+console.log("toBasee je: ", toBasee);
 
   const getNumberFromServer = async (correct:boolean) => {
     const toSend = {
@@ -192,6 +127,153 @@ function Game() {
       maxVal = BigInt(DifficultyValues.LAYMAN);
       console.log("something went wrong for this to show up");
   }
+
+useEffect(() => {
+  if (wsRef.current) {
+    console.log("WebSocket already exists, skipping");
+    return;
+  }
+
+  // Guard against missing data
+  if (!gameId || !playerID) {
+    console.error("Missing gameId or playerID:", { gameId, playerID });
+    alert("Missing game information. Redirecting to home...");
+    navigate("/");
+    return;
+  }
+
+  let mounted = true; // Track if component is still mounted
+  const ws = new WebSocket("ws://localhost:1738");
+
+  // Configure game mode
+  switch (gameMode) {
+    case "Classic":
+      break;
+    case "Reverse":
+      setFromBase(toBasee); // Fixed: was using toBase instead of toBasee
+      setToBase(10);
+      break;
+    case "Chaos":
+      break;
+    default:
+      break;
+  }
+
+  // Configure difficulty
+  switch (difficulty) {
+    case Difficulties.LAYMAN.toString(): 
+      maxVal = BigInt(DifficultyValues.LAYMAN);
+      break;
+    case Difficulties.CHILL_GUY.toString(): 
+      maxVal = BigInt(DifficultyValues.CHILL_GUY);
+      break;
+    case Difficulties.ELFAK_ENJOYER.toString(): 
+      maxVal = BigInt(DifficultyValues.ELFAK_ENJOYER);
+      break;
+    case Difficulties.BASED_MASTER.toString(): 
+      maxVal = BigInt(DifficultyValues.BASED_MASTER);
+      break;
+    default:
+      maxVal = BigInt(DifficultyValues.LAYMAN);
+      console.log("something went wrong for this to show up");
+  }
+
+  ws.onopen = () => {
+    if (!mounted) return;
+    
+    console.log("WebSocket connected");
+    ws.send(JSON.stringify({ 
+      type: IdPrefixes.SCOREBOARD_UPDATE, 
+      gameId, 
+      playerID 
+    }));
+    
+    // NOW it's safe to get the first number - moved here from outside
+    getNumberFromServer(false);
+  };
+
+  ws.onmessage = (event) => {
+    if (!mounted) return; // Don't process if unmounted
+    
+    try {
+      const data = JSON.parse(event.data);
+      console.log("WS received:", data); // Debug log
+      
+      if (data.type === IdPrefixes.SCOREBOARD_UPDATE) {
+        setScoreboard(data.scores);
+        
+        // Fixed comparison and check
+        if (data.points !== undefined && data.points !== 0) {
+          const isCurrentPlayer = playerID === String(data.playerId);
+          const message = isCurrentPlayer 
+            ? `You scored ${data.points} points.`
+            : `Player ${getUserName(data.playerId)} scored ${data.points} points.`;
+          
+          setPlayerChat(prevChat => [...prevChat, message]);
+        }
+      }
+      else if (data.type === IdPrefixes.PlAYER_LEAVE) {
+        setPlayerChat(prevChat => [...prevChat, 
+          `Player ${getUserName(data.playerId)} left the game.`
+        ]);
+      }
+      else if (data.type === IdPrefixes.MESSAGE_UPDATE) {
+        setPlayerChat(prevChat => [...prevChat, 
+          `${getUserName(data.playerId)}: ${data.playerMessage}`
+        ]);
+      }
+    } catch (error) {
+      console.error("Error parsing WebSocket message:", error);
+    }
+  };
+
+  ws.onerror = (error) => {
+    console.error("WebSocket error:", error);
+  };
+
+  ws.onclose = (event) => {
+    if (mounted) {
+      console.log("WebSocket closed:", event.code, event.reason);
+    }
+  };
+
+  // Cleanup function
+  return () => {
+    mounted = false;
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.close(1000, "Component unmounting");
+    } else {
+      ws.close();
+    }
+  };
+}, []); // Added dependencies
+
+console.log("toBase: "+toBase+" playerNum: "+playerNum+" gameMode: "+gameMode+" difficulty: "+difficulty+ " gameId: "+gameId);
+
+const sendPlayerChatMessage = async () => {
+  if (!chatInput.trim()) return;
+  try {
+    await axiosInstance.post('/game/sendLobbyMessage', { 
+      playerId: playerID, 
+      message: chatInput, 
+      gameId 
+    });
+    setChatInput("");
+  } catch (error) {
+    console.error("Error sending message:", error);
+  }
+};
+
+const leaveGame = async () => {
+  try {
+    await axiosInstance.post("/game/leaveGame", { gameId, playerID });
+    navigate("/");
+  } catch (error) {
+    console.error("Error leaving game:", error);
+  }
+};
+
+
 
   const [numOfButtons, setNumOfButtons] = useState(clcBtnCount(BigInt(toBase), maxVal));
   const [arrayOfValues, setArrayOfValues] = useState(Array.from({length: numOfButtons}, (_, i) => 0));  

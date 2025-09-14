@@ -41,4 +41,12 @@ export class RedisKeys {
   static globalLeaderboard() {
     return 'global_learerboard';
   }
+
+  static onlinePlayers() {
+    return IdPrefixes.ONLINE_PLAYERS;
+  }
+
+  static playerStats(playerId:string) {
+    return `${IdPrefixes.PLAYER_STATS}_${playerId}`;
+  }
 }

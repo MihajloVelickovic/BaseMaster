@@ -37,6 +37,8 @@ export enum IdPrefixes {
     PLAYER_JOIN = "PLAYER_JOIN",
     PlAYER_LEAVE = "PLAYER_LEAVE",
     LOBBY_PLAYERS = "lp",
+    ONLINE_PLAYERS = "onp",
+    PLAYER_STATS = "stats",
     MESSAGE = "msg",
     INVITE = "INVITE",
     FRIEND_LIST = "FRIEND_LIST"

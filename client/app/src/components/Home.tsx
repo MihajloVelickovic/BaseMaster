@@ -78,6 +78,7 @@ function Home() {
         params: { limit: 20 }
       });
       setLeaderboard(res.data.items || []);
+      console.log(res.data);
     } catch (err) {
       console.error("Error fetching leaderboard", err);
     }

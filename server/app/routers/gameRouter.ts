@@ -3,7 +3,8 @@ import GameOptions from "../models/gameOptions"
 import { GameModes,Difficulties, DifficultyValues,
 fromStringDiff, fromStringGM, IdPrefixes, BaseValues, maxValueFromDifficulty, 
 GameStates,
-fromStringState}
+fromStringState,
+NumericalConstants}
 from "../shared_modules/shared_enums";
 import { nanoid, random } from 'nanoid';
 import {redisClient, publisher} from "../redisClient";
@@ -161,7 +162,7 @@ gameRouter.post("/getCurrNum", async (req:any, res:any) => {
 
         console.log("sending data to subscriber", scoreboard);
         publisher.publish(`${IdPrefixes.SCOREBOARD_UPDATE}_${gameId}`,
-                           JSON.stringify({scoreboard, playerId, pointsToAdd}));
+                           JSON.stringify({scoreboard, playerId, points:pointsToAdd}));
 
         if(gamemode !== GameModes.CHAOS)
             return res.send({currRndNum:num});
@@ -647,30 +648,39 @@ async function setRounds(gameId:string, roundCount:number, initialValue:number) 
 
 gameRouter.get("/globalLeaderboard", async (req: any, res: any) => {
   const limitRaw = req.query.limit;
-  const skipRaw  = req.query.skip;
-
-  // Convert to proper integers for Neo4j
-//   const limit = Math.min(
-//     Number.isInteger(Number(limitRaw)) ? Math.floor(Math.abs(Number(limitRaw))) : 50,
-//     200
-//   );
-    const limit = 30;
-
+  const skipRaw = req.query.skip;
+  
+  const limit = 30;
   const skip = Number.isInteger(Number(skipRaw)) ? Math.floor(Math.abs(Number(skipRaw))) : 0;
-
+  
   try {
-
-    const leaderboardKey = RedisKeys.globalLeaderboard();
-
-    const leaderboard = 
-    await redisClient.zRangeWithScores(leaderboardKey, 0, -1);
-
-    if(leaderboard &&  leaderboard.length > 0)
-        return res.status(200).json(leaderboard);
-
+    // Create unique cache key for this pagination
+    const leaderboardKey = `${RedisKeys.globalLeaderboard()}:${skip}:${limit}`;
+    
+    // Check cache
+    const cached = await redisClient.get(leaderboardKey);
+    
+    if (cached) {
+      // Cache hit
+      const leaderboard = JSON.parse(cached);
+      return res.status(200).json({ items:leaderboard,
+                                    nextSkip: skip + leaderboard.length });
+    }
+    
+    // Cache miss - get from Neo4j
     const items = await getLeaderboard({ limit, skip });
-
+    
+    // Cache the result
+    if (items && items.length > 0) {
+      await redisClient.setEx(
+        leaderboardKey,
+        NumericalConstants.CACHE_EXP_TIME,
+        JSON.stringify(items)
+      );
+    }
+    
     return res.status(200).json({ items, nextSkip: skip + items.length });
+    
   } catch (err: any) {
     console.error("[ERROR] get /globalLeaderboard:", err?.message || err);
     return res.status(500).json({ message: "Failed to fetch global leaderboard" });

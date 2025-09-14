@@ -40,7 +40,7 @@ wss.on("connection", (ws) => {
             //console.log("data je: ", JSON.parse(data));
             const type = rawType.toLowerCase();
             
-            if (type === WebServerTypes.JOIN_LOBBY) {
+            if (type === WebServerTypes.JOIN_LOBBY.toLowerCase()) {
                 if (!wsClients.has(gameId)) {
                     wsClients.set(gameId, new Set());
                 }
@@ -49,7 +49,7 @@ wss.on("connection", (ws) => {
                 console.log(`[SYSTEM]Player ${playerID} joined lobby ${gameId}`);
                 
             }
-            else if (type === IdPrefixes.SCOREBOARD_UPDATE) {
+            else if (type === IdPrefixes.SCOREBOARD_UPDATE.toLocaleLowerCase()) {
                 if (!wsClients.has(gameId)) {
                     wsClients.set(gameId, new Set());
                 }
@@ -133,7 +133,7 @@ wss.on("connection", (ws) => {
     });
 });
 
-initRedisWsBridge({wsClients, userSockets});
+const redisWsBridge = initRedisWsBridge({wsClients, userSockets});
 
 app.use("/game", gameRouter);
 app.use("/user", userRouter);
@@ -145,4 +145,56 @@ await initializeGraphStructure();
 server.listen(SERVER_PORT, async () => {
     console.log(`[SYSTEM]: Server running on port ${SERVER_PORT}`);
     console.log(connectionSuccess);
+});
+
+
+
+// Add graceful shutdown handlers
+const gracefulShutdown = async (signal: string) => {
+  console.log(`\n${signal} received. Starting graceful shutdown...`);
+  
+  // Close WebSocket server
+  wss.close(() => {
+    console.log('WebSocket server closed');
+  });
+  
+  // Dispose Redis subscriptions
+  if (redisWsBridge && redisWsBridge.dispose) {
+    await redisWsBridge.dispose();
+  }
+  
+  // Close HTTP server
+  server.close(() => {
+    console.log('HTTP server closed');
+    
+    // Close Neo4j driver
+    if (n4jDriver) {
+      n4jDriver.close();
+      console.log('Neo4j connection closed');
+    }
+    
+    // Exit process
+    process.exit(0);
+  });
+  
+  // Force close after 10 seconds
+  setTimeout(() => {
+    console.error('Could not close connections in time, forcefully shutting down');
+    process.exit(1);
+  }, 10000);
+};
+
+// Listen for termination signals
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));  // Ctrl+C
+
+// Handle uncaught errors
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  gracefulShutdown('UNCAUGHT_EXCEPTION');
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  gracefulShutdown('UNHANDLED_REJECTION');
 });

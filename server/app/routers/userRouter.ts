@@ -80,6 +80,7 @@ userRouter.post("/login", async(req: any, res: any) => {
             return res.status(400).json({message: "Incorrect password"});
 
         //TODO JWT
+        await redisClient.sAdd(RedisKeys.onlinePlayers(), user.username);
         await upsertPlayerFromUser(user.username, user.email);
         await connectPlayerToLeaderboard(user.username); // Add this line
         return res.status(200).json({message: "Success", user: user});
@@ -172,6 +173,13 @@ userRouter.post("/sendFriendRequest", async(req:any, res:any)=>{
             return res.status(400).json({message: `User '${receiver}' doesn't exist`});
         }
 
+        const frinedListKey = RedisKeys.friendList(sender);
+        const cachedIsFriend = await redisClient.lPos(frinedListKey, receiver);
+
+        if(cachedIsFriend !== null)
+            return res.status(400).json({message: `Already sent friend request to user ${receiver}`});
+
+        
         const requestExists = await n4jSesh.executeRead(async transaction => {
             const result = await transaction.run(`MATCH(sender: User{username: $sender}) - 
                                                        [r:FRIEND_REQUEST] - 
@@ -474,8 +482,29 @@ userRouter.post("/getPlayerStats", async (req: any, res: any) => {
     }
     
     try {
-        const stats = await getPlayerStats(username);
-        return res.status(200).json({ stats });
+        const playerAchievementsKey = RedisKeys.playerStats(username);
+        
+        let stats;
+        
+        stats = await redisClient.get(playerAchievementsKey);
+        
+        if (stats === null) {
+
+            stats = await getPlayerStats(username);
+            
+            // Cache the result
+            await redisClient.set(playerAchievementsKey, JSON.stringify(stats));
+            await redisClient.expire(
+                playerAchievementsKey,
+                NumericalConstants.CACHE_EXP_TIME
+            );
+            
+            // stats is already an object here
+            return res.status(200).json({ stats });
+        } 
+        else 
+            return res.status(200).json({ stats: JSON.parse(stats) });
+        
     } catch (error) {
         return res.status(500).json({ message: "Failed to fetch player stats" });
     }
