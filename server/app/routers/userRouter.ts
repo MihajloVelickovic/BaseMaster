@@ -7,6 +7,7 @@ import { IdPrefixes, NumericalConstants } from "../shared_modules/shared_enums";
 import { upsertPlayerFromUser } from "../graph/player.repo";
 import { connectPlayerToLeaderboard, getPlayerAchievements, getPlayerStats, getFriendsWithAchievements } from '../graph/leaderboard.repo';
 import { RedisKeys } from "../utils/redisKeyService";
+import { hashPassword, verifyPassword } from "../utils/auth";
 
 // TODO hashiranje sifre
 
@@ -23,10 +24,12 @@ userRouter.post("/register", async(req: any, res: any) => {
     try{
         const n4jSesh = n4jSession();
 
+        const hashedPassword = await hashPassword(password);
+
         const register = await n4jSesh.executeWrite(async transaction => {
             const result = await transaction.run(`CREATE(n:User{email: $email, username: $username, password: $password})
                                                   RETURN true AS success`,
-                                                 { username, email, password });
+                                                 { username, email, password: hashedPassword });
             return result.records[0]?.get("success") ?? false;
         });
 
@@ -76,7 +79,10 @@ userRouter.post("/login", async(req: any, res: any) => {
         if(!user)
             return res.status(400).json({message: `User '${emailOrUsername}' does not exist`});
 
-        if(password != user.password)
+        const isCorrectPassword = 
+        await verifyPassword(password, user.password);
+
+        if(!isCorrectPassword)
             return res.status(400).json({message: "Incorrect password"});
 
         //TODO JWT
