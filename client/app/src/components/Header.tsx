@@ -215,14 +215,9 @@ function Header() {
                 </Link>
             ) : (
                 <>
-                    <div className="user-info">
+                    <div className="header-info">
                         <span className="username-display">{playerID}</span>
-                        <button onClick={handleLogout} className="logout-button btn btn-secondary">
-                            Logout
-                        </button>
-                    </div>
-
-                    <div className="bell-container">
+                        <div className="bell-container">
                         <div className="bell-wrapper">
                             <FaBell onClick={handleNotificationBtnClick} className="bell-icon" />
                             {unreadCount > 0 && (
@@ -245,6 +240,10 @@ function Header() {
                         ) : (
                             <GiCrossedSwords className="InviteIcon flippedIconVertical" />
                         )}
+                    </div>
+                        <button onClick={handleLogout} className="logout-button btn btn-secondary">
+                            Logout
+                        </button>
                     </div>
                 </>
             )}

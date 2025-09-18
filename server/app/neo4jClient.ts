@@ -26,7 +26,7 @@ const connectionSuccess = await (async () => {
 })();
 
 const n4jSession = () => {
-    return n4jDriver.session({database: "neo4j"});
+    return n4jDriver.session({database: NEO4J_USERNAME});
 }
 
 export {n4jDriver, n4jSession, connectionSuccess};

@@ -5,7 +5,7 @@
     border-bottom: solid darkblue 1px;
     background: #009900;
     z-index: 1200;
-    height: 9vh;
+    height: 7vh;
     padding: 15px;
 }
 
@@ -21,7 +21,6 @@
 .bell-container {
     position: relative;
     margin-left: auto;
-    margin-right: 20px;
     cursor: pointer;
 }
 
@@ -39,7 +38,7 @@
 .notification-dropdown {
     position: absolute;
     right: 0;
-    top: 30px;
+    top: 40px;
     background: #fff;
     color: #000;
     border: 1px solid #ccc;
@@ -164,7 +163,11 @@
 
 .basemaster-logo{
     align-self: center;
+    margin-top: -12px;   
+    vertical-align: middle;
+    margin-left:-10px;
 }
+
 
 .logo-text {
     font-family: 'JetBrains Mono', monospace; 
@@ -197,17 +200,16 @@
 }
 
 /* Add to Header.css */
-.user-info {
+.header-info {
   display: flex;
   align-items: center;
   gap: 1rem;
-  margin-right: 1rem;
 }
 
 .username-display {
     color: #1a7c1e;
     font-weight: 1000;
-    padding: 0.75rem 1rem;
+    padding: 0.65rem 1rem;
     background: #ffffe8;
     border-radius: 20px;
 }
