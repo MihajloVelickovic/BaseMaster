@@ -355,9 +355,9 @@ userRouter.post("/handleFriendRequest", authUser, async(req:any, res:any)=>{
         const recieverKey = RedisKeys.friendList(username);
         const senderKey = RedisKeys.friendList(sender);
 
-        UserService.deleteCachedFriendList(recieverKey);
+        await UserService.deleteCachedFriendList(recieverKey);
         
-        UserService.deleteCachedFriendList(senderKey);
+        await UserService.deleteCachedFriendList(senderKey);
         
 
         if(!makeFriends)
@@ -625,7 +625,14 @@ userRouter.post("/searchUsers", authUser, async (req: any, res: any) => {
     }
 });
 
+userRouter.post("/sendMessage", authUser, async (req:any, res:any) => {
+    const { sender, reciever, message} = req.body;
 
+});
 
+userRouter.post("/saveMessage", authUser, async (req:any, res:any) => {
+    const {sender, reciever, message} = req.body;
+    
+});
 
 export default userRouter;
