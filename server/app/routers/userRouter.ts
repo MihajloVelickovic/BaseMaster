@@ -103,8 +103,19 @@ userRouter.post("/login", async(req: any, res: any) => {
 
 });
 
-userRouter.post("/logout", (req, res) => {
+userRouter.post("/logout", authUser, (req, res) => {
+    const {token} = req.body;
     
+    if (!token) 
+        return res.status(400).json({message: "Refresh token required"});
+    
+    const tokenIndex = refreshToks.indexOf(token);
+    if (tokenIndex !== -1) {
+        refreshToks.splice(tokenIndex, 1);
+        return res.status(200).json({message: "Successfully logged out"});
+    }
+    
+    return res.status(400).json({message: "Invalid refresh token"});
 })
 
 userRouter.post("/refreshAccess", (req, res) => {

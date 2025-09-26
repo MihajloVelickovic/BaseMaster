@@ -24,6 +24,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const logout = () => {
     setPlayerIDState(null);
     localStorage.removeItem('playerID');
+    localStorage.removeItem('accessTok');
+    localStorage.removeItem('refreshTok');
   };
 
   const setPlayerID = (id: string | null) => {
