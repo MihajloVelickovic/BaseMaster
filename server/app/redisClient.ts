@@ -31,11 +31,11 @@ const subscriber = createClient({
 (async () => {
   try {
     await redisClient.connect();
-    console.log('[SYSTEM]: Succesfully stared redis client');
+    console.log('[SYSTEM]: Successfully stared redis client');
     await publisher.connect();
-    console.log('[SYSTEM]: Succesfully stared redis publisher client');
+    console.log('[SYSTEM]: Successfully stared redis publisher client');
     await subscriber.connect();
-    console.log('[SYSTEM]: Succesfully stared redis subsriber client');
+    console.log('[SYSTEM]: Successfully stared redis subscriber client');
   } 
   catch (err:any) {
     console.error('[ERROR]Error connecting to Redis:', err);

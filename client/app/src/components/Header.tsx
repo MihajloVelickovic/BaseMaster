@@ -160,7 +160,10 @@ function Header() {
 
     const handleLogout = () => {
         logout();
-        // Optionally navigate to home page
+        
+        localStorage.removeItem("accessTok");
+        localStorage.removeItem("refreshTok");
+
         window.location.href = '/';
     };
 

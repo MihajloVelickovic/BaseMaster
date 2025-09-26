@@ -6,6 +6,7 @@ import axiosInstance from "../utils/axiosInstance";
 import { useEffect, useState, useRef } from "react";
 import { FaBell, FaCheck, FaPlus, FaTimes, FaUserPlus } from "react-icons/fa";
 import { useFriendContext } from "../utils/FriendContext"
+import { STATUS_CODES } from "http";
 
 function getUserName (id: string) {
     if (id && id != "") {
@@ -46,7 +47,7 @@ export default function Lobby () {
     useEffect(() => {
         const fetchFriends = async () => {
             try {
-                const response = await axiosInstance.post("/user/getFriends", { username: playerID });
+                const response = await axiosInstance.post("/user/getFriends", { username: playerID });                    
                 setFriends(response.data.friends || []);
             } catch (err: any) {
                 console.error("Failed to fetch friends:", err.message);

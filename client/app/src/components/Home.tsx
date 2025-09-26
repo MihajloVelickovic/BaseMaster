@@ -76,7 +76,7 @@ function Home() {
     try {
       const res = await axiosInstance.get("/game/globalLeaderboard", {
         params: { limit: 20 }
-      });
+    });
       setLeaderboard(res.data.items || []);
       console.log(res.data);
     } catch (err) {

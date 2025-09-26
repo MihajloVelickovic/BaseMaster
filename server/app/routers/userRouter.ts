@@ -1,17 +1,20 @@
 import { Router } from "express";
 import { n4jDriver, n4jSession } from "../neo4jClient";
-import { Transaction } from "neo4j-driver";
+import { auth, Transaction } from "neo4j-driver";
 import { UserService } from "../utils/userService";
 import {publisher, redisClient} from "../redisClient";
 import { IdPrefixes, NumericalConstants } from "../shared_modules/shared_enums";
 import { upsertPlayerFromUser } from "../graph/player.repo";
 import { connectPlayerToLeaderboard, getPlayerAchievements, getPlayerStats, getFriendsWithAchievements } from '../graph/leaderboard.repo';
 import { RedisKeys } from "../utils/redisKeyService";
+import { authUser, JWT_REFRESH, JWT_SECRET } from "../config/config";
+import jwt from "jsonwebtoken";
 import { hashPassword, verifyPassword } from "../utils/auth";
 
 // TODO hashiranje sifre
 
 const userRouter = Router();
+let refreshToks: string[] = [];
 
 userRouter.post("/register", async(req: any, res: any) => {
 
@@ -60,7 +63,6 @@ userRouter.post("/login", async(req: any, res: any) => {
 
     try{
         const n4jSesh = n4jSession();
-
         let user = await n4jSesh.executeRead(async transaction => {
             const result = await transaction.run(`MATCH(n:User)
                                                    WHERE n.username = $emailOrUsername OR 
@@ -89,15 +91,50 @@ userRouter.post("/login", async(req: any, res: any) => {
         await redisClient.sAdd(RedisKeys.onlinePlayers(), user.username);
         await upsertPlayerFromUser(user.username, user.email);
         await connectPlayerToLeaderboard(user.username); // Add this line
-        return res.status(200).json({message: "Success", user: user});
+        const token = jwt.sign({emailOrUsername}, JWT_SECRET, {expiresIn: 600});
+        const refreshToken = jwt.sign({emailOrUsername}, JWT_REFRESH);
+        refreshToks.push(refreshToken);
+        return res.status(200).json({message: "Success", user: user, token: token, refresh: refreshToken});
     }
     catch(error:any){
-        return res.status(500).json({message:"How did this happen....", error: error.gqlStatusDescription});
+        return res.status(500).json({message:`How did this happen....\n[ERROR]:${error.message}`, 
+                                     error: error.gqlStatusDescription});
     }
 
 });
 
-userRouter.post("/friendRequests", async(req: any, res: any) => {
+userRouter.post("/logout", (req, res) => {
+    
+})
+
+userRouter.post("/refreshAccess", (req, res) => {
+    const {token} = req.body;
+    const verified = (() => {
+        try{
+            return jwt.verify(token, JWT_REFRESH);
+        }
+        catch(err){
+            return false;
+        }
+    })();
+
+    if(!verified)
+        return res.status(403).json({message: "Refresh token invalid"});
+
+    if(!refreshToks.includes(token))
+        return res.status(403).json({message: "Refresh token invalid"});
+
+    if (typeof verified === 'object' && 'emailOrUsername' in verified){
+        const newTok = jwt.sign({emailOrUsername: verified.emailOrUsername}, JWT_SECRET, {expiresIn: 600});
+        const newRefreshToken = jwt.sign({emailOrUsername: verified.emailOrUsername}, JWT_REFRESH);
+        refreshToks.splice(refreshToks.indexOf(token), 1);
+        refreshToks.push(newRefreshToken);
+        return res.status(200).json({accessTok: newTok, refreshTok: newRefreshToken});
+    }
+
+});
+
+userRouter.post("/friendRequests", authUser, async(req: any, res: any) => {
 
     console.log("na prste ruke prebroj prijatelje ☝️ ✌️ 🖐️");
 
@@ -141,7 +178,7 @@ userRouter.post("/friendRequests", async(req: any, res: any) => {
 
 });
 
-userRouter.post("/sendFriendRequest", async(req:any, res:any)=>{
+userRouter.post("/sendFriendRequest", authUser, async(req:any, res:any)=>{
 
     console.log("woo friends 👋👋👋");
 
@@ -236,7 +273,7 @@ userRouter.post("/sendFriendRequest", async(req:any, res:any)=>{
 
 });
 
-userRouter.post("/handleFriendRequest", async(req:any, res:any)=>{
+userRouter.post("/handleFriendRequest", authUser, async(req:any, res:any)=>{
 
     console.log("handling friend request 🧛🧛🧛");
 
@@ -327,13 +364,16 @@ userRouter.post("/handleFriendRequest", async(req:any, res:any)=>{
 
 });
 
-userRouter.post("/getFriends", async(req: any, res: any) => {
+userRouter.post("/getFriends", authUser, async(req: any, res: any) => {
     const {username} = req.body;
-
+    const {expired} = req;
+    if(expired)
+        return res.status(403).json({message: "Token expired"});
     if(!username) {
         console.log("[ERROR]: Argument username missing");
         return res.status(400).json({message: "Username needed to retrieve friends"});
     }
+    
     try {
         const redsiKey = RedisKeys.friendList(username);
 
@@ -353,7 +393,7 @@ userRouter.post("/getFriends", async(req: any, res: any) => {
     }
 });
 
-userRouter.post("/removeFriend", async (req: any, res: any) => {
+userRouter.post("/removeFriend", authUser, async (req: any, res: any) => {
     const {username, friend} = req.body;
 
     console.log(`Removing friend '${friend}' from '${username}' 💔`);
@@ -421,7 +461,7 @@ userRouter.post("/removeFriend", async (req: any, res: any) => {
     }
 });
 
-userRouter.post("/sendInvite", async (req:any, res:any) => {
+userRouter.post("/sendInvite", authUser, async (req:any, res:any) => {
     const { sender, receiver, gameId} = req.body;
 
     if(!sender || !receiver)
@@ -444,7 +484,7 @@ userRouter.post("/sendInvite", async (req:any, res:any) => {
     }
 });
 
-userRouter.post("/getInvites", async (req:any, res:any) => {
+userRouter.post("/getInvites", authUser, async (req:any, res:any) => {
     const {username} = req.body;
 
     if(!username)
@@ -464,7 +504,7 @@ userRouter.post("/getInvites", async (req:any, res:any) => {
 });
 
 // Get player achievements
-userRouter.post("/getAchievements", async (req: any, res: any) => {
+userRouter.post("/getAchievements", authUser,  async (req: any, res: any) => {
     const { username } = req.body;
     
     if (!username) {
@@ -480,7 +520,7 @@ userRouter.post("/getAchievements", async (req: any, res: any) => {
 });
 
 // Get player stats
-userRouter.post("/getPlayerStats", async (req: any, res: any) => {
+userRouter.post("/getPlayerStats", authUser, async (req: any, res: any) => {
     const { username } = req.body;
     
     if (!username) {
@@ -517,7 +557,7 @@ userRouter.post("/getPlayerStats", async (req: any, res: any) => {
 });
 
 // Get friends with their achievements
-userRouter.post("/getFriendsWithAchievements", async (req: any, res: any) => {
+userRouter.post("/getFriendsWithAchievements", authUser, async (req: any, res: any) => {
     const { username } = req.body;
     
     if (!username) {
@@ -533,7 +573,7 @@ userRouter.post("/getFriendsWithAchievements", async (req: any, res: any) => {
 });
 
 // Add to userRouter.ts
-userRouter.post("/searchUsers", async (req: any, res: any) => {
+userRouter.post("/searchUsers", authUser, async (req: any, res: any) => {
     const { query, currentUser } = req.body;
     
     if (!query) {
@@ -573,6 +613,8 @@ userRouter.post("/searchUsers", async (req: any, res: any) => {
         return res.status(500).json({ message: "Error searching users" });
     }
 });
+
+
 
 
 export default userRouter;

@@ -12,6 +12,7 @@ let n4jDriver: Driver;
 
 const connectionSuccess = await (async () => {
     try{
+        console.log(client.uri + ' ' + client.username + ' ' + client.password);
         n4jDriver = n4j.driver(
             client.uri,
             n4j.auth.basic(client.username, client.password),

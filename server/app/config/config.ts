@@ -1,5 +1,7 @@
 import dotenv from "dotenv";
 import path from "path";
+import jwt, { JwtPayload } from "jsonwebtoken";
+import {jwtDecode} from "jwt-decode";
 import { fileURLToPath } from "url";
 
 // Create __dirname equivalent
@@ -19,3 +21,29 @@ export const REDIS_PORT = Number(process.env.REDIS_PORT);
 export const NEO4J_URI = process.env.NEO4J_URI;
 export const NEO4J_USERNAME = process.env.NEO4J_USERNAME;
 export const NEO4J_PASSWORD = process.env.NEO4J_PASSWORD;
+export const JWT_SECRET: string = process.env.JWT_SECRET ?? "";
+export const JWT_REFRESH: string = process.env.JWT_REFRESH ?? "";
+
+export function authUser(req: any, res: any, next: any){
+    const authFromReq = req.headers["authorization"];
+    const token = authFromReq && authFromReq.split(' ')[1];
+    if(!token)
+        return res.status(401).json({message:"Unauthorized"});
+
+    req.expired = false;
+    const decoded : string| JwtPayload | null = jwt.decode(token) ;
+    if(decoded && typeof decoded === 'object' && 'exp' in decoded) {
+        const exp = Number(decoded.exp);
+        if(exp * 1000 <= Date.now())
+            req.expired = true;
+    }
+    
+    jwt.verify(token, JWT_SECRET, {ignoreExpiration: true}, (error:any, user:any) => {
+        if(error)
+            return res.status(403).json({message:`${error.message}`});
+        
+        req.user = user;
+        next();
+    });
+
+}

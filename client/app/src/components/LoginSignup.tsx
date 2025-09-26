@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import axiosInstance from "../utils/axiosInstance";   //ovde za sad ne treba
 import "../styles/LoginSignup.css";
 import { useAuth } from '../utils/AuthContext';
+import { access } from "fs";
 
 interface FormValues {
     username?: string;
@@ -21,6 +22,8 @@ interface FormErrors {
     confirmPassword?: string;
     serverResponse?: string;
 }
+
+
 
 const LoginSignup = () => {
     // const location = useLocation();
@@ -68,6 +71,8 @@ const LoginSignup = () => {
                 let response;
                 var msg = "";
                 var userName = "";
+                var accessTok = "";
+                var refreshTok = "";
                 if (action === "Login") {
                     response = await axiosInstance.post("/user/login", {
                         emailOrUsername: formValues.emailOrUsername,
@@ -75,10 +80,13 @@ const LoginSignup = () => {
                     });
                     msg = response.data.message;
                     userName = response.data.user.username;
+                    accessTok = response.data.token;
+                    refreshTok = response.data.refresh;
                     console.log(msg, userName);
                     localStorage.setItem("playerID",userName);      //will be absolite soon
+                    localStorage.setItem("accessTok", accessTok);
+                    localStorage.setItem("refreshTok", refreshTok);
                     //console.log(response.data);
-
                     //setUserId(response.data.userId);
                     login(userName);
                     navigate("/", { state: { playerIdTransfered: userName} });
