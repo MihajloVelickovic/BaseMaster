@@ -68,7 +68,7 @@ export async function connectPlayerToLeaderboard(username: string) {
   try {
     await session.executeWrite(async tx => {
       await tx.run(`
-        MATCH (p:Player {username: $username})
+        MATCH (p:User {username: $username})
         MATCH (lb:Leaderboard {id: 'global'})
         MERGE (p)-[r:PARTICIPATES_IN]->(lb)
         ON CREATE SET 
