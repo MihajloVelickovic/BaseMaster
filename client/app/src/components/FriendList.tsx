@@ -55,30 +55,21 @@ function FriendList() {
     try {
       // For now, we'll simulate a search by checking if the user exists
       // You might need to add a backend endpoint for searching users
-      const response = await axiosInstance.post('/user/searchUsers', { 
-        query: searchQuery,
-        currentUser: playerID 
-      }).catch(() => {
-        // If the endpoint doesn't exist, we'll do a simple check
-        return { data: { users: [{ 
-          username: searchQuery,
-          isFriend: friends.includes(searchQuery),
-          requestSent: false, // You'd need to track this
-          requestReceived: friendRequests.includes(searchQuery)
-        }] } };
-      });
+      const response = await axiosInstance.post('/user/searchUsers', {
+      query: searchQuery,
+      currentUser: playerID
+    }).catch(() => {
+      // If the endpoint doesn't exist, return empty users array
+      return { data: { users: [] } };
+    });
 
-      if (response.data.users && response.data.users.length > 0) {
-        setSearchResults(response.data.users);
-      } else {
-        // Fallback: just show the searched username if it's valid
-        setSearchResults([{
-          username: searchQuery,
-          isFriend: friends.includes(searchQuery),
-          requestSent: false,
-          requestReceived: friendRequests.includes(searchQuery)
-        }]);
-      }
+    if (response.data.users && response.data.users.length > 0) {
+      setSearchResults(response.data.users);
+    } else {
+      // No users found - show empty results and error message
+      setSearchResults([]);
+      setSearchError('No players found');
+    }
     } catch (error) {
       console.error('Error searching users:', error);
       setSearchError('Error searching for users. Please try again.');

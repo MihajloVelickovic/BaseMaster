@@ -67,8 +67,13 @@ export const fromStringState = (value: string): GameStates | undefined => {
             ? (value as GameStates) : undefined;
 };
 
-export const fromStringDiff = (value: string): Difficulties | undefined => {
-    return (Object.values(Difficulties) as string[]).includes(value) ? (value as Difficulties) : undefined;
+export const fromStringDiff = (
+    value: string, 
+    defaultValue: Difficulties = Difficulties.LAYMAN
+): Difficulties => {
+    return (Object.values(Difficulties) as string[]).includes(value) 
+        ? (value as Difficulties) 
+        : defaultValue;
 };
 
 export const fromStringGM = (value: string): GameModes | undefined => {
@@ -76,7 +81,7 @@ export const fromStringGM = (value: string): GameModes | undefined => {
 };
 
 export const getGamemode = (input: string): GameModes | undefined => {
-    const value = input.split("_")[0];
+    const value = input.split(":")[0];
     return (Object.values(GameModes) as string[]).includes(value) ? (value as GameModes) : undefined;
 };
 

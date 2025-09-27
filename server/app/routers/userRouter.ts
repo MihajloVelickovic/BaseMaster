@@ -11,6 +11,7 @@ import { authUser, JWT_REFRESH, JWT_SECRET } from "../config/config";
 import jwt from "jsonwebtoken";
 import { hashPassword, verifyPassword } from "../utils/auth";
 import { CACHE_DURATION } from "../shared_modules/configMaps";
+import { isNullOrWhitespace } from "../utils/stringUtils";
 
 // TODO hashiranje sifre
 
@@ -22,7 +23,10 @@ userRouter.post("/register", async(req: any, res: any) => {
     console.log("someone is registering 🤫🤫🤫");
     const {email, username, password} = req.body;
 
-    if(!email || !username || !password)
+    
+
+    if(isNullOrWhitespace(email) || isNullOrWhitespace(username) ||
+       isNullOrWhitespace(password))
         return res.status(400).json({message: "All fields necessary"});
 
     try{
@@ -61,6 +65,9 @@ userRouter.post("/login", async(req: any, res: any) => {
     console.log("someone is signing in 🕺🕺🕺");
 
     const {emailOrUsername, password} = req.body;
+
+    if(isNullOrWhitespace(emailOrUsername) || isNullOrWhitespace(password))
+        return res.status(400).json({message: "EmailOrUsername and Password required"}); 
 
     try{
         const n4jSesh = n4jSession();
@@ -107,7 +114,7 @@ userRouter.post("/login", async(req: any, res: any) => {
 userRouter.post("/logout", authUser, (req, res) => {
     const {token} = req.body;
     
-    if (!token) 
+    if (isNullOrWhitespace(token)) 
         return res.status(400).json({message: "Refresh token required"});
     
     const tokenIndex = refreshToks.indexOf(token);
@@ -152,7 +159,7 @@ userRouter.post("/friendRequests", authUser, async(req: any, res: any) => {
 
     const {username} = req.body;
 
-    if(!username)
+    if(isNullOrWhitespace(username))
         return res.status(400).json({message: "Username necessary to retrieve friend requests"});
 
     try{
@@ -196,7 +203,7 @@ userRouter.post("/sendFriendRequest", authUser, async(req:any, res:any)=>{
 
     const {sender, receiver} = req.body;
 
-    if(!sender || !receiver)
+    if(isNullOrWhitespace(sender) || isNullOrWhitespace(receiver))
         return res.status(400).json({message: "Both fields necessary"});
 
     if(sender === receiver)
@@ -290,7 +297,8 @@ userRouter.post("/handleFriendRequest", authUser, async(req:any, res:any)=>{
     console.log("handling friend request 🧛🧛🧛");
 
     const {username, sender, userResponse} = req.body;
-    if(!username || !sender || userResponse === undefined || userResponse === null)
+    if(isNullOrWhitespace(username) || isNullOrWhitespace(sender) 
+      ||userResponse === undefined || userResponse === null)
         return res.status(400).json({message: "The sender and the response need to be known to handle the request"});
 
     try{
@@ -381,7 +389,7 @@ userRouter.post("/getFriends", authUser, async(req: any, res: any) => {
     const {expired} = req;
     if(expired)
         return res.status(403).json({message: "Token expired"});
-    if(!username) {
+    if(isNullOrWhitespace(username)) {
         console.log("[ERROR]: Argument username missing");
         return res.status(400).json({message: "Username needed to retrieve friends"});
     }
@@ -410,7 +418,7 @@ userRouter.post("/removeFriend", authUser, async (req: any, res: any) => {
 
     console.log(`Removing friend '${friend}' from '${username}' 💔`);
 
-    if (!username || !friend) {
+    if (isNullOrWhitespace(username) || isNullOrWhitespace(friend)) {
         console.log("[ERROR]: Argument username or friend usenrame missing");
         return res.status(400).json({ message: "Both username and friend are required" });
     }
@@ -476,7 +484,7 @@ userRouter.post("/removeFriend", authUser, async (req: any, res: any) => {
 userRouter.post("/sendInvite", authUser, async (req:any, res:any) => {
     const { sender, receiver, gameId} = req.body;
 
-    if(!sender || !receiver)
+    if(isNullOrWhitespace(sender) || isNullOrWhitespace(receiver))
         return res.status(400).json({message: "Missing required parameters: username or friendUsername or gameId"});
 
     try {
@@ -499,7 +507,7 @@ userRouter.post("/sendInvite", authUser, async (req:any, res:any) => {
 userRouter.post("/getInvites", authUser, async (req:any, res:any) => {
     const {username} = req.body;
 
-    if(!username)
+    if(isNullOrWhitespace(username))
         return res.status(400).json({message:"Missing username arugment"});
 
     try {
@@ -519,7 +527,7 @@ userRouter.post("/getInvites", authUser, async (req:any, res:any) => {
 userRouter.post("/getAchievements", authUser,  async (req: any, res: any) => {
     const { username } = req.body;
     
-    if (!username) {
+    if (isNullOrWhitespace(username)) {
         return res.status(400).json({ message: "Username required" });
     }
     
@@ -535,7 +543,7 @@ userRouter.post("/getAchievements", authUser,  async (req: any, res: any) => {
 userRouter.post("/getPlayerStats", authUser, async (req: any, res: any) => {
     const { username } = req.body;
     
-    if (!username) {
+    if (isNullOrWhitespace(username)) {
         return res.status(400).json({ message: "Username required" });
     }
     
@@ -572,7 +580,7 @@ userRouter.post("/getPlayerStats", authUser, async (req: any, res: any) => {
 userRouter.post("/getFriendsWithAchievements", authUser, async (req: any, res: any) => {
     const { username } = req.body;
     
-    if (!username) {
+    if (isNullOrWhitespace(username)) {
         return res.status(400).json({ message: "Username required" });
     }
     
@@ -588,7 +596,7 @@ userRouter.post("/getFriendsWithAchievements", authUser, async (req: any, res: a
 userRouter.post("/searchUsers", authUser, async (req: any, res: any) => {
     const { query, currentUser } = req.body;
     
-    if (!query) {
+    if (isNullOrWhitespace(query)) {
         return res.status(400).json({ message: "Search query required" });
     }
     
@@ -629,7 +637,7 @@ userRouter.post("/searchUsers", authUser, async (req: any, res: any) => {
 userRouter.post("/sendMessage", async (req:any, res:any) => {
     const { sender, receiver, messageText} = req.body;
 
-    if(isInvalid(messageText) || areInvalidMessagePair(sender,receiver))
+    if(isNullOrWhitespace(messageText) || areInvalidMessagePair(sender,receiver))
         return res.status(400).json({ message: "Invalid input" });
 
     try {

@@ -12,7 +12,8 @@ import {redisClient, publisher} from "../redisClient";
 import { recordResult } from "../graph/player.repo";
 import { getLeaderboard } from "../graph/player.repo";
 import { RedisKeys } from "../utils/redisKeyService";
-import { CACHE_DURATION, MAX_NUMBER } from "../shared_modules/configMaps";
+import { CACHE_DURATION, DiffcultyModifier, MAX_NUMBER } from "../shared_modules/configMaps";
+import { isNullOrWhitespace } from "../utils/stringUtils";
 
 
 
@@ -117,6 +118,10 @@ gameRouter.post("/getCurrNum", async (req:any, res:any) => {
         correct
     } = req.body;
 
+    if(isNullOrWhitespace(gameId) || isNullOrWhitespace(currRound) || 
+       isNullOrWhitespace(playerId) || isNullOrWhitespace(correct))
+        return res.status(400).send('Invalid body');
+    
     try {
         const randomNumsKey = RedisKeys.randomNumbers(gameId);
 
@@ -184,8 +189,10 @@ gameRouter.post("/joinLobby", async (req:any, res:any) => {
         playerId
     } = req.body;
 
-    const scoreboardKey = RedisKeys.scoreboard(gameId);
+    if(isNullOrWhitespace(gameId) || isNullOrWhitespace(playerId))
+        return res.status(400).send('Invalid body for join lobby');
 
+    const scoreboardKey = RedisKeys.scoreboard(gameId);
 
     const lobbyData = await redisClient.hGet(IdPrefixes.LOBBIES_CURR_PLAYERS, gameId);
 
@@ -291,6 +298,9 @@ gameRouter.post("/setGameState", async (req:any, res:any) => {
         gameState
     } = req.body;
 
+    if(isNullOrWhitespace(gameId) || isNullOrWhitespace(gameState))
+        return res.status(400).send('Invalid body for set game state');
+
     try {
         const gameData = await redisClient.get(gameId);
 
@@ -346,16 +356,23 @@ gameRouter.post("/playerComplete", async (req:any, res:any) => {
         correct: correct
     } = req.body;
 
+    if(isNullOrWhitespace(playerId) || isNullOrWhitespace(gameId) ||
+       isNullOrWhitespace(correct))
+        return res.status(400).send('Invalid body for player complete');
+
+
     const scoreboardKey = RedisKeys.scoreboard(gameId); 
     const gameData = await redisClient.get(gameId);
 
     if(!gameData)
         return res.status(404).send({message:"Could not find the game"});
 
-    const parcedData = JSON.parse(gameData);
+    const parcedData:GameOptions = JSON.parse(gameData);
     const currRound = parcedData.roundCount;
     var orderBonus = 0;   
     
+    const difficulty = parcedData.difficulty;
+
     if(correct) {
         const orderPointsKey = RedisKeys.orderPoints(gameId);
         orderBonus = await 
@@ -363,7 +380,7 @@ gameRouter.post("/playerComplete", async (req:any, res:any) => {
     }
     
     const basePoints = 100;
-    const pointsToAdd = orderBonus * basePoints;
+    const pointsToAdd = orderBonus * basePoints * DiffcultyModifier[difficulty];
     await redisClient.zIncrBy(scoreboardKey, pointsToAdd, playerId );
     const scoreboard = await redisClient.zRangeWithScores(scoreboardKey, 0, -1);
     scoreboard.reverse();
@@ -376,8 +393,8 @@ gameRouter.post("/playerComplete", async (req:any, res:any) => {
     const remainingPlayers = 
     await redisClient.decr(gameEndKey);
     
-    if (parcedData.currPlayerCount > 0) {
-        parcedData.currPlayerCount -= 1;
+    if (parcedData.playerCount > 0) {
+        parcedData.playerCount -= 1;
         await redisClient.set(gameId, JSON.stringify(parcedData));
     }
 
@@ -405,7 +422,7 @@ gameRouter.post("/playerComplete", async (req:any, res:any) => {
 gameRouter.post("/leaveLobby", async (req: any, res: any) => {
     const { gameId, playerID } = req.body;
 
-    if (!gameId || !playerID) {
+    if (isNullOrWhitespace(gameId) || isNullOrWhitespace(playerID)) {
         return res.status(400).send({ message: "Missing gameId or playerID" });
     }
 
@@ -462,7 +479,7 @@ gameRouter.post("/leaveLobby", async (req: any, res: any) => {
 gameRouter.post("/leaveGame", async (req: any, res: any) => {
     const { gameId, playerID } = req.body;
 
-    if (!gameId || !playerID) {
+    if (isNullOrWhitespace(gameId) || isNullOrWhitespace(playerID)) {
         return res.status(400).send({ message: "Missing gameId or playerID" });
     }
 
@@ -516,11 +533,8 @@ gameRouter.post("/sendLobbyMessage", async (req:any, res:any) => {
         gameId
     } = req.body;
 
-    if(!playerId)
-        return res.status(400).send({ message: "Error processing request" });
-    if(!message)
-        return res.status(400).send({ message: "Error processing request" });
-    if(!gameId)
+    if(isNullOrWhitespace(playerId) || isNullOrWhitespace(message) 
+                                    || isNullOrWhitespace(gameId))
         return res.status(400).send({ message: "Error processing request" });
 
     try {
@@ -545,7 +559,7 @@ gameRouter.post("/getLobbyMessages", async (req:any, res:any) => {
 
     console.log(req.body);
 
-    if(!gameId)
+    if(isNullOrWhitespace(gameId))
         return res.status(400).send({ message: "[ERROR]: Argument gameId missing" });
 
     try {

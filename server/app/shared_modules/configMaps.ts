@@ -15,6 +15,13 @@ export const CACHE_DURATION  = {
 
 } as const;
 
+export const DiffcultyModifier: Readonly<Record<Difficulties, number>> = {
+  [Difficulties.LAYMAN]: 1,
+  [Difficulties.CHILL_GUY]: 2,
+  [Difficulties.ELFAK_ENJOYER]: 3,
+  [Difficulties.BASED_MASTER]: 5
+} as const;
+
 
 
 

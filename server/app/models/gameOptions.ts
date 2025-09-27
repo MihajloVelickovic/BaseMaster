@@ -4,7 +4,7 @@ interface GameOptionsParams {
   gamemode: GameModes | undefined;
   playerCount: number;
   roundCount: number;
-  difficulty: Difficulties | undefined;
+  difficulty: Difficulties;
   hostId: string;
   lobbyName: string;
 }
@@ -13,7 +13,7 @@ export default class GameOptions {
   gamemode: GameModes | undefined;
   playerCount: number;
   roundCount: number;
-  difficulty: Difficulties | undefined;
+  difficulty: Difficulties;
   hostId: string;
   lobbyName: string;
 
