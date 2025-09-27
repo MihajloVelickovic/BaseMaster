@@ -3,13 +3,14 @@ import { n4jDriver, n4jSession } from "../neo4jClient";
 import { auth, Transaction } from "neo4j-driver";
 import { UserService } from "../utils/userService";
 import {publisher, redisClient} from "../redisClient";
-import { IdPrefixes, NumericalConstants } from "../shared_modules/shared_enums";
+import { IdPrefixes, CacheTypes } from "../shared_modules/shared_enums";
 import { upsertPlayerFromUser } from "../graph/player.repo";
 import { connectPlayerToLeaderboard, getPlayerAchievements, getPlayerStats, getFriendsWithAchievements } from '../graph/leaderboard.repo';
 import { RedisKeys } from "../utils/redisKeyService";
 import { authUser, JWT_REFRESH, JWT_SECRET } from "../config/config";
 import jwt from "jsonwebtoken";
 import { hashPassword, verifyPassword } from "../utils/auth";
+import { CACHE_DURATION } from "../shared_modules/configMaps";
 
 // TODO hashiranje sifre
 
@@ -553,7 +554,7 @@ userRouter.post("/getPlayerStats", authUser, async (req: any, res: any) => {
             await redisClient.set(playerAchievementsKey, JSON.stringify(stats));
             await redisClient.expire(
                 playerAchievementsKey,
-                NumericalConstants.CACHE_EXP_TIME
+                CACHE_DURATION[CacheTypes.GENERIC_CACHE]
             );
             
             // stats is already an object here
@@ -628,9 +629,10 @@ userRouter.post("/searchUsers", authUser, async (req: any, res: any) => {
 userRouter.post("/sendMessage", authUser, async (req:any, res:any) => {
     const { sender, reciever, message} = req.body;
 
+
 });
 
-userRouter.post("/saveMessage", authUser, async (req:any, res:any) => {
+userRouter.post("/getMessages", authUser, async (req:any, res:any) => {
     const {sender, reciever, message} = req.body;
     
 });

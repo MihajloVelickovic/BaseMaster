@@ -1,6 +1,7 @@
 import { n4jSession } from "../neo4jClient";
 import { redisClient } from "../redisClient";
-import { IdPrefixes, NumericalConstants } from "../shared_modules/shared_enums";
+import { CACHE_DURATION } from "../shared_modules/configMaps";
+import { IdPrefixes, CacheTypes } from "../shared_modules/shared_enums";
 
 
 export class UserService {
@@ -54,7 +55,7 @@ export class UserService {
     if (friends.length === 0) return; // no-op
     
     await redisClient.rPush(redisKey, friends);
-    await redisClient.expire(redisKey, NumericalConstants.CACHE_EXP_TIME);
+    await redisClient.expire(redisKey, CACHE_DURATION[CacheTypes.GENERIC_CACHE]);
    }
 
  

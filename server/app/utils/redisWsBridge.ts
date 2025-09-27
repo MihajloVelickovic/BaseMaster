@@ -25,10 +25,10 @@ export function initRedisWsBridge({
   };
 
   // scoreboard updates
-  subscriber.pSubscribe(`${IdPrefixes.SCOREBOARD_UPDATE}_*`, 
+  subscriber.pSubscribe(`${IdPrefixes.SCOREBOARD_UPDATE}:*`, 
                         async (message:any, channel:any) => {
     try {
-      const lobbyId = channel.replace(`${IdPrefixes.SCOREBOARD_UPDATE}_`, "");
+      const lobbyId = channel.replace(`${IdPrefixes.SCOREBOARD_UPDATE}:`, "");
       const parsed = JSON.parse(message);
       if (wsClients.has(lobbyId)) {
         wsClients.get(lobbyId)!.forEach((client) =>
@@ -46,9 +46,9 @@ export function initRedisWsBridge({
   });
 
   // game started
-  subscriber.pSubscribe(`${IdPrefixes.GAME_STARTED}_*`, 
+  subscriber.pSubscribe(`${IdPrefixes.GAME_STARTED}:*`, 
                         (message:any, channel:any) => {
-    const lobbyId = channel.replace(`${IdPrefixes.GAME_STARTED}_`, "");
+    const lobbyId = channel.replace(`${IdPrefixes.GAME_STARTED}:`, "");
     if (wsClients.has(lobbyId)) {
       wsClients.get(lobbyId)!.forEach((c) =>
         safeSend(c, { type: IdPrefixes.GAME_STARTED, message: "Game has started!" })
@@ -57,10 +57,10 @@ export function initRedisWsBridge({
   });
 
   // all players complete (example simplified)
-  subscriber.pSubscribe(`${IdPrefixes.ALL_PLAYERS_COMPLETE}_*`, 
+  subscriber.pSubscribe(`${IdPrefixes.ALL_PLAYERS_COMPLETE}:*`, 
                         async (message:any, channel:any) => {
     try {
-      const lobbyId = channel.replace(`${IdPrefixes.ALL_PLAYERS_COMPLETE}_`, "");
+      const lobbyId = channel.replace(`${IdPrefixes.ALL_PLAYERS_COMPLETE}:`, "");
       const payload = JSON.parse(message);
 
       // If you want to record results in Neo4j or Redis, consider emitting an event here
@@ -80,10 +80,10 @@ export function initRedisWsBridge({
   });
 
   // player join
-  subscriber.pSubscribe(`${IdPrefixes.PLAYER_JOIN}_*`, 
+  subscriber.pSubscribe(`${IdPrefixes.PLAYER_JOIN}:*`, 
                         (message:any, channel:any) => {
     try {
-      const lobbyId = channel.replace(`${IdPrefixes.PLAYER_JOIN}_`, "");
+      const lobbyId = channel.replace(`${IdPrefixes.PLAYER_JOIN}:`, "");
       const parsed = JSON.parse(message);
       const playerId = parsed.playerID;
       if (wsClients.has(lobbyId)) {
@@ -97,10 +97,10 @@ export function initRedisWsBridge({
   });
 
   // player leave
-  subscriber.pSubscribe(`${IdPrefixes.PlAYER_LEAVE}_*`, 
+  subscriber.pSubscribe(`${IdPrefixes.PlAYER_LEAVE}:*`, 
                         (message:any, channel:any) => {
     try {
-      const lobbyId = channel.replace(`${IdPrefixes.PlAYER_LEAVE}_`, "");
+      const lobbyId = channel.replace(`${IdPrefixes.PlAYER_LEAVE}:`, "");
       const parsed = JSON.parse(message);
       const playerId = parsed.playerID;
       const newHost = parsed.newHost;
@@ -115,10 +115,10 @@ export function initRedisWsBridge({
   });
 
   // message update
-  subscriber.pSubscribe(`${IdPrefixes.MESSAGE_UPDATE}_*`, 
+  subscriber.pSubscribe(`${IdPrefixes.MESSAGE_UPDATE}:*`, 
   (message:any, channel:any) => {
     try {
-      const lobbyId = channel.replace(`${IdPrefixes.MESSAGE_UPDATE}_`, "");
+      const lobbyId = channel.replace(`${IdPrefixes.MESSAGE_UPDATE}:`, "");
       const parsed = JSON.parse(message);
       if (wsClients.has(lobbyId)) {
         wsClients.get(lobbyId)!.forEach((client) =>
@@ -136,11 +136,11 @@ export function initRedisWsBridge({
   });
 
   // FRIEND_* patterns -> user-specific sockets
-  const friendPatterns = ["FRIEND_REQUEST_*", "FRIEND_ACCEPTED_*", "FRIEND_DECLINED_*", "FRIEND_REMOVED_*"];
+  const friendPatterns = ["FRIEND_REQUEST:*", "FRIEND_ACCEPTED:*", "FRIEND_DECLINED:*", "FRIEND_REMOVED:*"];
   friendPatterns.forEach(pattern => {
     subscriber.pSubscribe(pattern, (message:any, channel:any) => {
       try {
-        const toUser = channel.split("_").slice(1).join("_"); // supports underscores in username
+        const toUser = channel.split(":"); // supports underscores in username
         if (userSockets.has(toUser)) {
           userSockets.get(toUser)!.forEach(client => safeSend(client, { type: pattern.split("_")[0], ...JSON.parse(message) }));
         }

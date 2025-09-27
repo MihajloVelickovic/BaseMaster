@@ -1,41 +1,46 @@
+import { nanoid } from "nanoid";
 import { IdPrefixes } from "../shared_modules/shared_enums";
 
 // RedisKeyService.ts
 export class RedisKeys {
   static friendList(username: string) {
-      return `${IdPrefixes.FRIEND_LIST}_${username}`;
+      return `${IdPrefixes.FRIEND_LIST}:${username}`;
   }
 
   static scoreboard(gameId: string) {
-    return `${IdPrefixes.PLAYER_POINTS}_${gameId}`
+    return `${IdPrefixes.PLAYER_POINTS}:${gameId}`
   }
 
   static gameEnd(gameId: string) {
-    return`${IdPrefixes.GAME_END}_${gameId}`;
+    return`${IdPrefixes.GAME_END}:${gameId}`;
   }
 
   static lobbyPlayers(gameId: string) {
-    return `${IdPrefixes.LOBBY_PLAYERS}_${gameId}`
+    return `${IdPrefixes.LOBBY_PLAYERS}:${gameId}`
   }
 
   static lobbyMessage(gameId:string) {
-    return `${IdPrefixes.MESSAGE}_${gameId}`;
+    return `${IdPrefixes.MESSAGE}:${gameId}`;
   }
 
   static randomNumbers(gameId: string) {
-    return `${IdPrefixes.RANDOM_NUMBERS}_${gameId}`;
+    return `${IdPrefixes.RANDOM_NUMBERS}:${gameId}`;
   }
 
   static orderPoints(gameId: string) {
-    return `${IdPrefixes.ORDER_POINTS}_${gameId}`;
+    return `${IdPrefixes.ORDER_POINTS}:${gameId}`;
   }
 
   static fromBaseArray(gameId: string) {
-    return `${IdPrefixes.FROM_BASE}_${gameId}`
+    return `${IdPrefixes.FROM_BASE}:${gameId}`
   }
 
   static toBaseArray(gameId: string) {
-    return `${IdPrefixes.TO_BASE}_${gameId}`;
+    return `${IdPrefixes.TO_BASE}:${gameId}`;
+  }
+
+  static roundCount(gameId:string) {
+    return `${IdPrefixes.ROUND_COUNT}:${gameId}`;
   }
 
   static globalLeaderboard() {
@@ -47,6 +52,35 @@ export class RedisKeys {
   }
 
   static playerStats(playerId:string) {
-    return `${IdPrefixes.PLAYER_STATS}_${playerId}`;
+    return `${IdPrefixes.PLAYER_STATS}:${playerId}`;
+  }
+
+  static frinedMessageKey(senderId:string,reveiverId:string) {
+    const messageId = nanoid();
+    return `${IdPrefixes.FRIEND_MESSAGES}:${senderId}:${reveiverId}:${messageId}`;
+  }
+
+  static scoreboardUpdate(gameId:string) {
+    return `${IdPrefixes.SCOREBOARD_UPDATE}:${gameId}`;
+  }
+
+  static playerJoin(gameId:string) {
+    return `${IdPrefixes.PLAYER_JOIN}:${gameId}`;
+  }
+
+  static gameStart(gameId:string) {
+    return `${IdPrefixes.GAME_STARTED}:${gameId}`;
+  }
+
+  static allPlayersComplete(gameId:string) {
+    return `${IdPrefixes.ALL_PLAYERS_COMPLETE}:${gameId}`;
+  }
+
+  static playerLeave(gameId:string) {
+    return `${IdPrefixes.PlAYER_LEAVE}_${gameId}`;
+  }
+  
+  static messageUpdate(gameId:string) {
+    return `${IdPrefixes.MESSAGE_UPDATE}:${gameId}`;
   }
 }

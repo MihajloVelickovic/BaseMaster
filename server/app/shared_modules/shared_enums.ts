@@ -11,12 +11,6 @@ export enum Difficulties {
     BASED_MASTER = "Based master"
 }
 
-export enum DifficultyValues {
-    LAYMAN=64,
-    CHILL_GUY=256,
-    ELFAK_ENJOYER=512,
-    BASED_MASTER=2048,
-}
 
 export enum IdPrefixes {
     RANDOM_NUMBERS = "rn",
@@ -41,7 +35,9 @@ export enum IdPrefixes {
     PLAYER_STATS = "stats",
     MESSAGE = "msg",
     INVITE = "INVITE",
-    FRIEND_LIST = "FRIEND_LIST"
+    FRIEND_LIST = "FRIEND_LIST",
+    FRIEND_MESSAGES = "FRIEND_MESSAGES",
+    ROUND_COUNT = "rn"
 }
 
 export enum WebServerTypes {
@@ -59,8 +55,10 @@ export enum GameStates {
     STARTED = "Started"
 }
 
-export enum NumericalConstants {
-    CACHE_EXP_TIME = 300
+export enum CacheTypes {
+    GENERIC_CACHE = "GENERIC_CACHE",
+    DISSAPEARING_MESSAGE = "DISSAPEARING_MESSAGE",
+    LOBBY_CONTEXT = "LOBBY_CONTEXT"
 }
 // If only commits could write themselves... oh wait, they can’t.  
 
@@ -77,23 +75,8 @@ export const fromStringGM = (value: string): GameModes | undefined => {
     return (Object.values(GameModes) as string[]).includes(value) ? (value as GameModes) : undefined;
 };
 
-export function maxValueFromDifficulty(diff:Difficulties | undefined) {
-    var maxValue:number;
-    switch(diff) {
-        case Difficulties.LAYMAN:
-            maxValue = DifficultyValues.LAYMAN;
-            break;
-        case Difficulties.CHILL_GUY:
-            maxValue = DifficultyValues.CHILL_GUY;
-            break;
-        case Difficulties.ELFAK_ENJOYER:
-            maxValue = DifficultyValues.ELFAK_ENJOYER;
-            break;
-        case Difficulties.BASED_MASTER:
-            maxValue = DifficultyValues.BASED_MASTER;
-            break;
-        default:
-            maxValue=-1;
-    }
-    return maxValue;
-}
+export const getGamemode = (input: string): GameModes | undefined => {
+    const value = input.split("_")[0];
+    return (Object.values(GameModes) as string[]).includes(value) ? (value as GameModes) : undefined;
+};
+
