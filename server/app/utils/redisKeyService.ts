@@ -55,9 +55,15 @@ export class RedisKeys {
     return `${IdPrefixes.PLAYER_STATS}:${playerId}`;
   }
 
-  static frinedMessageKey(senderId:string,reveiverId:string) {
+  static inboxKey(senderId:string,reveiverId:string) {
     const messageId = nanoid();
-    return `${IdPrefixes.FRIEND_MESSAGES}:${senderId}:${reveiverId}:${messageId}`;
+    const inboxId = [senderId, reveiverId].sort().join(":");
+    return `${IdPrefixes.FRIEND_MESSAGES}:${inboxId}:${messageId}`;
+  }
+
+  static inboxPatern(senderId:string,reveiverId:string) {
+    const inboxId = [senderId, reveiverId].sort().join(":");
+    return `${IdPrefixes.FRIEND_MESSAGES}:${inboxId}:*`;
   }
 
   static scoreboardUpdate(gameId:string) {

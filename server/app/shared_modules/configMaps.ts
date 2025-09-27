@@ -11,6 +11,7 @@ export const MAX_NUMBER: Readonly<Record<Difficulties, number>> = {
 
 export const CACHE_DURATION  = {
     [CacheTypes.GENERIC_CACHE]: toSeconds(15, TimeUnit.MINUTES),
+    [CacheTypes.DISSAPEARING_MESSAGE]: toSeconds(7, TimeUnit.DAYS)
 
 } as const;
 

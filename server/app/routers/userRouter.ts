@@ -626,15 +626,65 @@ userRouter.post("/searchUsers", authUser, async (req: any, res: any) => {
     }
 });
 
-userRouter.post("/sendMessage", authUser, async (req:any, res:any) => {
-    const { sender, reciever, message} = req.body;
+userRouter.post("/sendMessage", async (req:any, res:any) => {
+    const { sender, receiver, messageText} = req.body;
 
+    if(isInvalid(messageText) || areInvalidMessagePair(sender,receiver))
+        return res.status(400).json({ message: "Invalid input" });
 
+    try {
+        const inboxKey = RedisKeys.inboxKey(sender, receiver);
+
+        const message = {
+            from: sender,
+            to: receiver,
+            text: messageText,
+            timestamp: Date.now()
+        };
+
+        await redisClient.setEx(inboxKey, 
+                                CACHE_DURATION[CacheTypes.DISSAPEARING_MESSAGE],
+                                JSON.stringify(message));
+
+        return res.status(200).json({ receiver });                                
+    }
+    catch(err:any) {
+        console.log(err);
+        return res.status(500).json({ message: "Error sending message" });
+    }
 });
 
-userRouter.post("/getMessages", authUser, async (req:any, res:any) => {
-    const {sender, reciever, message} = req.body;
+userRouter.post("/getMessages", async (req:any, res:any) => {
+    const {sender, receiver} = req.body;
     
+    if(areInvalidMessagePair(sender,receiver))
+        return res.status(400).json({ message: "Invalid input" });
+
+    try {
+        const pattern = RedisKeys.inboxPatern(sender, receiver);
+
+        const msgKeys = await redisClient.keys(pattern);
+
+        const messagePromises = msgKeys.map(async (key) => {
+            const msg = await redisClient.get(key);
+            return msg ? JSON.parse(msg) : null;
+        });
+
+        const messages = (await Promise.all(messagePromises)).filter(Boolean);
+
+        return res.status(200).json({ messages });
+    }
+    catch(err:any) {
+         return res.status(500).json({ message: "Error getting messages" });
+    }
 });
+
+const isInvalid = (value:any) => {
+    return !value || typeof value !== 'string' || value.trim() === '';
+}
+
+const areInvalidMessagePair = (sender:any, receiver:any) => {
+    return isInvalid(sender) || isInvalid(receiver) || sender === receiver;
+}
 
 export default userRouter;

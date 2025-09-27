@@ -36,7 +36,7 @@ export enum IdPrefixes {
     MESSAGE = "msg",
     INVITE = "INVITE",
     FRIEND_LIST = "FRIEND_LIST",
-    FRIEND_MESSAGES = "FRIEND_MESSAGES",
+    FRIEND_MESSAGES = "inbox",
     ROUND_COUNT = "rn"
 }
 
