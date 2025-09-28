@@ -12,7 +12,7 @@ export function toSeconds(value: number, unit: TimeUnit): number {
     case TimeUnit.MINUTES: return value * 60;
     case TimeUnit.HOURS:   return value * 60 * 60;
     case TimeUnit.DAYS:    return value * 60 * 60 * 24;
-    case TimeUnit.MONTHS:  return value * 60 * 60 * 24 * 30; // 30d approx
+    case TimeUnit.MONTHS:  return value * 60 * 60 * 24 * 28; // 30d approx
     default:               return value;
   }
 }
