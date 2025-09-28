@@ -675,7 +675,7 @@ gameRouter.get("/globalLeaderboard", async (req: any, res: any) => {
     // Check cache
     const cached = await redisClient.get(leaderboardKey);
     
-    if (cached) {
+    if (cached) {        //turned off cache for now
       // Cache hit
       const leaderboard = JSON.parse(cached);
       return res.status(200).json({ items:leaderboard,
