@@ -212,7 +212,7 @@ useEffect(() => {
           setPlayerChat(prevChat => [...prevChat, message]);
         }
       }
-      else if (data.type === IdPrefixes.PlAYER_LEAVE) {
+      else if (data.type === IdPrefixes.PLAYER_LEAVE) {
         setPlayerChat(prevChat => [...prevChat, 
           `Player ${getUserName(data.playerId)} left the game.`
         ]);

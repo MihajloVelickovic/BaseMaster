@@ -97,16 +97,16 @@ export function initRedisWsBridge({
   });
 
   // player leave
-  subscriber.pSubscribe(`${IdPrefixes.PlAYER_LEAVE}:*`, 
+  subscriber.pSubscribe(`${IdPrefixes.PLAYER_LEAVE}:*`, 
                         (message:any, channel:any) => {
     try {
-      const lobbyId = channel.replace(`${IdPrefixes.PlAYER_LEAVE}:`, "");
+      const lobbyId = channel.replace(`${IdPrefixes.PLAYER_LEAVE}:`, "");
       const parsed = JSON.parse(message);
       const playerId = parsed.playerID;
       const newHost = parsed.newHost;
       if (wsClients.has(lobbyId)) {
         wsClients.get(lobbyId)!.forEach((client) =>
-          safeSend(client, { type: IdPrefixes.PlAYER_LEAVE, message: "Player left the game", playerId, newHost })
+          safeSend(client, { type: IdPrefixes.PLAYER_LEAVE, message: "Player left the game", playerId, newHost })
         );
       }
     } catch (err) {

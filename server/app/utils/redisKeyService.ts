@@ -83,7 +83,7 @@ export class RedisKeys {
   }
 
   static playerLeave(gameId:string) {
-    return `${IdPrefixes.PlAYER_LEAVE}_${gameId}`;
+    return `${IdPrefixes.PLAYER_LEAVE}:${gameId}`;
   }
   
   static messageUpdate(gameId:string) {

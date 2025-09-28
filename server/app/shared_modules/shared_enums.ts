@@ -29,7 +29,7 @@ export enum IdPrefixes {
     USER_EMAILS = "USER_EMAILS",
     USERNAMES = "USERNAMES",
     PLAYER_JOIN = "PLAYER_JOIN",
-    PlAYER_LEAVE = "PLAYER_LEAVE",
+    PLAYER_LEAVE = "PLAYER_LEAVE",
     LOBBY_PLAYERS = "lp",
     ONLINE_PLAYERS = "onp",
     PLAYER_STATS = "stats",
@@ -41,7 +41,7 @@ export enum IdPrefixes {
 }
 
 export enum WebServerTypes {
-    JOIN_LOBBY = "joinlobby",
+    JOIN_LOBBY = "joinLobby",
     LOGIN = "login",    
 }
 

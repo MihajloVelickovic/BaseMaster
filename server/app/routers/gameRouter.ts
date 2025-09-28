@@ -465,7 +465,7 @@ gameRouter.post("/leaveLobby", async (req: any, res: any) => {
 
 
         publisher.publish(RedisKeys.playerLeave(gameId), JSON.stringify({
-            type:IdPrefixes.PlAYER_LEAVE,
+            type:IdPrefixes.PLAYER_LEAVE,
             playerID,
             newHost: newHost
         }));
@@ -515,7 +515,7 @@ gameRouter.post("/leaveGame", async (req: any, res: any) => {
             JSON.stringify({scoreboard, playerID, points: 0}));
 
         publisher.publish(RedisKeys.playerLeave(gameId), JSON.stringify({
-            type:IdPrefixes.PlAYER_LEAVE,
+            type:IdPrefixes.PLAYER_LEAVE,
             playerID,
         }));
 

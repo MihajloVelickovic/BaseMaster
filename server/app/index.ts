@@ -36,11 +36,11 @@ wss.on("connection", (ws) => {
 
     ws.on("message", async (data: any) => {
         try {
-            const { type:rawType, gameId, playerID, username } = JSON.parse(data);
+            const { type, gameId, playerID, username } = JSON.parse(data);
             //console.log("data je: ", JSON.parse(data));
-            const type = rawType.toLowerCase();
+            //const type = rawType.toLowerCase();
             
-            if (type === WebServerTypes.JOIN_LOBBY.toLowerCase()) {
+            if (type === WebServerTypes.JOIN_LOBBY) {
                 if (!wsClients.has(gameId)) {
                     wsClients.set(gameId, new Set());
                 }
@@ -49,7 +49,8 @@ wss.on("connection", (ws) => {
                 console.log(`[SYSTEM]Player ${playerID} joined lobby ${gameId}`);
                 
             }
-            else if (type === IdPrefixes.SCOREBOARD_UPDATE.toLocaleLowerCase()) {
+            
+            else if (type === IdPrefixes.SCOREBOARD_UPDATE) {
                 if (!wsClients.has(gameId)) {
                     wsClients.set(gameId, new Set());
                 }
@@ -57,7 +58,7 @@ wss.on("connection", (ws) => {
                 currentLobby = gameId;
                 console.log(`Player ${playerID} joined lobby ${gameId}`);
             }
-
+            
             if (type === WebServerTypes.LOGIN) {
                 if (!userSockets.has(username)) {
                     userSockets.set(username, new Set());

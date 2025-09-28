@@ -19,6 +19,7 @@ function getUserName (id: string) {
 //project could not be done without it
 export default function Lobby () {
     const location = useLocation();
+    const wsRef = useRef<WebSocket | null>(null);
     var { toBasee = 2, playerNum = 1, gameMode = GameModes.CLASSIC.toString(),
          difficulty = Difficulties.LAYMAN.toString(), gameId = "", playerID,
           lobbyName, hostId, roundCount, playerIds} = location.state || {};
@@ -97,7 +98,7 @@ export default function Lobby () {
                     setPlayerChat(prevChat => [...prevChat, `Player ${getUserName(data.playerId)} joined the lobby.`]);
                 }
             }
-            else if(data.type === IdPrefixes.PlAYER_LEAVE) {
+            else if(data.type === IdPrefixes.PLAYER_LEAVE) {
                 console.log("Player left the lobby: ",data.playerId);
                 setPlayers(prevPlayers => prevPlayers.filter(id => id !== data.playerId));
                 if(data.newHost){
@@ -148,6 +149,17 @@ export default function Lobby () {
         } catch (error) {
             console.error("Error leaving lobby:", error);
         }
+    };
+
+    const handleLeaveLobby = async () => {
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        wsRef.current.send(JSON.stringify({
+            type: IdPrefixes.PLAYER_LEAVE,
+            gameId,
+            playerID,
+        }));
+        }
+        navigate("/");
     };
 
     const getPlayerChat = async () => {
@@ -233,7 +245,7 @@ export default function Lobby () {
 
     async function sendInvite(friend:string) {
         try {
-            const response = await axiosInstance.post("user/sendInvite", {sender:playerID, receiver:friend, gameId:gameId});
+            const response = await axiosInstance.post("/user/sendInvite", {sender:playerID, receiver:friend, gameId:gameId});
             console.log(response.data['message']);
         }
         catch(err:any) {
@@ -331,7 +343,7 @@ export default function Lobby () {
                     <div className="waitingText">Waiting for lobby owner to start the game...</div>
                 )}
                 
-                <button className="startGameButton leaveLobbyButton" onClick={() => navigate("/")}>
+                <button className="startGameButton leaveLobbyButton" onClick={handleLeaveLobby}>
                     Leave Lobby
                 </button>
             </div>

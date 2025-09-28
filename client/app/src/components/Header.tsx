@@ -35,7 +35,7 @@ function Header() {
     useEffect(() => {
         if (!playerID) return;
     
-        const socket = new WebSocket(`ws://localhost:1738?playerID=${playerID}`);
+        const socket = new WebSocket("ws://localhost:1738/");
     
         socket.onopen = () => {
             socket.send(JSON.stringify({
