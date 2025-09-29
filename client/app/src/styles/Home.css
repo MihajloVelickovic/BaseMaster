@@ -589,6 +589,7 @@ input.inputFont {
   display: flex;
   flex: 1;
   overflow: hidden;
+  min-height: 0;
 }
 
 .chat-friends {
@@ -666,18 +667,20 @@ input.inputFont {
   flex:1;
   display: flex;
   flex-direction: column;
-  overflow-y:hidden;
+  min-height: 0;
+  
 }
 
 .messages-list {
   flex: 1;
-  overflow-y: auto;
+  overflow-y: scroll;
+  max-height: 100%;
   padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  justify-content: flex-end;
+  gap: 8px;  
   min-height: 0;
+  scrollbar-gutter: stable;
 }
 
 .message {
@@ -689,7 +692,7 @@ input.inputFont {
   gap:4px;
 }
 
-.message.me {
+.message.us {
   align-self: flex-end;
   background: #007bff;
   color: white;

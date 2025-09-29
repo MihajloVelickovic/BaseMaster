@@ -1,6 +1,6 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import "../styles/Home.css"
-import { JSXElementConstructor, ReactElement, ReactNode, ReactPortal, useEffect, useState } from "react";
+import { JSXElementConstructor, ReactElement, ReactNode, ReactPortal, useEffect, useLayoutEffect, useRef, useState } from "react";
 import axiosInstance from "../utils/axiosInstance";   //ovde za sad ne treba
 import {GameModes, Difficulties} from "../shared_modules/shared_enums"
 import { useAuth } from '../utils/AuthContext';
@@ -85,6 +85,7 @@ function Home() {
         username: f,
         unread: f.unread || 0,
       }));
+      
       setFriends(friendsList);
       const totalUnread = friendsList.reduce((sum:number, f:Friend) => sum + f.unread, 0);
       setChatUnreadCount(totalUnread);
@@ -167,6 +168,14 @@ function Home() {
     // console.log(location.state?.playerIdTransfered, "this is it");
     // setPlayerId(location.state?.playerIdTransfered);
   }, [gameId]);  // This effect runs when `gameId` is updated
+
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+  if (messagesEndRef.current) {
+    messagesEndRef.current.scrollIntoView({ behavior: "auto" }); // auto = instant jump
+  }
+}, [messages]);
 
   const fetchLeaderboard = async () => {
     try {
@@ -310,6 +319,7 @@ function Home() {
   }
     
   };
+  
   
   function showLobbies() {
     return (
@@ -511,7 +521,10 @@ function Home() {
           <div className="chat-window">
             <div className="chat-header">
               <span>Chat</span>
-              <button onClick={() => setChatOpen(false)}>✖</button>
+              <button onClick={() => {setChatOpen(false)
+                setActiveFriend("");
+                setMessages([]);
+              }}>✖</button>
             </div>
             <div className="chat-body">
               <div className="chat-friends">
@@ -536,11 +549,13 @@ function Home() {
                   <>
                   <div className="messages-list">
                     {messages.map((m, i) => (
-                      <div key={i} className={`message ${m.from === playerID ? "me" : "them"}`}>
+                      <div key={i} className={`message ${m.from === playerID ? "us" : "them"}`}>
                         <span className="msg-text">{m.text}</span>
                         <span className="msg-time">{new Date(m.timestamp).toLocaleTimeString()}</span>
                       </div>
                     ))}
+                    {/* SCROLL TARGET */}
+                    <div ref={messagesEndRef} />
                   </div>
                   <div className="chat-input">
                     <input
