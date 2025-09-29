@@ -40,6 +40,7 @@ export async function initializeGraphStructure() {
         { code: 'HIGH_SCORER', name: 'High Scorer', description: 'Score over 1000 points', type: 'SCORE', requirement: 1000 },
         { code: 'VETERAN', name: 'Veteran Player', description: 'Play 50 games', type: 'GAMES', requirement: 50 },
         { code: 'PERFECTIONIST', name: 'Perfectionist', description: 'Get a perfect score', type: 'SPECIAL', requirement: 1 },
+        {code: 'YOU_ARE_MY_BEST_FRIEND', name:'You are my best friend', description:'Make one friend — send or accept a friend request', type:'SPECIAL', requirement:1},
         { code: 'SOCIAL_BUTTERFLY', name: 'Social Butterfly', description: 'Have 10 friends', type: 'SPECIAL', requirement: 10 }
       ];
 
