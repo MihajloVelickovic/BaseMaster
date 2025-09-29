@@ -55,7 +55,7 @@ function Home() {
   const [messages, setMessages] = useState<any[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [activeFriend, setActiveFriend] = useState<string>(""); 
-  const [unreadMap, setUnreadMap] = useState<Record<string, number>>({});
+  const [chatUnreadCount, setChatUnreadCount] = useState(0);
   const { onlineUsers } = useFriendContext();
   interface Friend {
     username: string;
@@ -83,9 +83,11 @@ function Home() {
       const response = await axiosInstance.post('/user/getFriends', { username: playerID });
       const friendsList = response.data.friends.map((f: any) => ({
         username: f,
-        unread: 0
+        unread: f.unread || 0,
       }));
       setFriends(friendsList);
+      const totalUnread = friendsList.reduce((sum:number, f:Friend) => sum + f.unread, 0);
+      setChatUnreadCount(totalUnread);
     } catch (error) {
       console.error('Error fetching friends:', error);
     }
@@ -95,30 +97,44 @@ function Home() {
   const handleWSMessage = (event: any) => {
     const data = event.detail;
     
-    if (data.type === "PRIVATE_MESSAGE") {
+    if (data.type === "PRIVATE_MESSAGE_UPDATE") {
       const { from, to, text, timestamp } = data;
-      if (from === activeFriend || to === activeFriend) {
-        setMessages(prev => [...prev, { from, to, text, timestamp }]);
-      } else {
+
+      const otherPerson = from === playerID ? to : from;
+      if(otherPerson === activeFriend) {
+        setMessages((prev) =>
+          [...prev, { from, to, text, timestamp }].sort(
+            (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+          )
+        );
+      }
+      else {
         setFriends((prevFriends) =>
           prevFriends.map(f =>
             f.username === from ? { ...f, unread: f.unread + 1 } : f
           )
         );
+        setChatUnreadCount((c) => c + 1);
       }
     }
   };
 
   window.addEventListener('ws-message', handleWSMessage);
   return () => window.removeEventListener('ws-message', handleWSMessage);
-}, [activeFriend]);
+}, [activeFriend, playerID, chatOpen]);
 
   useEffect(() => {
     if (!activeFriend || !playerId) return;
 
     axiosInstance
       .post("/user/getMessages", { sender: playerId, receiver: activeFriend })
-      .then((res) => setMessages(res.data.messages || []))
+      .then((res) => {
+        const sortedMessages = (res.data.messages || []).sort(
+          (a: any, b: any) =>
+            new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+        );
+        setMessages(sortedMessages)
+      })
       .catch((err) => console.error("Failed to load messages", err));
   }, [activeFriend, playerId]);;
 
@@ -129,13 +145,18 @@ function Home() {
     if (playerId) {
     axiosInstance
       .post("/user/getMessages", { sender: playerId, receiver: friend.username })
-      .then(res => setMessages(res.data.messages || []))
+      .then(res => {
+        const sortedMessages = (res.data.messages || []).sort((a:any, b:any) => a.timestamp - b.timestamp);
+        setMessages(sortedMessages)
+      })
       .catch(err => console.error("Failed to load messages", err));
   }
 
-  setFriends(prev =>
-    prev.map(f => f.username === friend.username ? { ...f, unread: 0 } : f)
-  );
+    setFriends(prev =>
+      prev.map(f => f.username === friend.username ? { ...f, unread: 0 } : f)
+    );
+
+    setChatUnreadCount(prev=> Math.max(0,prev-friend.unread));
   };
 
   useEffect(() => {
@@ -170,7 +191,6 @@ function Home() {
     try {
       await axiosInstance.post("/user/sendMessage", payload);
       setChatInput("");
-      setMessages((prev) => [...prev, { from: playerId, to: activeFriend, text: chatInput, timestamp: Date.now() }]);
     } catch (err) {
       console.error("Send failed", err);
     }
@@ -483,7 +503,10 @@ function Home() {
     {playerID && (
       <div className="chat-container">
         {!chatOpen ? (
-          <div className="chat-circle" onClick={() => setChatOpen(true)}>💬</div>
+          <div className="chat-circle" onClick={() => setChatOpen(true)}>
+            💬
+            {chatUnreadCount > 0 && <span className="chat-badge">{chatUnreadCount}</span>}
+            </div>
         ) : (
           <div className="chat-window">
             <div className="chat-header">
@@ -496,10 +519,10 @@ function Home() {
                   friends.map((f) => (
                   <div
                     key={f.username}
-                    className={`friend-item ${f.username === activeFriend ? "active" : ""}`}
+                    className={`friend-item-home ${f.username === activeFriend ? "active" : ""}`}
                     onClick={() => handleClickFriend(f)}
                   >
-                  <div className="friend-circle" style={{ backgroundColor: onlineUsers.includes(f.username) ? "#28a745" : "#6c757d" }}>{f.username}</div>
+                  <div className={`friend-circle ${onlineUsers.includes(f.username) ? "online" : ""}`}>{f.username.charAt(0).toUpperCase()}</div>
                     <span>{f.username}</span>
                     {f.unread > 0 && <span className="unread-badge">{f.unread}</span>}
                   </div>
