@@ -89,4 +89,10 @@ export class RedisKeys {
   static messageUpdate(gameId:string) {
     return `${IdPrefixes.MESSAGE_UPDATE}:${gameId}`;
   }
+
+  static privateMessageUpdate(senderId: string, receiverId: string) {
+    const inboxId = [senderId, receiverId].sort().join(":");
+    return `${IdPrefixes.PRIVATE_MESSAGE_UPDATE}:${inboxId}`;
+  }
 }
+

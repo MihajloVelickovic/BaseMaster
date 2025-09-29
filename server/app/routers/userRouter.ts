@@ -654,6 +654,11 @@ userRouter.post("/sendMessage", async (req:any, res:any) => {
                                 CACHE_DURATION[CacheTypes.DISSAPEARING_MESSAGE],
                                 JSON.stringify(message));
 
+        publisher.publish(
+            RedisKeys.privateMessageUpdate(sender,receiver),
+            JSON.stringify(message)
+        );
+
         return res.status(200).json({ receiver });                                
     }
     catch(err:any) {

@@ -37,7 +37,8 @@ export enum IdPrefixes {
     INVITE = "INVITE",
     FRIEND_LIST = "FRIEND_LIST",
     FRIEND_MESSAGES = "inbox",
-    ROUND_COUNT = "rn"
+    ROUND_COUNT = "rn",
+    PRIVATE_MESSAGE_UPDATE = "PRIVATE_MESSAGE_UPDATE"
 }
 
 export enum WebServerTypes {

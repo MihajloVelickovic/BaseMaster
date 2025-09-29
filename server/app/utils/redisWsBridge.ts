@@ -185,6 +185,30 @@ export function initRedisWsBridge({
     }
   });
 
+  subscriber.pSubscribe(`${IdPrefixes.PRIVATE_MESSAGE_UPDATE}:*`, 
+  (message: any, channel: any) => {
+    try {
+      const inboxId = channel.replace(`${IdPrefixes.PRIVATE_MESSAGE_UPDATE}:`, "");
+      const parsed = JSON.parse(message);
+
+      const [user1, user2] = inboxId.split(":");
+
+      [user1, user2].forEach(user => {
+        if (userSockets.has(user)) {
+          userSockets.get(user)!.forEach(client => 
+            safeSend(client, { 
+              type: IdPrefixes.PRIVATE_MESSAGE_UPDATE,
+              ...parsed
+            })
+          );
+        }
+      });
+    } catch (err) {
+      console.error("[PRIVATE_MESSAGE_UPDATE handler error]", err);
+    }
+  }
+);
+
   // Return a disposer so server can unsubscribe on shutdown
   const dispose = async () => {
     try {

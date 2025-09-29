@@ -11,13 +11,6 @@ const gameID = "gameID";
 const playerID = Math.floor(Math.random()*10000).toString();
 console.log(playerID);
 
-function getUserName (id: string) {
-  if (id && id != "") {
-    return id.split("_")[0];
-  }
-  return "";
-}
-
 interface LeaderboardEntry {
   username: string;
   bestScore: number;
@@ -57,12 +50,109 @@ function Home() {
   const gameModes:string[] = Object.values(GameModes);
   const difficulties:string[] = Object.values(Difficulties);
 
+  const [chatOpen, setChatOpen] = useState(false);
+  const [messages, setMessages] = useState<any[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [activeFriend, setActiveFriend] = useState<string>(""); 
+  const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
+  const [unreadMap, setUnreadMap] = useState<Record<string, number>>({});
+  interface Friend {
+    username: string;
+    unread: number;
+  }
+  const [friends, setFriends] = useState<Friend[]>([]);
+
+
   useEffect(() => {
     if (loggedIn) {
       fetchLeaderboard();
     }
   }, [loggedIn]);
   
+  useEffect(() => {
+    if (playerID) {
+      fetchFriends();
+    }
+  }, [playerID]);
+
+  const fetchFriends = async () => {
+    if (!playerID) return;
+
+    try {
+      const response = await axiosInstance.post('/user/getFriends', { username: playerID });
+      const friendsList = response.data.friends.map((f: any) => ({
+        username: f,
+        unread: 0
+      }));
+      setFriends(friendsList);
+    } catch (error) {
+      console.error('Error fetching friends:', error);
+    }
+  };
+
+
+  useEffect(() => {
+    if (!playerId) return;
+
+    const ws = new WebSocket("ws://localhost:1738"); 
+
+    ws.onopen = () => {
+      ws.send(JSON.stringify({ type: "login", username: playerId }));
+    };
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+
+      if (data.type === "USER_ONLINE") {
+        setOnlineUsers(prev => [...prev, data.username]);
+      }
+      if (data.type === "USER_OFFLINE") {
+        setOnlineUsers(prev => prev.filter(u => u !== data.username));
+      }
+
+      if (data.type === "PRIVATE_MESSAGE") {
+        const { from, to, text, timestamp } = data;
+        if (from === activeFriend || to === activeFriend) {
+          setMessages(prev=>[...prev, {from, to, text, timestamp}]);
+        }
+        else{
+          setFriends((prevFriends) => 
+            prevFriends.map(f =>
+              f.username === from ? {...f, unread:f.unread+1} : f
+            )
+          );
+        }
+      }
+    };
+
+    return () => ws.close();
+  }, [playerId, activeFriend]);
+
+  useEffect(() => {
+    if (!activeFriend || !playerId) return;
+
+    axiosInstance
+      .post("/user/getMessages", { sender: playerId, receiver: activeFriend })
+      .then((res) => setMessages(res.data.messages || []))
+      .catch((err) => console.error("Failed to load messages", err));
+  }, [activeFriend, playerId]);;
+
+  const handleClickFriend = (friend : Friend) => {
+    setActiveFriend(friend.username);
+    setMessages([]); 
+
+    if (playerId) {
+    axiosInstance
+      .post("/user/getMessages", { sender: playerId, receiver: friend.username })
+      .then(res => setMessages(res.data.messages || []))
+      .catch(err => console.error("Failed to load messages", err));
+  }
+
+  setFriends(prev =>
+    prev.map(f => f.username === friend.username ? { ...f, unread: 0 } : f)
+  );
+  };
+
   useEffect(() => {
     if (gameId) {
       navigate("/Lobby", { state: { toBasee:toBase, playerNum, gameMode, difficulty, gameId, playerID: playerId? playerId : "", roundCount, lobbyName: playerIdTransfered!=""? playerIdTransfered : "Enie", hostId: playerId? playerId : "" } });
@@ -81,6 +171,23 @@ function Home() {
       console.log(res.data);
     } catch (err) {
       console.error("Error fetching leaderboard", err);
+    }
+  };
+
+  const sendMessage = async () => {
+    if (!chatInput.trim() || !activeFriend) return;
+    const payload = {
+      sender: playerId,
+      receiver: activeFriend,
+      messageText: chatInput.trim(),
+    };
+
+    try {
+      await axiosInstance.post("/user/sendMessage", payload);
+      setChatInput("");
+      setMessages((prev) => [...prev, { from: playerId, to: activeFriend, text: chatInput, timestamp: Date.now() }]);
+    } catch (err) {
+      console.error("Send failed", err);
     }
   };
 
@@ -388,6 +495,65 @@ function Home() {
         </ul>
       </div>
     </div>
+    {playerID && (
+      <div className="chat-container">
+        {!chatOpen ? (
+          <div className="chat-circle" onClick={() => setChatOpen(true)}>💬</div>
+        ) : (
+          <div className="chat-window">
+            <div className="chat-header">
+              <span>Chat</span>
+              <button onClick={() => setChatOpen(false)}>✖</button>
+            </div>
+            <div className="chat-body">
+              <div className="chat-friends">
+                {friends.length > 0 ? (
+                  friends.map((f) => (
+                  <div
+                    key={f.username}
+                    className={`friend-item ${f.username === activeFriend ? "active" : ""}`}
+                    onClick={() => handleClickFriend(f)}
+                  >
+                  <div className="friend-circle" style={{ backgroundColor: onlineUsers.includes(f.username) ? "#28a745" : "#6c757d" }}>{f.username}</div>
+                    <span>{f.username}</span>
+                    {f.unread > 0 && <span className="unread-badge">{f.unread}</span>}
+                  </div>
+                  ))
+                ) : (
+                  <p className="no-friends">No chats yet</p>
+                )}
+              </div>
+              <div className="chat-messages">
+                {activeFriend ? (
+                  <>
+                  <div className="messages-list">
+                    {messages.map((m, i) => (
+                      <div key={i} className={`message ${m.from === playerID ? "me" : "them"}`}>
+                        <span className="msg-text">{m.text}</span>
+                        <span className="msg-time">{new Date(m.timestamp).toLocaleTimeString()}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="chat-input">
+                    <input
+                      type="text"
+                      value={chatInput}
+                      onChange={(e) => setChatInput(e.target.value)}
+                      placeholder="Type a message..."
+                      onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                    />
+                    <button onClick={sendMessage}>➤</button>
+                  </div>
+                  </>
+                ) : (
+                <div className="no-chat">Select a friend to start chatting</div>
+                )}
+            </div>
+          </div>
+        </div>
+      )}
+  </div>
+  )}
   </div>
 );
 
