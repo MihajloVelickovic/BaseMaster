@@ -4,6 +4,7 @@ import { JSXElementConstructor, ReactElement, ReactNode, ReactPortal, useEffect,
 import axiosInstance from "../utils/axiosInstance";   //ovde za sad ne treba
 import {GameModes, Difficulties} from "../shared_modules/shared_enums"
 import { useAuth } from '../utils/AuthContext';
+import { useFriendContext } from '../utils/FriendContext';
 
 //export const roundCount = 15;
 const maxValue = 255;
@@ -54,8 +55,8 @@ function Home() {
   const [messages, setMessages] = useState<any[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [activeFriend, setActiveFriend] = useState<string>(""); 
-  const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
   const [unreadMap, setUnreadMap] = useState<Record<string, number>>({});
+  const { onlineUsers } = useFriendContext();
   interface Friend {
     username: string;
     unread: number;
@@ -90,43 +91,27 @@ function Home() {
     }
   };
 
-
   useEffect(() => {
-    if (!playerId) return;
-
-    const ws = new WebSocket("ws://localhost:1738"); 
-
-    ws.onopen = () => {
-      ws.send(JSON.stringify({ type: "login", username: playerId }));
-    };
-
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-
-      if (data.type === "USER_ONLINE") {
-        setOnlineUsers(prev => [...prev, data.username]);
+  const handleWSMessage = (event: any) => {
+    const data = event.detail;
+    
+    if (data.type === "PRIVATE_MESSAGE") {
+      const { from, to, text, timestamp } = data;
+      if (from === activeFriend || to === activeFriend) {
+        setMessages(prev => [...prev, { from, to, text, timestamp }]);
+      } else {
+        setFriends((prevFriends) =>
+          prevFriends.map(f =>
+            f.username === from ? { ...f, unread: f.unread + 1 } : f
+          )
+        );
       }
-      if (data.type === "USER_OFFLINE") {
-        setOnlineUsers(prev => prev.filter(u => u !== data.username));
-      }
+    }
+  };
 
-      if (data.type === "PRIVATE_MESSAGE") {
-        const { from, to, text, timestamp } = data;
-        if (from === activeFriend || to === activeFriend) {
-          setMessages(prev=>[...prev, {from, to, text, timestamp}]);
-        }
-        else{
-          setFriends((prevFriends) => 
-            prevFriends.map(f =>
-              f.username === from ? {...f, unread:f.unread+1} : f
-            )
-          );
-        }
-      }
-    };
-
-    return () => ws.close();
-  }, [playerId, activeFriend]);
+  window.addEventListener('ws-message', handleWSMessage);
+  return () => window.removeEventListener('ws-message', handleWSMessage);
+}, [activeFriend]);
 
   useEffect(() => {
     if (!activeFriend || !playerId) return;

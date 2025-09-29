@@ -94,8 +94,9 @@ function Header() {
                 };
                 setInvites((prev) => [...prev, newInvite]);
             }
+
+            window.dispatchEvent(new CustomEvent('ws-message', { detail: data }));
         };
-    
         socket.onclose = () => {
             console.log("WebSocket connection closed from Header");
         };
