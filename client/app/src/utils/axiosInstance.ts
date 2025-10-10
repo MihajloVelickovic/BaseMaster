@@ -20,7 +20,7 @@ axiosInstance.interceptors.request.use(
             '/user/getPlayerStats',
             '/user/getFriendsWithAchievements',
             '/user/searchUsers',
-            '/user/refreshAccess',
+            //'/user/refreshAccess',
             '/game/createGame',
             '/game/getCurrNum',
             '/game/joinLobby',
