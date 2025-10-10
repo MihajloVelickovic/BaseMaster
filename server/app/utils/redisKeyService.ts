@@ -94,5 +94,9 @@ export class RedisKeys {
     const inboxId = [senderId, receiverId].sort().join(":");
     return `${IdPrefixes.PRIVATE_MESSAGE_UPDATE}:${inboxId}`;
   }
+
+  static globalAchievementStats() {
+    return `global:achievementsstats`;
+  }
 }
 

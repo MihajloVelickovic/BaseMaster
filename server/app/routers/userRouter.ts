@@ -5,7 +5,7 @@ import { UserService } from "../utils/userService";
 import {publisher, redisClient} from "../redisClient";
 import { IdPrefixes, CacheTypes } from "../shared_modules/shared_enums";
 import { upsertPlayerFromUser } from "../graph/player.repo";
-import { connectPlayerToLeaderboard, getPlayerAchievements, getPlayerStats, getFriendsWithAchievements } from '../graph/leaderboard.repo';
+import { connectPlayerToLeaderboard, getPlayerAchievements, getPlayerStats, getFriendsWithAchievements, getGlobalStats } from '../graph/leaderboard.repo';
 import { RedisKeys } from "../utils/redisKeyService";
 import { authUser, JWT_REFRESH, JWT_SECRET } from "../config/config";
 import jwt from "jsonwebtoken";
@@ -200,7 +200,7 @@ userRouter.post("/friendRequests", authUser, async(req: any, res: any) => {
 userRouter.post("/sendFriendRequest", authUser, async(req:any, res:any)=>{
 
     console.log("woo friends 👋👋👋");
-
+    console.log(req);
     const {sender, receiver} = req.body;
 
     if(isNullOrWhitespace(sender) || isNullOrWhitespace(receiver))
@@ -252,7 +252,7 @@ userRouter.post("/sendFriendRequest", authUser, async(req:any, res:any)=>{
                                                   ELSE 2
                                                   END AS req`, 
                                                   { sender, receiver });
-            return result.records[0]?.get("req").toNumber() ?? 0;
+            return result.records[0]?.get("req") ?? 0;
         });
 
         switch(requestExists){
@@ -287,6 +287,7 @@ userRouter.post("/sendFriendRequest", authUser, async(req:any, res:any)=>{
 
     }
     catch(error:any){
+        console.log(error);
         return res.status(500).json({message:"How did this happen....", error: error.gqlStatusDescription});
     }
 
@@ -298,7 +299,7 @@ userRouter.post("/handleFriendRequest", authUser, async(req:any, res:any)=>{
 
     const {username, sender, userResponse} = req.body;
     if(isNullOrWhitespace(username) || isNullOrWhitespace(sender) 
-      ||userResponse === undefined || userResponse === null)
+      ||userResponse === null || userResponse === null)
         return res.status(400).json({message: "The sender and the response need to be known to handle the request"});
 
     try{
@@ -699,5 +700,30 @@ const isInvalid = (value:any) => {
 const areInvalidMessagePair = (sender:any, receiver:any) => {
     return isInvalid(sender) || isInvalid(receiver) || sender === receiver;
 }
+
+
+userRouter.get("/getGlobalAchievementStats", async (req: any, res: any) => {
+  try {
+    // Check cache first
+    const cacheKey = RedisKeys.globalAchievementStats(); // You'll need to add this to RedisKeys
+    const cached = await redisClient.get(cacheKey);
+    
+    if (cached) {
+      return res.status(200).json({ stats: JSON.parse(cached) });
+    }
+
+    // Get from Neo4j
+    const stats = await getGlobalStats();
+    
+    // Cache for 5 minutes (stats don't change that often)
+    await redisClient.set(cacheKey, JSON.stringify(stats));
+    await redisClient.expire(cacheKey, 300); // 5 minutes
+    
+    return res.status(200).json({ stats });
+  } catch (error: any) {
+    console.error('[ERROR]: Failed to fetch global stats', error);
+    return res.status(500).json({ message: "Failed to fetch global stats" });
+  }
+});
 
 export default userRouter;

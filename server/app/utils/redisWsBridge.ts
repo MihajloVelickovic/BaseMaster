@@ -230,5 +230,46 @@ export function initRedisWsBridge({
     }
   };
 
+  subscriber.pSubscribe(`${IdPrefixes.ALL_PLAYERS_COMPLETE}:*`, 
+                      async (message:any, channel:any) => {
+  try {
+    const lobbyId = channel.replace(`${IdPrefixes.ALL_PLAYERS_COMPLETE}:`, "");
+    const payload = JSON.parse(message);
+
+    // Send full results to everyone still in the lobby
+    if (wsClients.has(lobbyId)) {
+      wsClients.get(lobbyId)!.forEach((client) =>
+        safeSend(client, {
+          type: IdPrefixes.ALL_PLAYERS_COMPLETE,
+          message: "Game has ended!",
+          results: payload.results
+        })
+      );
+    }
+
+    // Send individual results to each player via userSockets
+    // (works even if they left the lobby)
+    if (payload.results && Array.isArray(payload.results)) {
+      payload.results.forEach((playerResult: any, index: number) => {
+        const playerId = playerResult.playerId || playerResult.id; // adjust based on your data structure
+        
+        if (userSockets.has(playerId)) {
+          userSockets.get(playerId)!.forEach((client) =>
+            safeSend(client, {
+              type: IdPrefixes.GAME_RESULT,  // Different type for individual results
+              place: index + 1,  // 1st, 2nd, 3rd, etc.
+              score: playerResult.score,
+              totalPlayers: payload.results.length
+            })
+          );
+        }
+      });
+    }
+  } catch (err) {
+    console.error("[ALL_PLAYERS_COMPLETE handler error]", err);
+  }
+  });
+
   return { dispose };
 }
+

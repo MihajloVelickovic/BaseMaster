@@ -111,6 +111,7 @@ gameRouter.post("/createGame", async (req: any, res:any) => {
 });
 
 gameRouter.post("/getCurrNum", async (req:any, res:any) => {  
+    console.log(req.body);
     const {
         gameId,
         currRound,
@@ -118,8 +119,8 @@ gameRouter.post("/getCurrNum", async (req:any, res:any) => {
         correct
     } = req.body;
 
-    if(isNullOrWhitespace(gameId) || isNullOrWhitespace(currRound) || 
-       isNullOrWhitespace(playerId) || isNullOrWhitespace(correct))
+    if(isNullOrWhitespace(gameId) || currRound === null || 
+       isNullOrWhitespace(playerId) || correct === null)
         return res.status(400).send('Invalid body');
     
     try {
@@ -357,7 +358,7 @@ gameRouter.post("/playerComplete", async (req:any, res:any) => {
     } = req.body;
 
     if(isNullOrWhitespace(playerId) || isNullOrWhitespace(gameId) ||
-       isNullOrWhitespace(correct))
+       correct === null)
         return res.status(400).send('Invalid body for player complete');
 
 

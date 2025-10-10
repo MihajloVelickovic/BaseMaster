@@ -356,3 +356,34 @@ export async function getPlayerStats(username: string) {
     await session.close();
   }
 }
+
+export async function getGlobalStats() {
+  const session = n4jSession();
+  try {
+    const result = await session.executeRead(async tx => {
+      return await tx.run(`
+        MATCH (a:Achievement)
+        OPTIONAL MATCH (p:Player)-[:ACHIEVED]->(a)
+        WITH a, count(p) as playerCount
+        WITH collect({
+          code: a.code,
+          name: a.name,
+          playerCount: playerCount
+        }) as achievements
+        MATCH (total:Player)
+        RETURN 
+          achievements,
+          count(total) as totalPlayers
+      `);
+    });
+
+    const record = result.records[0];
+    
+    return {
+      totalPlayers: record.get('totalPlayers') || 0,
+      achievements: record.get('achievements')
+    };
+  } finally {
+    await session.close();
+  }
+}

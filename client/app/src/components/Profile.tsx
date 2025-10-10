@@ -82,19 +82,29 @@ function Profile() {
 
       // Merge unlocked achievements with all achievements
       const unlockedAchievements = achievementsRes.data.achievements || [];
-      const globalStats = globalStatsRes.data.stats || {};
-      
-      const allAchievementsWithStatus = ALL_ACHIEVEMENTS.map(achievement => {
-        const unlocked = unlockedAchievements.find((a: any) => a.code === achievement.code);
-        return {
-          ...achievement,
-          unlocked: !!unlocked,
-          achievedAt: unlocked?.achievedAt,
-          globalPercentage: globalStats[achievement.code] || 0
-        };
-      });
+      const globalData = globalStatsRes.data.stats || { totalPlayers: 0, achievements: [] };
+    
+    // Convert achievements array to percentage map
+    const globalStatsMap: { [key: string]: number } = {};
+    globalData.achievements.forEach((ach: any) => {
+      if (globalData.totalPlayers > 0) {
+        globalStatsMap[ach.code] = (ach.playerCount / globalData.totalPlayers) * 100;
+      } else {
+        globalStatsMap[ach.code] = 0;
+      }
+    });
 
-      setAchievements(allAchievementsWithStatus);
+    const allAchievementsWithStatus = ALL_ACHIEVEMENTS.map(achievement => {
+      const unlocked = unlockedAchievements.find((a: any) => a.code === achievement.code);
+      return {
+        ...achievement,
+        unlocked: !!unlocked,
+        achievedAt: unlocked?.achievedAt,
+        globalPercentage: globalStatsMap[achievement.code] || 0
+      };
+    });
+
+    setAchievements(allAchievementsWithStatus);
     } catch (error) {
       console.error('Error fetching player data:', error);
     } finally {
