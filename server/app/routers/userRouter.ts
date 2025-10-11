@@ -565,7 +565,7 @@ userRouter.post("/getPlayerStats", authUser, async (req: any, res: any) => {
                 playerAchievementsKey,
                 CACHE_DURATION[CacheTypes.GENERIC_CACHE]
             );
-            
+            console.log("stats", stats)
             // stats is already an object here
             return res.status(200).json({ stats });
         } 

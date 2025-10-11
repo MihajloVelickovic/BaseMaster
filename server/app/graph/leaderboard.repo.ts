@@ -1,5 +1,6 @@
 import { n4jSession } from "../neo4jClient";
 import neo4j from 'neo4j-driver';
+import { formatNeo4jDate } from "../utils/timeConversion";
 
 export interface LeaderboardEntry {
   username: string;
@@ -331,6 +332,10 @@ export async function getPlayerStats(username: string) {
           r.totalGames as totalGames,
           r.totalScore as totalScore,
           r.lastPlayed as lastPlayed,
+          p.firsts as firsts,
+          p.seconds as seconds,
+          p.thirds as thirds,
+          p.fourths as fourths,
           count(DISTINCT a) as achievementCount,
           count(DISTINCT friends) as friendCount
       `, { username });
@@ -350,7 +355,11 @@ export async function getPlayerStats(username: string) {
       averageScore: totalGames > 0 ? Math.round(totalScore / totalGames) : 0,
       achievementCount: record.get('achievementCount'),
       friendCount: record.get('friendCount'),
-      lastPlayed: record.get('lastPlayed')
+      lastPlayed: formatNeo4jDate(record.get('lastPlayed')),
+      firsts: record.get('firsts') || 0,
+      seconds: record.get('seconds') || 0,
+      thirds: record.get('thirds') || 0,
+      fourths: record.get('fourths') || 0
     };
   } finally {
     await session.close();

@@ -16,3 +16,14 @@ export function toSeconds(value: number, unit: TimeUnit): number {
     default:               return value;
   }
 }
+
+export function formatNeo4jDate(neo4jDateTime: any): string | null {
+  if (!neo4jDateTime) return null;
+
+  const jsDate = new Date(neo4jDateTime.epochMillis);
+  const day = String(jsDate.getDate()).padStart(2, '0');
+  const month = String(jsDate.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+  const year = jsDate.getFullYear();
+
+  return `${day}/${month}/${year}`;
+}

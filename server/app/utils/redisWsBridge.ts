@@ -236,18 +236,8 @@ export function initRedisWsBridge({
     const lobbyId = channel.replace(`${IdPrefixes.ALL_PLAYERS_COMPLETE}:`, "");
     const payload = JSON.parse(message);
 
-    // Send full results to everyone still in the lobby
-    if (wsClients.has(lobbyId)) {
-      wsClients.get(lobbyId)!.forEach((client) =>
-        safeSend(client, {
-          type: IdPrefixes.ALL_PLAYERS_COMPLETE,
-          message: "Game has ended!",
-          results: payload.results
-        })
-      );
-    }
 
-    // Send individual results to each player via userSockets
+   // Send individual results to each player via userSockets
     // (works even if they left the lobby)
     if (payload.results && Array.isArray(payload.results)) {
       payload.results.forEach((playerResult: any, index: number) => {
