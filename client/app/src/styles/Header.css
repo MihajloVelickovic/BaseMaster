@@ -49,39 +49,85 @@
 }
 
 /* Navigation Links */
+/* --- header nav separators and improved hover/active --- */
 .header-nav {
+    position: relative; /* needed for outer lines */
     display: flex;
     align-items: center;
     gap: 0;
     height: 100%;
+    padding: 0 8px; /* space for outer separators */
 }
 
+/* outer thin lines on both sides of the nav */
+.header-nav::before,
+.header-nav::after {
+    content: "";
+    position: absolute;
+    top: 22%;
+    bottom: 22%;
+    width: 1px;
+    background: rgba(255,255,255,0.12); /* subtle white */
+    pointer-events: none;
+}
+.header-nav::before { left: 0; }
+.header-nav::after  { right: 0; }
+
+/* nav link base */
 .nav-link {
-    color: rgba(255, 255, 255, 0.8);
+    position: relative; /* for internal separator */
+    color: #FFFFF2 !important; /* white text */
     text-decoration: none;
-    padding: 20px 18px;
-    font-size: 15px;
-    font-weight: 600;
+    padding: 0 20px;
+    font-size: 20px !important;
+    font-weight: bolder !important;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    transition: all 0.2s ease;
-    position: relative;
     display: flex;
     align-items: center;
     height: 100%;
+    margin: 6px 6px 6px 6px !important;
+    padding: 5px;
+    border-radius: 6px;
+    transition: transform 160ms ease, background 160ms ease, box-shadow 160ms ease;
     border-bottom: 3px solid transparent;
 }
 
-.nav-link:hover {
-    color: white;
-    background: rgba(255, 255, 255, 0.1);
+/* separator between adjacent links */
+.nav-link + .nav-link::before {
+    content: "";
+    position: absolute;
+    left: 0; /* left edge of this link */
+    top: 22%;
+    bottom: 22%;
+    width: 1px;
+    background: rgba(255,255,255,0.12);
+    pointer-events: none;
 }
 
-.nav-link.active {
-    color: white;
-    border-bottom-color: #38f79e;
-    background: rgba(255, 255, 255, 0.15);
+/* hover: stronger green highlight and slight lift */
+.nav-link:hover {
+    color: #ffffff;
+    background: rgba(56, 247, 158, 0.36); /* subtle green overlay */
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.14);
 }
+
+/* keyboard focus */
+.nav-link:focus {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(56,247,158,0.12);
+}
+
+/* active: stronger bottom accent and soft gradient */
+.nav-link.active {
+    color: #ffffff;
+    background: linear-gradient(180deg, rgba(56,247,158,0.06), rgba(56,247,158,0.10));
+    border-bottom-color: #38f79e;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.12);
+}
+
 
 /* Spacer */
 .spacer {
@@ -99,14 +145,6 @@
     display: flex;
     align-items: center;
     gap: 1rem;
-}
-
-.username-display {
-    color: #1a7c1e;
-    font-weight: 1000;
-    padding: 0.65rem 1rem;
-    background: #ffffe8;
-    border-radius: 20px;
 }
 
 .logout-button {

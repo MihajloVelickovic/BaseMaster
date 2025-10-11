@@ -58,7 +58,7 @@ axiosInstance.interceptors.response.use(
             
             try {
                 const refreshToken = localStorage.getItem('refreshTok');
-                const refreshResponse = await axiosInstance.post("/user/refreshAccess", {
+                const refreshResponse = await axios.post("/user/refreshAccess", {
                     token: refreshToken
                 });
                 

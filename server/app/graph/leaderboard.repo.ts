@@ -234,7 +234,11 @@ export async function getGlobalLeaderboard(limit: number = 50, skip: number = 0)
           COALESCE(p.bestScore, r.bestScore, 0) as bestScore,
           COALESCE(p.totalGames, r.totalGames, 0) as totalGames,
           COALESCE(p.totalScore, r.totalScore, 0) as totalScore,
-          r.lastPlayed as lastPlayed
+          r.lastPlayed as lastPlayed,
+           COALESCE(p.firsts, 0) AS firsts,
+          COALESCE(p.seconds, 0) AS seconds,
+          COALESCE(p.thirds, 0) AS thirds,
+          COALESCE(p.fourths, 0) AS fourths
         ORDER BY COALESCE(p.bestScore, r.bestScore, 0) DESC, COALESCE(p.totalGames, r.totalGames, 0) DESC
         SKIP $skip LIMIT $limit
       `, { skip: skipInt, limit: limitInt });
@@ -249,7 +253,11 @@ export async function getGlobalLeaderboard(limit: number = 50, skip: number = 0)
         bestScore: record.get('bestScore') || 0,
         totalGames: totalGames,
         averageScore: totalGames > 0 ? Math.round(totalScore / totalGames) : 0,
-        rank: Math.floor(Math.abs(skip)) + index + 1
+        rank: Math.floor(Math.abs(skip)) + index + 1,
+        firsts: record.get('firsts') || 0,
+        seconds: record.get('seconds') || 0,
+        thirds: record.get('thirds') || 0,
+        fourths: record.get('fourths') || 0
       };
     });
   } finally {

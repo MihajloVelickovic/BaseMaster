@@ -112,10 +112,10 @@ const Leaderboard = () => {
                   <td className="score-cell">
                     <span className="score-badge">{entry.bestScore}</span>
                   </td>
-                  <td className="stats-cell">{entry.firsts}</td>
-                  <td className="stats-cell">{entry.seconds}</td>
-                  <td className="stats-cell">{entry.thirds}</td>
-                  <td className="stats-cell">{entry.fourths}</td>
+                  <td className="stats-cell">{entry.firsts || 0}</td>
+                  <td className="stats-cell">{entry.seconds || 0}</td>
+                  <td className="stats-cell">{entry.thirds || 0}</td>
+                  <td className="stats-cell">{entry.fourths || 0}</td>
                 </tr>
               ))
             ) : (
