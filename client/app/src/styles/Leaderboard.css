@@ -1,0 +1,260 @@
+.leaderboard-page {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 30px 20px;
+  min-height: 100vh;
+}
+
+.leaderboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.leaderboard-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #2c3e50;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+}
+
+.globe-icon {
+  font-size: 36px;
+}
+
+.refresh-button {
+  background: #3498db;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.refresh-button:hover {
+  background: #2980b9;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
+}
+
+.leaderboard-table-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.leaderboard-table thead {
+  background: #f8f9fa;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.leaderboard-table th {
+  padding: 16px 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #5a6c7d;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.rank-col {
+  width: 80px;
+  text-align: center !important;
+}
+
+.player-col {
+  width: auto;
+}
+
+.score-col {
+  width: 120px;
+  text-align: center !important;
+}
+
+.stats-col {
+  width: 70px;
+  text-align: center !important;
+}
+
+.leaderboard-row {
+  border-bottom: 1px solid #f0f0f0;
+  transition: background-color 0.2s;
+}
+
+.leaderboard-row:hover {
+  background: #f8f9fa;
+}
+
+.leaderboard-row.top-three {
+  background: #fffbf0;
+}
+
+.leaderboard-row.top-three:hover {
+  background: #fff8e1;
+}
+
+.leaderboard-table td {
+  padding: 16px 12px;
+  font-size: 14px;
+}
+
+.rank-cell {
+  text-align: center;
+}
+
+.rank-number {
+  font-weight: 600;
+  font-size: 16px;
+  color: #2c3e50;
+}
+
+.player-cell {
+  font-weight: 500;
+}
+
+.player-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.player-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.player-name {
+  color: #2c3e50;
+  font-size: 15px;
+}
+
+.score-cell {
+  text-align: center;
+}
+
+.score-badge {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 15px;
+  display: inline-block;
+}
+
+.stats-cell {
+  text-align: center;
+  color: #5a6c7d;
+  font-weight: 500;
+}
+
+.empty-state {
+  padding: 80px 20px;
+  text-align: center;
+}
+
+.empty-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-state p {
+  color: #7f8c8d;
+  font-size: 16px;
+  margin: 8px 0;
+}
+
+.empty-subtext {
+  font-size: 14px !important;
+  color: #95a5a6 !important;
+}
+
+.loading-spinner,
+.error-message {
+  text-align: center;
+  padding: 80px 20px;
+  font-size: 18px;
+  color: #7f8c8d;
+}
+
+.error-message {
+  color: #e74c3c;
+}
+
+.retry-button {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: all 0.2s;
+}
+
+.retry-button:hover {
+  background: #c0392b;
+  transform: translateY(-2px);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .leaderboard-page {
+    padding: 20px 10px;
+  }
+
+  .leaderboard-title {
+    font-size: 24px;
+  }
+
+  .leaderboard-table th,
+  .leaderboard-table td {
+    padding: 12px 8px;
+    font-size: 12px;
+  }
+
+  .player-avatar {
+    width: 30px;
+    height: 30px;
+    font-size: 14px;
+  }
+
+  .stats-col {
+    width: 50px;
+  }
+
+  .score-badge {
+    padding: 4px 12px;
+    font-size: 13px;
+  }
+}

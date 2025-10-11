@@ -11,11 +11,11 @@
   .sidebar-container {
     position: fixed;
     top: 7vh;
-    left: 0;
+    right: 0;
     width: 250px;
-    height: 93vh;
+    height: auto;
     background: #32E537;
-    transform: translateX(-100%); /* Move off-screen */
+    transform: translateX(100%); /* Move off-screen */
     opacity: 0;
     visibility: hidden;
     transition: transform 0.2s cubic-bezier(0.33, 1, 0.68, 1);
@@ -84,3 +84,11 @@
     margin-right: 13px;    
   }
   
+
+  .username-display {
+    color: #1a7c1e;
+    font-weight: 1000;
+    padding: 0.65rem 1rem;
+    background: #ffffe8;
+    border-radius: 20px;
+}

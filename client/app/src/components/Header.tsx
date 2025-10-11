@@ -8,6 +8,7 @@ import { useFriendContext } from "../utils/FriendContext"
 import { useLobbyContext } from "../utils/LobbyContext";
 import { GiCrossedSwords } from "react-icons/gi";
 import { useAuth } from "../utils/AuthContext";
+import Leaderboard from "./Leaderboard";
 
 function Header() {
     type Invite = {
@@ -16,7 +17,7 @@ function Header() {
     };
     
     const { playerID, logout } = useAuth();
-    const [isOpen, setIsOpen] = useState(false);
+    const [isOpenNotification, setIsOpenNotification] = useState(false);
     const { friendRequests, setFriends, setFriendRequests, setOnlineUsers } = useFriendContext();
     const [unreadCount, setUnreadCount] = useState(0);
     const [notifications, setNotifications] = useState<string[]>([]);
@@ -116,9 +117,9 @@ function Header() {
     };
 
     const handleNotificationBtnClick = async () => {
-        setIsOpen((prev) => !prev);
+        setIsOpenNotification((prev) => !prev);
         console.log(playerID);
-        if (!isOpen) {
+        if (!isOpenNotification) {
             setUnreadCount(0);
             setNotifications([]);
         }
@@ -132,7 +133,7 @@ function Header() {
             console.log(err.message);
         }
         
-        console.log(isOpen);
+        console.log(isOpenNotification);
     }
 
     async function handleRequestSelection(username: string, selection:boolean) {
@@ -155,9 +156,13 @@ function Header() {
         }
         finally{
             setFriendRequests((prev) => prev.filter((req) => req !== username));
-            setIsOpen(false);
+            setIsOpenNotification(false);
         }
     }
+
+    const isActive = (path: string) => {
+        return location.pathname === path;
+    };
 
     const handleLogout = () => {
         logout();
@@ -169,7 +174,7 @@ function Header() {
     };
 
     const renderNotifications = () => (
-        <div className={`notification-dropdown ${isOpen ? "open" : ""}`}>
+        <div className={`notification-dropdown ${isOpenNotification ? "open" : ""}`}>
             {friendRequests.length === 0 && notifications.length === 0 ? (
                 <span>No new notifications</span>
             ) : (
@@ -193,7 +198,6 @@ function Header() {
 
     return (
         <div className="Header">
-            <Sidebar/>
             <Link to="/" className="logo-link">
                 <svg className="basemaster-logo" width="260" height="60" viewBox="0 0 260 60" xmlns="http://www.w3.org/2000/svg">
                     <path className="circuit-line" d="M 10 5 L 30 5 Q 40 5 40 15 L 40 45 Q 40 55 50 55 L 210 55 Q 220 55 220 45 L 220 15 Q 220 5 230 5 L 250 5" />
@@ -209,6 +213,15 @@ function Header() {
                 </svg>
             </Link>
 
+             <nav className="header-nav">
+                <Link to="/" className={`nav-link ${isActive('/') ? 'active' : ''}`}>
+                    Play
+                </Link>
+                <Link to="/Leaderboard" className={`nav-link ${isActive('/Leaderboard') ? 'active' : ''}`}>
+                    Leaderboard
+                </Link>
+            </nav>
+
             <div className="spacer" />
             
             {!playerID ? (
@@ -220,7 +233,6 @@ function Header() {
             ) : (
                 <>
                     <div className="header-info">
-                        <span className="username-display">{playerID}</span>
                         <div className="bell-container">
                         <div className="bell-wrapper">
                             <FaBell onClick={handleNotificationBtnClick} className="bell-icon" />
@@ -228,11 +240,12 @@ function Header() {
                                 <div className="notification-badge">{unreadCount}</div>
                             )}
                         </div>
-                        {isOpen && (
+                        {isOpenNotification && (
                             <div>
                                 {renderNotifications()}
                             </div>
                         )}
+                        
                     </div>
 
                     <div className="bell-wrapper">
@@ -245,9 +258,7 @@ function Header() {
                             <GiCrossedSwords className="InviteIcon flippedIconVertical" />
                         )}
                     </div>
-                        <button onClick={handleLogout} className="logout-button btn btn-secondary">
-                            Logout
-                        </button>
+                        <Sidebar/>
                     </div>
                 </>
             )}

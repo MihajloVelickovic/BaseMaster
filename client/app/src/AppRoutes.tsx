@@ -12,6 +12,7 @@ import { LobbyProvider } from "./utils/LobbyContext";
 import Profile from './components/Profile';
 import Sidebar from './components/Sidebar';
 import { AuthProvider } from './utils/AuthContext';
+import Leaderboard from './components/Leaderboard';
 
 
 const routes = [
@@ -21,7 +22,8 @@ const routes = [
     { path: "/LoginSignup", element: <LoginSignup />},
     { path: "/FriendList", element: <FriendList />},
     {path: "/Sidebar", element: <Sidebar/>},
-    {path:"/Profile", element:<Profile/>}
+    {path:"/Profile", element:<Profile/>},
+    {path:"/Leaderboard", element:<Leaderboard/>}
     // { path: "/login", element: <LoginSignupPage /> },
     // { path: "/register/:token", element: <Register /> },
 ];

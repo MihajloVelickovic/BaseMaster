@@ -495,7 +495,7 @@ function Home() {
         )}
       </div>
 
-      <div className="LeaderboardContainer">
+      {/* <div className="LeaderboardContainer">
         <h3 className="leaderboardTitle">🌍 Global Leaderboard</h3>
         <ul className="leaderboardList">
           {leaderboard.length > 0 ? leaderboard.map((e, i) => (
@@ -508,7 +508,7 @@ function Home() {
             <p className="noPlayers">No players yet.</p>
           )}
         </ul>
-      </div>
+      </div> */}
     </div>
     {playerID && (
       <div className="chat-container">

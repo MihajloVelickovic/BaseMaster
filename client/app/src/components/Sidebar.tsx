@@ -6,7 +6,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 function Sidebar() {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
-  const [username, setUsername] = useState(location.state?.playerIdTransfered);
+  const [username, setUsername] = useState(localStorage.getItem("playerID") || "");
   const navigate = useNavigate();
   
   function handleLogout() {
@@ -54,8 +54,8 @@ function Sidebar() {
     <>
       {isOpen && <div className="sidebar-overlay" onClick={toggleSidebar}></div>}
       <div className="header">
-        <button className="menu-button" onClick={toggleSidebar}>
-          ☰
+        <button className="username-display" onClick={toggleSidebar}>
+          {username}
         </button>
       </div>
       {renderSidebar()}
