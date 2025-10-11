@@ -162,7 +162,9 @@
 }
 
 .basemaster-logo{
-    align-self: center;
+   position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
     margin-top: -12px;   
     vertical-align: middle;
     margin-left:-10px;

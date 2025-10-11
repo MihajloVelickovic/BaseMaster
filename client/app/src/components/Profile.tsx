@@ -121,9 +121,9 @@ function Profile() {
   const formatDate = (dateString: string | null | undefined) => {
     if (!dateString) return 'Never';
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
+    return date.toLocaleDateString('en-GB', { //Long Live People of United Kingdom
       day: 'numeric', 
+      month: 'short', 
       year: 'numeric' 
     });
   };

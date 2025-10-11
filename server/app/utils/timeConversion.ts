@@ -19,11 +19,10 @@ export function toSeconds(value: number, unit: TimeUnit): number {
 
 export function formatNeo4jDate(neo4jDateTime: any): string | null {
   if (!neo4jDateTime) return null;
-
-  const jsDate = new Date(neo4jDateTime.epochMillis);
-  const day = String(jsDate.getDate()).padStart(2, '0');
-  const month = String(jsDate.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
-  const year = jsDate.getFullYear();
+  
+  const day = String(neo4jDateTime.day);
+  const month = String(neo4jDateTime.month); // Months are 0-indexed
+  const year = String(neo4jDateTime.year);
 
   return `${day}/${month}/${year}`;
 }
