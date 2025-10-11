@@ -37,15 +37,6 @@ interface FriendWithAchievements {
   achievements: string[];
 }
 
-// All possible achievements - should match backend
-const ALL_ACHIEVEMENTS = [
-  { code: 'FIRST_WIN', name: 'First Victory', description: 'Win your first game', type: 'GAMES' },
-  { code: 'HIGH_SCORER', name: 'High Scorer', description: 'Score over 1000 points', type: 'SCORE' },
-  { code: 'VETERAN', name: 'Veteran Player', description: 'Play 50 games', type: 'GAMES' },
-  { code: 'PERFECTIONIST', name: 'Perfectionist', description: 'Get a perfect score', type: 'SPECIAL' },
-  { code: 'SOCIAL_BUTTERFLY', name: 'Social Butterfly', description: 'Have 10 friends', type: 'SPECIAL' }
-];
-
 function Profile() {
   const { playerID } = useAuth();
   const [stats, setStats] = useState<PlayerStats | null>(null);
@@ -70,16 +61,17 @@ function Profile() {
       setLoading(true);
       
       // Fetch all data in parallel
-      const [statsRes, achievementsRes, friendsRes, globalStatsRes] = await Promise.all([
+      const [statsRes, achievementsRes, friendsRes, globalStatsRes, allAchievements] = await Promise.all([
         axiosInstance.post('/user/getPlayerStats', { username: playerID }),
         axiosInstance.post('/user/getAchievements', { username: playerID }),
         axiosInstance.post('/user/getFriendsWithAchievements', { username: playerID }),
-        axiosInstance.get('/user/getGlobalAchievementStats').catch(() => ({ data: { stats: {} } }))
+        axiosInstance.get('/user/getGlobalAchievementStats').catch(() => ({ data: { stats: {} } })),
+        axiosInstance.get('/user/getAllAchievements').catch(() => ({ data: { stats: {} } }))
       ]);
 
       setStats(statsRes.data.stats);
       setFriendsData(friendsRes.data.friends || []);
-
+      const catalog = allAchievements.data?.achievements || [];
       // Merge unlocked achievements with all achievements
       const unlockedAchievements = achievementsRes.data.achievements || [];
       const globalData = globalStatsRes.data.stats || { totalPlayers: 0, achievements: [] };
@@ -93,8 +85,8 @@ function Profile() {
         globalStatsMap[ach.code] = 0;
       }
     });
-
-    const allAchievementsWithStatus = ALL_ACHIEVEMENTS.map(achievement => {
+    console.log("catalog", catalog);
+    const allAchievementsWithStatus = catalog.map((achievement:any) => {
       const unlocked = unlockedAchievements.find((a: any) => a.code === achievement.code);
       return {
         ...achievement,
@@ -244,7 +236,7 @@ function Profile() {
               </div>
               <div className="stat-row">
                 <span>Achievements:</span>
-                <span className="stat-value">{stats.achievementCount}/{ALL_ACHIEVEMENTS.length}</span>
+                <span className="stat-value">{stats.achievementCount}/{achievements.length}</span>
               </div>
               <div className="stat-row">
                 <span>Friends:</span>

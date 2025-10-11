@@ -36,9 +36,6 @@ function Sidebar() {
     //perfect place to have neo4j
     <>
       <div className={`sidebar-container ${isOpen ? "open" : ""}`}>
-        <button className="close-btn" onClick={toggleSidebar}>
-          ✖
-        </button>
         <div className="sidebar-content">
           <button className="sidebar-item" onClick={() => {toggleSidebar(); navigate("/Profile")}}><FaUser />  Profile</button>
           <button className="sidebar-item" onClick={handleFriendList}><FaUserFriends/>  Friend List</button>
@@ -63,5 +60,9 @@ function Sidebar() {
   ); // if only you could know what we really are, people who actualy do the work
      //they said that they would do a month ago, maybe longer I stopped counting weeks
 }
+
+// <button className="close-btn" onClick={toggleSidebar}>
+//   ✖
+// </button>
 
 export default Sidebar;

@@ -671,7 +671,7 @@ gameRouter.get("/globalLeaderboard", async (req: any, res: any) => {
   
   try {
     // Create unique cache key for this pagination
-    const leaderboardKey = `${RedisKeys.globalLeaderboard()}:${skip}:${limit}`;
+    const leaderboardKey = `${RedisKeys.globalLeaderboard()}`;
     
     // Check cache
     const cached = await redisClient.get(leaderboardKey);

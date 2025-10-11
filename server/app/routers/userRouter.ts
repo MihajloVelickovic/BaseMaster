@@ -5,7 +5,7 @@ import { UserService } from "../utils/userService";
 import {publisher, redisClient} from "../redisClient";
 import { IdPrefixes, CacheTypes } from "../shared_modules/shared_enums";
 import { upsertPlayerFromUser } from "../graph/player.repo";
-import { connectPlayerToLeaderboard, getPlayerAchievements, getPlayerStats, getFriendsWithAchievements, getGlobalStats } from '../graph/leaderboard.repo';
+import { connectPlayerToLeaderboard, getPlayerAchievements, getPlayerStats, getFriendsWithAchievements, getGlobalStats, getAchievementCatalog } from '../graph/leaderboard.repo';
 import { RedisKeys } from "../utils/redisKeyService";
 import { authUser, JWT_REFRESH, JWT_SECRET } from "../config/config";
 import jwt from "jsonwebtoken";
@@ -48,6 +48,7 @@ userRouter.post("/register", async(req: any, res: any) => {
         if (register) {
             await upsertPlayerFromUser(username, email);
             await connectPlayerToLeaderboard(username); // Add this line
+            await redisClient.del(RedisKeys.globalLeaderboard());
             return res.status(200).json({message: `User successfully created!`, username});
         }
         else 
@@ -723,6 +724,20 @@ userRouter.get("/getGlobalAchievementStats", async (req: any, res: any) => {
   } catch (error: any) {
     console.error('[ERROR]: Failed to fetch global stats', error);
     return res.status(500).json({ message: "Failed to fetch global stats" });
+  }
+});
+
+userRouter.get("/getAllAchievements", async (req: any, res: any) => {
+ try {
+    const achievements = await getAchievementCatalog();
+    // Optionally include a lastUpdated or version value to help client caching
+    res.json({
+      achievements,
+      lastUpdated: new Date().toISOString()
+    });
+  } catch (err) {
+    console.error('Failed to fetch achievement catalog', err);
+    res.status(500).json({ error: 'Failed to fetch achievement catalog' });
   }
 });
 

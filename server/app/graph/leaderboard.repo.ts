@@ -1,6 +1,7 @@
 import { n4jSession } from "../neo4jClient";
 import neo4j from 'neo4j-driver';
 import { formatNeo4jDate } from "../utils/timeConversion";
+import type {Record} from 'neo4j-driver'
 
 export interface LeaderboardEntry {
   username: string;
@@ -400,6 +401,47 @@ export async function getGlobalStats() {
       totalPlayers: record.get('totalPlayers') || 0,
       achievements: record.get('achievements')
     };
+  } finally {
+    await session.close();
+  }
+}
+
+export async function getAchievementCatalog() {
+  const session = n4jSession();
+  try {
+    const result = await session.executeRead(tx =>
+      tx.run(
+        `
+        MATCH (a:Achievement)
+        RETURN
+          a.code AS code,
+          a.name AS name,
+          a.description AS description,
+          a.type AS type,
+          a.requirement AS requirement,
+          a.displayOrder AS displayOrder
+        ORDER BY a.displayOrder ASC, a.code ASC
+        `
+      )
+    );
+
+    const toPlain = (value: any) => {
+      if (value === null || value === undefined) return null;
+      // neo4j Integer -> convert to number if necessary
+      if (typeof value === 'object' && typeof value.toNumber === 'function') {
+        return value.toNumber();
+      }
+      return value;
+    };
+
+    return result.records.map((r: Record) => ({
+      code: toPlain(r.get('code')),
+      name: toPlain(r.get('name')),
+      description: toPlain(r.get('description')),
+      type: toPlain(r.get('type')),
+      requirement: toPlain(r.get('requirement')),   // optional numeric requirement
+      displayOrder: toPlain(r.get('displayOrder'))  // optional ordering int
+    }));
   } finally {
     await session.close();
   }
