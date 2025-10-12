@@ -51,6 +51,18 @@ function Profile() {
     }
   }, [playerID]);
 
+  const formatPercentage = (value: number | undefined): string => {
+    if (!value && value !== 0) return '0';
+    
+    // Check if the value is a whole number
+    if (value % 1 === 0) {
+      return value.toString();
+    }
+    
+    // Otherwise, show one decimal place
+    return value.toFixed(1);
+  };
+
   const fetchPlayerData = async () => {
     if (!playerID) {
       setLoading(false);
@@ -61,42 +73,46 @@ function Profile() {
       setLoading(true);
       
       // Fetch all data in parallel
-      const [statsRes, achievementsRes, friendsRes, globalStatsRes, allAchievements] = await Promise.all([
+      const [statsRes, achievementsRes, friendsRes, allAchvStats] = await Promise.all([
         axiosInstance.post('/user/getPlayerStats', { username: playerID }),
         axiosInstance.post('/user/getAchievements', { username: playerID }),
         axiosInstance.post('/user/getFriendsWithAchievements', { username: playerID }),
-        axiosInstance.get('/user/getGlobalAchievementStats').catch(() => ({ data: { stats: {} } })),
-        axiosInstance.get('/user/getAllAchievements').catch(() => ({ data: { stats: {} } }))
+        axiosInstance.get('/user/getAllAchievementsWithStats').catch(() => ({ data: { stats: {} } })),
       ]);
 
       setStats(statsRes.data.stats);
       setFriendsData(friendsRes.data.friends || []);
-      const catalog = allAchievements.data?.achievements || [];
+
       // Merge unlocked achievements with all achievements
       const unlockedAchievements = achievementsRes.data.achievements || [];
-      const globalData = globalStatsRes.data.stats || { totalPlayers: 0, achievements: [] };
-    
-    // Convert achievements array to percentage map
-    const globalStatsMap: { [key: string]: number } = {};
-    globalData.achievements.forEach((ach: any) => {
-      if (globalData.totalPlayers > 0) {
-        globalStatsMap[ach.code] = (ach.playerCount / globalData.totalPlayers) * 100;
-      } else {
-        globalStatsMap[ach.code] = 0;
-      }
-    });
-    console.log("catalog", catalog);
-    const allAchievementsWithStatus = catalog.map((achievement:any) => {
-      const unlocked = unlockedAchievements.find((a: any) => a.code === achievement.code);
-      return {
-        ...achievement,
-        unlocked: !!unlocked,
-        achievedAt: unlocked?.achievedAt,
-        globalPercentage: globalStatsMap[achievement.code] || 0
-      };
-    });
+      const globalData = allAchvStats.data.stats || { totalPlayers: 0, achievements: [] };
 
-    setAchievements(allAchievementsWithStatus);
+      // Convert achievements array to percentage map
+      const globalStatsMap: { [key: string]: number } = {};
+      globalData.achievements.forEach((ach: any) => {
+        if (globalData.totalPlayers > 0) {
+          // Use achieversCount instead of playerCount based on the new structure
+          globalStatsMap[ach.code] = (ach.achieversCount / globalData.totalPlayers) * 100;
+        } else {
+          globalStatsMap[ach.code] = 0;
+        }
+      });
+
+      console.log("catalog", globalData);
+
+      // Map over globalData.achievements, not globalData itself
+      const allAchievementsWithStatus = globalData.achievements.map((achievement: any) => {
+        const unlocked = unlockedAchievements.find((a: any) => a.code === achievement.code);
+        return {
+          ...achievement,
+          unlocked: !!unlocked,
+          achievedAt: unlocked?.achievedAt,
+          globalPercentage: globalStatsMap[achievement.code] || 0
+          // Note: achievement.achievementRate is already calculated in the backend if you want to use that instead
+        };
+      });
+
+      setAchievements(allAchievementsWithStatus);
     } catch (error) {
       console.error('Error fetching player data:', error);
     } finally {
@@ -273,12 +289,12 @@ function Profile() {
                           Unlocked: {formatDate(achievement.achievedAt)}
                         </span>
                         <span className="achievement-rarity">
-                          {achievement.globalPercentage?.toFixed(1) || '0'}% of players have this
+                          {formatPercentage(achievement.globalPercentage)} % of players have this
                         </span>
                       </>
                     ) : (
                       <span className="achievement-locked-text">
-                        Locked - {achievement.globalPercentage?.toFixed(1) || '0'}% of players have this
+                        Locked - {formatPercentage(achievement.globalPercentage)}% of players have this
                       </span>
                     )}
                   </div>

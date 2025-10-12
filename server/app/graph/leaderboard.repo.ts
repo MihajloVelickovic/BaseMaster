@@ -375,23 +375,34 @@ export async function getPlayerStats(username: string) {
   }
 }
 
-export async function getGlobalStats() {
+export async function getAllAchievementsWithStats() {
   const session = n4jSession();
   try {
     const result = await session.executeRead(async tx => {
       return await tx.run(`
         MATCH (a:Achievement)
         OPTIONAL MATCH (p:Player)-[:ACHIEVED]->(a)
-        WITH a, count(p) as playerCount
+        WITH a, count(p) as achieversCount
         WITH collect({
           code: a.code,
           name: a.name,
-          playerCount: playerCount
+          description: a.description,
+          type: a.type,
+          requirement: a.requirement,
+          created: a.created,
+          achieversCount: achieversCount
         }) as achievements
+        
         MATCH (total:Player)
+        WITH achievements, count(total) as totalPlayers
+        
+        OPTIONAL MATCH (p:Player)-[r:PARTICIPATES_IN]->(lb:Leaderboard {id: 'global'})
+        WITH achievements, totalPlayers, count(r) as activePlayers
+        
         RETURN 
           achievements,
-          count(total) as totalPlayers
+          totalPlayers,
+          activePlayers
       `);
     });
 
@@ -399,49 +410,21 @@ export async function getGlobalStats() {
     
     return {
       totalPlayers: record.get('totalPlayers') || 0,
-      achievements: record.get('achievements')
+      activePlayers: record.get('activePlayers') || 0,
+      achievements: record.get('achievements').map((achievement: any) => ({
+        code: achievement.code,
+        name: achievement.name,
+        description: achievement.description,
+        type: achievement.type,
+        requirement: achievement.requirement,
+        created: achievement.created,
+        achieversCount: achievement.achieversCount || 0,
+        // Calculate percentage of players who have this achievement
+        achievementRate: record.get('totalPlayers') > 0 
+          ? ((achievement.achieversCount || 0) / record.get('totalPlayers') * 100).toFixed(2) + '%'
+          : '0%'
+      }))
     };
-  } finally {
-    await session.close();
-  }
-}
-
-export async function getAchievementCatalog() {
-  const session = n4jSession();
-  try {
-    const result = await session.executeRead(tx =>
-      tx.run(
-        `
-        MATCH (a:Achievement)
-        RETURN
-          a.code AS code,
-          a.name AS name,
-          a.description AS description,
-          a.type AS type,
-          a.requirement AS requirement,
-          a.displayOrder AS displayOrder
-        ORDER BY a.displayOrder ASC, a.code ASC
-        `
-      )
-    );
-
-    const toPlain = (value: any) => {
-      if (value === null || value === undefined) return null;
-      // neo4j Integer -> convert to number if necessary
-      if (typeof value === 'object' && typeof value.toNumber === 'function') {
-        return value.toNumber();
-      }
-      return value;
-    };
-
-    return result.records.map((r: Record) => ({
-      code: toPlain(r.get('code')),
-      name: toPlain(r.get('name')),
-      description: toPlain(r.get('description')),
-      type: toPlain(r.get('type')),
-      requirement: toPlain(r.get('requirement')),   // optional numeric requirement
-      displayOrder: toPlain(r.get('displayOrder'))  // optional ordering int
-    }));
   } finally {
     await session.close();
   }

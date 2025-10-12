@@ -5,7 +5,7 @@ import { UserService } from "../utils/userService";
 import {publisher, redisClient} from "../redisClient";
 import { IdPrefixes, CacheTypes } from "../shared_modules/shared_enums";
 import { upsertPlayerFromUser } from "../graph/player.repo";
-import { connectPlayerToLeaderboard, getPlayerAchievements, getPlayerStats, getFriendsWithAchievements, getGlobalStats, getAchievementCatalog } from '../graph/leaderboard.repo';
+import { connectPlayerToLeaderboard, getPlayerAchievements, getPlayerStats, getFriendsWithAchievements, getAllAchievementsWithStats } from '../graph/leaderboard.repo';
 import { RedisKeys } from "../utils/redisKeyService";
 import { authUser, JWT_REFRESH, JWT_SECRET } from "../config/config";
 import jwt from "jsonwebtoken";
@@ -703,7 +703,7 @@ const areInvalidMessagePair = (sender:any, receiver:any) => {
 }
 
 
-userRouter.get("/getGlobalAchievementStats", async (req: any, res: any) => {
+userRouter.get("/getAllAchievementsWithStats", async (req: any, res: any) => {
   try {
     // Check cache first
     const cacheKey = RedisKeys.globalAchievementStats(); // You'll need to add this to RedisKeys
@@ -714,7 +714,7 @@ userRouter.get("/getGlobalAchievementStats", async (req: any, res: any) => {
     }
 
     // Get from Neo4j
-    const stats = await getGlobalStats();
+    const stats = await getAllAchievementsWithStats();
     
     // Cache for 5 minutes (stats don't change that often)
     await redisClient.set(cacheKey, JSON.stringify(stats));
@@ -724,20 +724,6 @@ userRouter.get("/getGlobalAchievementStats", async (req: any, res: any) => {
   } catch (error: any) {
     console.error('[ERROR]: Failed to fetch global stats', error);
     return res.status(500).json({ message: "Failed to fetch global stats" });
-  }
-});
-
-userRouter.get("/getAllAchievements", async (req: any, res: any) => {
- try {
-    const achievements = await getAchievementCatalog();
-    // Optionally include a lastUpdated or version value to help client caching
-    res.json({
-      achievements,
-      lastUpdated: new Date().toISOString()
-    });
-  } catch (err) {
-    console.error('Failed to fetch achievement catalog', err);
-    res.status(500).json({ error: 'Failed to fetch achievement catalog' });
   }
 });
 
