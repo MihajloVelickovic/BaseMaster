@@ -1,8 +1,15 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap');
+
 .profile-container {
+  font-family: 'JetBrains Mono', monospace;
   max-width: 1200px;
   margin: 0 auto;
   padding: 2rem;
-  background: linear-gradient(135deg, #32d336 0%, #28a82e 100%);
+   background: linear-gradient(
+    135deg, 
+    rgba(50,229,55,0.9) 0%,   /* 0.7 = 70% opacity */
+    rgba(0,153,0,0.9) 100%
+  );
   min-height: calc(100vh - 80px);
 }
 
@@ -28,7 +35,7 @@
   align-items: center;
   gap: 2rem;
   padding: 2rem;
-  background: rgba(255, 255, 255, 0.95);
+  background: #ffffe8;
   border-radius: 20px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
   margin-bottom: 2rem;
@@ -80,7 +87,7 @@
   display: flex;
   gap: 1rem;
   margin-bottom: 2rem;
-  background: #EAFE9F !important;
+  background: #ffffe8 !important;
   padding: 0.5rem;
   border-radius: 15px;
 }
@@ -89,13 +96,14 @@
   flex: 1;
   padding: 1rem 2rem;
   background: transparent;
-  border: none;
+  border: none !important;
   color: white;
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: 1.2rem;
+  font-weight: 900 !important;
   cursor: pointer;
   border-radius: 10px;
   transition: all 0.3s ease;
+  position: relative; /* ADD THIS */
 }
 
 .tab-button:hover {
@@ -104,12 +112,24 @@
 
 .tab-button.active {
   background: rgba(255, 255, 255, 0.95);
+  border-bottom: none;
   color: #28a82e;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
+.tab-button.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%; /* adjust this percentage */
+    height: 3px;
+    background: #32E537;
+}
+
 .profile-content {
-  background: rgba(255, 255, 255, 0.95);
+  background: #ffffe8;
   border-radius: 20px;
   padding: 2rem;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);

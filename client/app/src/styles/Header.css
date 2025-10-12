@@ -49,85 +49,77 @@
 }
 
 /* Navigation Links */
-/* --- header nav separators and improved hover/active --- */
 .header-nav {
-    position: relative; /* needed for outer lines */
+    position: relative;
     display: flex;
-    align-items: center;
+    align-items: stretch;
     gap: 0;
     height: 100%;
-    padding: 0 8px; /* space for outer separators */
+    padding: 0 8px;
 }
 
-/* outer thin lines on both sides of the nav */
-.header-nav::before,
-.header-nav::after {
-    content: "";
-    position: absolute;
-    top: 22%;
-    bottom: 22%;
-    width: 1px;
-    background: rgba(255,255,255,0.12); /* subtle white */
-    pointer-events: none;
-}
-.header-nav::before { left: 0; }
-.header-nav::after  { right: 0; }
-
-/* nav link base */
+/* Nav link base */
 .nav-link {
-    position: relative; /* for internal separator */
-    color: #FFFFF2 !important; /* white text */
+    position: relative;
+    color: #FFFFF2 !important;
     text-decoration: none;
-    padding: 0 20px;
     font-size: 20px !important;
     font-weight: bolder !important;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     display: flex;
     align-items: center;
+    justify-content: center;
     height: 100%;
-    margin: 6px 6px 6px 6px !important;
-    padding: 5px;
-    border-radius: 6px;
-    transition: transform 160ms ease, background 160ms ease, box-shadow 160ms ease;
+    padding: 0 27px !important;
+    margin: 0 !important;
+    transition: all 200ms ease;
+    border: none !important;
     border-bottom: 3px solid transparent;
 }
 
-/* separator between adjacent links */
-.nav-link + .nav-link::before {
-    content: "";
-    position: absolute;
-    left: 0; /* left edge of this link */
-    top: 22%;
-    bottom: 22%;
-    width: 1px;
-    background: rgba(255,255,255,0.12);
-    pointer-events: none;
-}
+/* NO SEPARATOR BY DEFAULT - NOTHING! */
 
-/* hover: stronger green highlight and slight lift */
+/* Hover state - fills with green */
 .nav-link:hover {
     color: #ffffff;
-    background: rgba(56, 247, 158, 0.36); /* subtle green overlay */
-    transform: translateY(-2px);
-    box-shadow: 0 6px 14px rgba(0,0,0,0.14);
+    background: rgba(56, 247, 158, 0.25);
 }
 
-/* keyboard focus */
-.nav-link:focus {
-    outline: none;
-    box-shadow: 0 0 0 4px rgba(56,247,158,0.12);
+/* ONLY ON HOVER - Add glowing border to the LEFT of hovered element */
+.nav-link:hover::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 10%;
+    bottom: 10%;
+    width: 3px;
+    background: #32E537;
+    box-shadow: 0 0 10px rgba(56, 247, 158, 0.8);
 }
 
-/* active: stronger bottom accent and soft gradient */
 .nav-link.active {
     color: #ffffff;
-    background: linear-gradient(180deg, rgba(56,247,158,0.06), rgba(56,247,158,0.10));
-    border-bottom-color: #38f79e;
-    transform: translateY(-1px);
-    box-shadow: 0 6px 12px rgba(0,0,0,0.12);
+    background: transparent !important;
+    border-bottom: none !important; /* This removes the full-width border */
+    position: relative;
 }
 
+.nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%; /* adjust this percentage */
+    height: 3px;
+    background: #32E537;
+}
+
+/* Focus state */
+.nav-link:focus {
+    outline: none;
+}
 
 /* Spacer */
 .spacer {

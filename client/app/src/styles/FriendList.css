@@ -2,6 +2,7 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: 2rem;
+  font-family: 'JetBrains Mono', monospace;
   background: linear-gradient(
     135deg, 
     rgba(50,229,55,0.9) 0%,   /* 0.7 = 70% opacity */
@@ -21,7 +22,7 @@
 .friends-header {
   text-align: center;
   margin-bottom: 2rem;
-  color: white;
+  color: #ffffe8;
 }
 
 .friends-header h1 {
@@ -48,7 +49,7 @@
   display: flex;
   gap: 1rem;
   margin-bottom: 2rem;
-  background: #EAFE9F !important;
+  background: #ffffe8 !important;
   background: rgba(255, 255, 255, 0.1);
   padding: 0.5rem;
   border-radius: 15px;
