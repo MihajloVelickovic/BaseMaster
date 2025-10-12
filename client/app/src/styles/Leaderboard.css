@@ -1,5 +1,5 @@
 .leaderboard-page {
-  max-width: 1000px;
+  max-width: 800px;
   margin: 0 auto;
   padding: 30px 20px;
   min-height: 100vh;
@@ -59,6 +59,7 @@
 .leaderboard-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 .leaderboard-table thead {
@@ -77,12 +78,13 @@
 }
 
 .rank-col {
-  width: 80px;
-  text-align: center !important;
+  width: 15%;
+  text-align: center !important;  
 }
 
 .player-col {
-  width: auto;
+  width: 25%;
+  padding-left: 2rem !important;
 }
 
 .score-col {
@@ -92,6 +94,12 @@
 
 .stats-col {
   width: 70px;
+  text-align: center !important;
+}
+
+/* NEW: Actions column for expand button */
+.actions-col {
+  width: 80px;
   text-align: center !important;
 }
 
@@ -129,6 +137,7 @@
 
 .player-cell {
   font-weight: 500;
+  padding-left: 2rem !important; 
 }
 
 .player-info {
@@ -169,10 +178,134 @@
   display: inline-block;
 }
 
+/* NEW: Badge variants for total vs best score */
+.score-badge.total {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  font-weight: 700;
+}
+
+.score-badge.best {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  font-weight: 600;
+}
+
 .stats-cell {
   text-align: center;
   color: #5a6c7d;
   font-weight: 500;
+}
+
+/* NEW: Actions cell and details button */
+.actions-cell {
+  text-align: center;
+}
+
+.details-button {
+  background: #3498db;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 40px;
+  line-height: 1;
+}
+
+.details-button:hover {
+  background: #2980b9;
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+}
+
+.details-button:active {
+  transform: scale(0.95);
+}
+
+/* NEW: Expanded details row */
+.details-row {
+  background: #f8f9fa;
+  animation: slideDown 0.3s ease-in-out;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.details-row td {
+  padding: 0;
+}
+
+.placement-details {
+  padding: 24px;
+  border-top: 2px solid #e0e0e0;
+}
+
+.placement-details h4 {
+  margin: 0 0 20px 0;
+  color: #2c3e50;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.placement-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 16px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.placement-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px;
+  background: white;
+  border-radius: 12px;
+  border: 2px solid #e0e0e0;
+  transition: all 0.3s ease;
+}
+
+.placement-stat:hover {
+  border-color: #3498db;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(52, 152, 219, 0.2);
+}
+
+.placement-stat .medal {
+  font-size: 36px;
+  margin-bottom: 8px;
+}
+
+.placement-stat .count {
+  font-size: 28px;
+  font-weight: bold;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 4px;
+}
+
+.placement-stat .label {
+  font-size: 12px;
+  color: #7f8c8d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+/* NEW: Animation for expansion */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .empty-state {
@@ -256,5 +389,36 @@
   .score-badge {
     padding: 4px 12px;
     font-size: 13px;
+  }
+
+  /* NEW: Responsive adjustments for expandable details */
+  .actions-col {
+    width: 60px;
+  }
+
+  .details-button {
+    padding: 6px 10px;
+    font-size: 14px;
+  }
+
+  .placement-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .placement-stat {
+    padding: 12px;
+  }
+
+  .placement-stat .medal {
+    font-size: 28px;
+  }
+
+  .placement-stat .count {
+    font-size: 22px;
+  }
+
+  .placement-details {
+    padding: 16px;
   }
 }

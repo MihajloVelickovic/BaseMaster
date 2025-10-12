@@ -9,11 +9,12 @@ getGamemode}
 from "../shared_modules/shared_enums";
 import { nanoid, random } from 'nanoid';
 import {redisClient, publisher} from "../redisClient";
-import { recordResult } from "../graph/player.repo";
 import { getLeaderboard } from "../graph/player.repo";
 import { RedisKeys } from "../utils/redisKeyService";
 import { CACHE_DURATION, DiffcultyModifier, MAX_NUMBER } from "../shared_modules/configMaps";
 import { isNullOrWhitespace } from "../utils/stringUtils";
+import { getGlobalLeaderboard, recordGameResult } from "../graph/leaderboard.repo";
+import { GameResultRow, PlayerResult, ScoreboardEntry } from "../models/types";
 
 
 
@@ -634,30 +635,60 @@ async function setRounds(gameId:string, roundCount:number, initialValue:number) 
     await redisClient.hSet(gameId, roundData);
   }
 
-  async function SaveResults(scoreboard: { score: number; value: string; }[]) {
-    // scoreboard: [{ value: playerId, score: number }, ...] high → low (you already reversed above)
-    const results: Array<{ username: string; playerId: string; score: number; placement: number }> = [];
+  async function SaveResults(scoreboard: ScoreboardEntry[]): Promise<PlayerResult[]> {
+  // Build rows with usernames and placements
+  const rows: GameResultRow[] = scoreboard.map((row, index) => ({
+    username: playerIdToUsername(row.value),
+    score: Math.floor(Number(row.score) || 0),
+    placement: (index + 1) as 1 | 2 | 3 | 4,
+  }));
 
-    for (let i = 0; i < scoreboard.length; i++) {
-        const row = scoreboard[i];
-        const playerId = row.value;
-        const score = Number(row.score) || 0;
-        const placement = i + 1; // 1-based podium
-        const username = playerIdToUsername(playerId);
+  // Single Neo4j call to record all results
+  await recordGameResult(rows);
 
-        // 1) Persist to Neo4j (you set Player.id = username)
-        await recordResult({ username, score, placement: placement as 1 | 2 | 3 | 4 });
+  // Update Redis leaderboard (only if score is better)
+  const zKey = RedisKeys.globalLeaderboard();
+  const pipeline = redisClient.multi();
 
-        // 2) OPTIONAL: maintain a global Redis leaderboard as a ZSET (best scores)
-        // Only write if new score is higher than stored best.
-        const zKey = RedisKeys.globalLeaderboard();
-        const existing = await redisClient.zScore(zKey, username); // number | null
-        if (existing === null || score > existing) {
-            await redisClient.zAdd(zKey, [{ score, value: username }]);
-        }
+  for (const row of rows) {
+    pipeline.zScore(zKey, row.username);
+  }
 
-        results.push({ username, playerId, score, placement });
+  const scores = await pipeline.exec();
+  const updates: Array<{ score: number; value: string }> = [];
+
+  if (scores) {
+    for (let i = 0; i < rows.length; i++) {
+      // Handle different redis client return types
+      const scoreResult = scores[i];
+      const existingScore = Array.isArray(scoreResult) 
+        ? (scoreResult[1] as number | null)
+        : (scoreResult as number | null);
+      
+      if (existingScore === null || rows[i].score > existingScore) {
+        updates.push({ score: rows[i].score, value: rows[i].username });
+      }
     }
+  }
+
+  if (updates.length > 0) {
+    await redisClient.zAdd(zKey, updates);
+  }
+
+  // Invalidate page cache
+  const pattern = `${RedisKeys.globalLeaderboard()}:page:*`;
+  const keys = await redisClient.keys(pattern);
+  if (keys.length > 0) {
+    await redisClient.del(keys);
+  }
+
+  // Build proper return format
+  const results: PlayerResult[] = scoreboard.map((row, index) => ({
+    username: playerIdToUsername(row.value),
+    playerId: row.value,
+    score: Math.floor(Number(row.score) || 0),
+    placement: index + 1,
+  }));
 
   return results;
 }
@@ -665,44 +696,59 @@ async function setRounds(gameId:string, roundCount:number, initialValue:number) 
 gameRouter.get("/globalLeaderboard", async (req: any, res: any) => {
   const limitRaw = req.query.limit;
   const skipRaw = req.query.skip;
-  
-  const limit = 30;
-  const skip = Number.isInteger(Number(skipRaw)) ? Math.floor(Math.abs(Number(skipRaw))) : 0;
-  
+ 
+  const limit = Number.isInteger(Number(limitRaw)) 
+    ? Math.min(Math.floor(Math.abs(Number(limitRaw))), 100) // Max 100 per page
+    : 30;
+  const skip = Number.isInteger(Number(skipRaw)) 
+    ? Math.floor(Math.abs(Number(skipRaw))) 
+    : 0;
+ 
   try {
-    // Create unique cache key for this pagination
-    const leaderboardKey = `${RedisKeys.globalLeaderboard()}`;
-    
-    // Check cache
-    const cached = await redisClient.get(leaderboardKey);
-    
-    if (cached) {        //turned off cache for now
+    // Create unique cache key for THIS specific page
+    // Format: global:leaderboard:page:skip:limit
+    const pageKey = `${RedisKeys.globalLeaderboard()}:page:${skip}:${limit}`;
+   
+    // Try to get cached page
+    const cached = await redisClient.get(pageKey);
+   
+    if (cached) {
       // Cache hit
+      console.log(`[CACHE HIT] Leaderboard page ${skip}-${skip + limit}`);
       const leaderboard = JSON.parse(cached);
-      return res.status(200).json({ items:leaderboard,
-                                    nextSkip: skip + leaderboard.length });
+      return res.status(200).json({ 
+        items: leaderboard,
+        nextSkip: skip + leaderboard.length,
+        cached: true
+      });
     }
-    
-    // Cache miss - get from Neo4j
-    const items = await getLeaderboard({ limit, skip });
-    
-    // Cache the result
+   
+    console.log(`[CACHE MISS] Fetching leaderboard page ${skip}-${skip + limit} from Neo4j`);
+    const items = await getGlobalLeaderboard(limit, skip);
+   
+    // Cache this page's results
     if (items && items.length > 0) {
       await redisClient.setEx(
-        leaderboardKey,
-        CACHE_DURATION[CacheTypes.GENERIC_CACHE],
+        pageKey,
+        CACHE_DURATION[CacheTypes.GENERIC_CACHE], // e.g., 300 seconds
         JSON.stringify(items)
       );
+      console.log(`[CACHE SET] Cached page ${skip}-${skip + limit} for ${CACHE_DURATION[CacheTypes.GENERIC_CACHE]}s`);
     }
-    
-    return res.status(200).json({ items, nextSkip: skip + items.length });
-    
+   
+    return res.status(200).json({ 
+      items, 
+      nextSkip: skip + items.length,
+      cached: false
+    });
+   
   } catch (err: any) {
     console.error("[ERROR] get /globalLeaderboard:", err?.message || err);
-    return res.status(500).json({ message: "Failed to fetch global leaderboard" });
+    return res.status(500).json({ 
+      message: "Failed to fetch global leaderboard" 
+    });
   }
 });
-
 
 
 export default gameRouter;

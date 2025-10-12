@@ -41,9 +41,9 @@ export async function upsertPlayerFromUser(username: string, email?: string) {
   }
 }
 
-export async function recordResult({ username, score, placement }: { username: string; score: number; placement: 1 | 2 | 3 | 4 }) {
-  await recordGameResult(username, score, placement);
-}
+// export async function recordResult({ username, score, placement }: { username: string; score: number; placement: 1 | 2 | 3 | 4 }) {
+//   await recordGameResult(username, score, placement);
+// }
 
 export async function getLeaderboard({ limit, skip }: { limit: number; skip: number }) {
   return await getGlobalLeaderboard(limit, skip);

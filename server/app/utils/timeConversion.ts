@@ -24,5 +24,5 @@ export function formatNeo4jDate(neo4jDateTime: any): string | null {
   const month = String(neo4jDateTime.month); // Months are 0-indexed
   const year = String(neo4jDateTime.year);
 
-  return `${day}/${month}/${year}`;
+  return `${year}-${month}-${day}`; // I LOVE ISO STANDARS SO MUCH
 }

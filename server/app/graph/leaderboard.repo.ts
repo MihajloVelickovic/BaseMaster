@@ -100,78 +100,98 @@ export async function connectPlayerToLeaderboard(username: string) {
 
 // Update the recordGameResult function in leaderboard.repo.ts
 
-export async function recordGameResult(username: string, score: number, placement: 1 | 2 | 3 | 4) {
+export async function recordGameResult(
+  rows: Array<{ username: string; score: number; placement: 1 | 2 | 3 | 4 }>
+): Promise<void> {
   const session = n4jSession();
   try {
-    await session.executeWrite(async tx => {
-      // Update both the relationship AND the player node properties
-      const result = await tx.run(`
-        MATCH (p:Player {username: $username})-[r:PARTICIPATES_IN]->(lb:Leaderboard {id: 'global'})
-        SET 
+    await session.executeWrite(async (tx) => {
+      // Single UNWIND query to update all players
+      const result = await tx.run(
+        `
+        UNWIND $rows AS row
+        MATCH (p:Player {username: row.username})-[r:PARTICIPATES_IN]->(lb:Leaderboard {id: 'global'})
+        
+        SET
           // Update relationship stats
           r.totalGames = COALESCE(r.totalGames, 0) + 1,
-          r.totalScore = COALESCE(r.totalScore, 0) + $score,
-          r.bestScore = CASE 
-            WHEN $score > COALESCE(r.bestScore, 0) THEN $score 
-            ELSE COALESCE(r.bestScore, 0) 
+          r.totalScore = COALESCE(r.totalScore, 0) + row.score,
+          r.bestScore = CASE
+            WHEN row.score > COALESCE(r.bestScore, 0) THEN row.score
+            ELSE COALESCE(r.bestScore, 0)
+          END,
+          r.bestScoreDate = CASE
+            WHEN row.score > COALESCE(r.bestScore, 0) THEN datetime()
+            ELSE r.bestScoreDate
           END,
           r.lastPlayed = datetime(),
-          r.lastScore = $score,
-          r.lastPlacement = $placement,
+          r.lastScore = row.score,
+          r.lastPlacement = row.placement,
           
           // Update player node properties
           p.totalGames = COALESCE(p.totalGames, 0) + 1,
-          p.totalScore = COALESCE(p.totalScore, 0) + $score,
-          p.bestScore = CASE 
-            WHEN $score > COALESCE(p.bestScore, 0) THEN $score 
-            ELSE COALESCE(p.bestScore, 0) 
+          p.totalScore = COALESCE(p.totalScore, 0) + row.score,
+          p.bestScore = CASE
+            WHEN row.score > COALESCE(p.bestScore, 0) THEN row.score
+            ELSE COALESCE(p.bestScore, 0)
           END,
-          p.averageScore = (COALESCE(p.totalScore, 0) + $score) / (COALESCE(p.totalGames, 0) + 1),
+          p.bestScoreDate = CASE
+            WHEN row.score > COALESCE(p.bestScore, 0) THEN datetime()
+            ELSE p.bestScoreDate
+          END,
+          p.averageScore = (COALESCE(p.totalScore, 0) + row.score) / (COALESCE(p.totalGames, 0) + 1),
           p.lastPlayed = datetime(),
           
           // Update placement counts
-          p.firsts = CASE 
-            WHEN $placement = 1 THEN COALESCE(p.firsts, 0) + 1 
-            ELSE COALESCE(p.firsts, 0) 
+          p.firsts = CASE
+            WHEN row.placement = 1 THEN COALESCE(p.firsts, 0) + 1
+            ELSE COALESCE(p.firsts, 0)
           END,
-          p.seconds = CASE 
-            WHEN $placement = 2 THEN COALESCE(p.seconds, 0) + 1 
-            ELSE COALESCE(p.seconds, 0) 
+          p.seconds = CASE
+            WHEN row.placement = 2 THEN COALESCE(p.seconds, 0) + 1
+            ELSE COALESCE(p.seconds, 0)
           END,
-          p.thirds = CASE 
-            WHEN $placement = 3 THEN COALESCE(p.thirds, 0) + 1 
-            ELSE COALESCE(p.thirds, 0) 
+          p.thirds = CASE
+            WHEN row.placement = 3 THEN COALESCE(p.thirds, 0) + 1
+            ELSE COALESCE(p.thirds, 0)
           END,
-          p.fourths = CASE 
-            WHEN $placement = 4 THEN COALESCE(p.fourths, 0) + 1 
-            ELSE COALESCE(p.fourths, 0) 
+          p.fourths = CASE
+            WHEN row.placement = 4 THEN COALESCE(p.fourths, 0) + 1
+            ELSE COALESCE(p.fourths, 0)
           END,
           
-          // Legacy gamesWon field (for backward compatibility)
-          p.gamesWon = CASE 
-            WHEN $placement = 1 THEN COALESCE(p.gamesWon, 0) + 1 
-            ELSE COALESCE(p.gamesWon, 0) 
+          // Legacy gamesWon field
+          p.gamesWon = CASE
+            WHEN row.placement = 1 THEN COALESCE(p.gamesWon, 0) + 1
+            ELSE COALESCE(p.gamesWon, 0)
           END
-          
-        RETURN 
-          p.totalGames as games, 
-          p.totalScore as total, 
-          p.bestScore as best
-      `, { username, score, placement });
+        
+        RETURN
+          row.username AS username,
+          p.totalGames AS totalGames,
+          p.totalScore AS totalScore,
+          p.bestScore AS bestScore,
+          row.score AS lastScore,
+          row.placement AS placement
+        `,
+        { rows }
+      );
 
-      const record = result.records[0];
-      if (record) {
-        const totalGames = record.get('games');
-        const totalScore = record.get('total');
-        const bestScore = record.get('best');
+      // Check achievements for each player in same transaction
+      for (const record of result.records) {
+        const username = record.get('username');
+        const totalGames = record.get('totalGames');
+        const totalScore = record.get('totalScore');
+        const bestScore = record.get('bestScore');
+        const lastScore = record.get('lastScore');
+        const placement = record.get('placement');
 
-        // Check and award achievements
         await checkAndAwardAchievements(tx, username, {
           totalGames,
           totalScore,
           bestScore,
-          lastScore: score,
-          placement
+          lastScore,
+          placement,
         });
       }
     });
@@ -258,7 +278,8 @@ export async function getGlobalLeaderboard(limit: number = 50, skip: number = 0)
         firsts: record.get('firsts') || 0,
         seconds: record.get('seconds') || 0,
         thirds: record.get('thirds') || 0,
-        fourths: record.get('fourths') || 0
+        fourths: record.get('fourths') || 0,
+        totalScore: record.get('totalScore') || 0
       };
     });
   } finally {

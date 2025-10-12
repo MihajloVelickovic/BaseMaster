@@ -5,6 +5,7 @@ import "../styles/Leaderboard.css";
 interface LeaderboardEntry {
   username: string;
   bestScore: number;
+  totalScore: number;
   firsts: number;
   seconds: number;
   thirds: number;
@@ -15,6 +16,7 @@ const Leaderboard = () => {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [expandedRow, setExpandedRow] = useState<string | null>(null);
 
   useEffect(() => {
     fetchLeaderboard();
@@ -26,6 +28,7 @@ const Leaderboard = () => {
       const res = await axiosInstance.get("/game/globalLeaderboard", {
         params: { limit: 20 }
       });
+      console.log(res);
       setLeaderboard(res.data.items || []);
       setError(null);
     } catch (err) {
@@ -34,6 +37,10 @@ const Leaderboard = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const toggleDetails = (username: string) => {
+    setExpandedRow(expandedRow === username ? null : username);
   };
 
   const getMedalEmoji = (rank: number) => {
@@ -82,45 +89,87 @@ const Leaderboard = () => {
             <tr>
               <th className="rank-col">Rank</th>
               <th className="player-col">Player</th>
+              <th className="score-col">Total Score</th>
               <th className="score-col">Best Score</th>
-              <th className="stats-col">1st</th>
-              <th className="stats-col">2nd</th>
-              <th className="stats-col">3rd</th>
-              <th className="stats-col">4th</th>
+              <th className="actions-col">Details</th>
             </tr>
           </thead>
           <tbody>
             {leaderboard.length > 0 ? (
               leaderboard.map((entry, index) => (
-                <tr 
-                  key={entry.username} 
-                  className={`leaderboard-row ${index < 3 ? 'top-three' : ''}`}
-                >
-                  <td className="rank-cell">
-                    <span className="rank-number">
-                      {getMedalEmoji(index + 1) || `#${index + 1}`}
-                    </span>
-                  </td>
-                  <td className="player-cell">
-                    <div className="player-info">
-                      <div className="player-avatar">
-                        {entry.username.charAt(0).toUpperCase()}
+                <>
+                  {/* Main Row */}
+                  <tr 
+                    key={entry.username} 
+                    className={`leaderboard-row ${index < 3 ? 'top-three' : ''}`}
+                  >
+                    <td className="rank-cell">
+                      <span className="rank-number">
+                        {getMedalEmoji(index + 1) || `#${index + 1}`}
+                      </span>
+                    </td>
+                    <td className="player-cell">
+                      <div className="player-info">
+                        <div className="player-avatar">
+                          {entry.username.charAt(0).toUpperCase()}
+                        </div>
+                        <span className="player-name">{entry.username}</span>
                       </div>
-                      <span className="player-name">{entry.username}</span>
-                    </div>
-                  </td>
-                  <td className="score-cell">
-                    <span className="score-badge">{entry.bestScore}</span>
-                  </td>
-                  <td className="stats-cell">{entry.firsts || 0}</td>
-                  <td className="stats-cell">{entry.seconds || 0}</td>
-                  <td className="stats-cell">{entry.thirds || 0}</td>
-                  <td className="stats-cell">{entry.fourths || 0}</td>
-                </tr>
+                    </td>
+                    <td className="score-cell">
+                      <span className="score-badge total">{entry.totalScore}</span>
+                    </td>
+                    <td className="score-cell">
+                      <span className="score-badge best">{entry.bestScore}</span>
+                    </td>
+                    <td className="actions-cell">
+                      <button 
+                        onClick={() => toggleDetails(entry.username)}
+                        className="details-button"
+                        aria-label="Toggle details"
+                      >
+                        {expandedRow === entry.username ? '▲' : '▼'}
+                      </button>
+                    </td>
+                  </tr>
+
+                  {/* Expanded Details Row */}
+                  {expandedRow === entry.username && (
+                    <tr className="details-row">
+                      <td colSpan={5}>
+                        <div className="placement-details">
+                          <h4>Placement History</h4>
+                          <div className="placement-grid">
+                            <div className="placement-stat">
+                              <span className="medal">🥇</span>
+                              <span className="count">{entry.firsts || 0}</span>
+                              <span className="label">First Place</span>
+                            </div>
+                            <div className="placement-stat">
+                              <span className="medal">🥈</span>
+                              <span className="count">{entry.seconds || 0}</span>
+                              <span className="label">Second Place</span>
+                            </div>
+                            <div className="placement-stat">
+                              <span className="medal">🥉</span>
+                              <span className="count">{entry.thirds || 0}</span>
+                              <span className="label">Third Place</span>
+                            </div>
+                            <div className="placement-stat">
+                              <span className="medal">4️⃣</span>
+                              <span className="count">{entry.fourths || 0}</span>
+                              <span className="label">Fourth Place</span>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </>
               ))
             ) : (
               <tr>
-                <td colSpan={7} className="empty-state">
+                <td colSpan={5} className="empty-state">
                   <div className="empty-icon">🏆</div>
                   <p>No players on the leaderboard yet.</p>
                   <p className="empty-subtext">Be the first to play!</p>
