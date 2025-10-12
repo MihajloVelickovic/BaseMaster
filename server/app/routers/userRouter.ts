@@ -12,6 +12,7 @@ import jwt from "jsonwebtoken";
 import { hashPassword, verifyPassword } from "../utils/auth";
 import { CACHE_DURATION } from "../shared_modules/configMaps";
 import { isNullOrWhitespace } from "../utils/stringUtils";
+import { invalidateLeaderboardCache } from "../utils/gameService";
 
 // TODO hashiranje sifre
 
@@ -49,6 +50,7 @@ userRouter.post("/register", async(req: any, res: any) => {
             await upsertPlayerFromUser(username, email);
             await connectPlayerToLeaderboard(username); // Add this line
             await redisClient.del(RedisKeys.globalLeaderboard());
+            await invalidateLeaderboardCache();
             return res.status(200).json({message: `User successfully created!`, username});
         }
         else 

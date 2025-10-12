@@ -9,24 +9,15 @@ getGamemode}
 from "../shared_modules/shared_enums";
 import { nanoid, random } from 'nanoid';
 import {redisClient, publisher} from "../redisClient";
-import { getLeaderboard } from "../graph/player.repo";
 import { RedisKeys } from "../utils/redisKeyService";
 import { CACHE_DURATION, DiffcultyModifier, MAX_NUMBER } from "../shared_modules/configMaps";
 import { isNullOrWhitespace } from "../utils/stringUtils";
-import { getGlobalLeaderboard, recordGameResult } from "../graph/leaderboard.repo";
-import { GameResultRow, PlayerResult, ScoreboardEntry } from "../models/types";
+import { addChaosBaseArrays, CleanupGameContext, SaveResults, setRounds } from "../utils/gameService";
+import { getGlobalLeaderboard } from "../graph/leaderboard.repo";
 
 
 
 const gameRouter = Router();
-
-function playerIdToUsername(playerId: string): string {
-  // Your playerId looks like "username_random"
-  // If it ever comes as just "username", this still works.
-  const name = String(playerId).split("_")[0];
-  return name || String(playerId);
-}
-
 
 gameRouter.post("/createGame", async (req: any, res:any) => {
     console.log(req.body); //DEBUG
@@ -580,118 +571,6 @@ gameRouter.post("/getLobbyMessages", async (req:any, res:any) => {
         return res.status(500).send({ message: "Error processing message" });
     }
 });
-
-
-async function addChaosBaseArrays(roundCount:number, gameId:string) {
-    //console.log("Entering chaos bases creation....");
-    const fromBases = Array.from({ length: roundCount }, () => 
-        Math.floor(Math.random() * (BaseValues.MAX_BASE -
-             BaseValues.MIN_BASE + 1)) + BaseValues.MIN_BASE
-    );
-
-    const toBases = Array.from({ length: roundCount }, () => 
-        Math.floor(Math.random() * (BaseValues.MAX_BASE -
-                BaseValues.MIN_BASE + 1)) + BaseValues.MIN_BASE      
-    );
-    
-    const fromBaseArrayKey = RedisKeys.fromBaseArray(gameId);
-    const toBaseArrayKey = RedisKeys.toBaseArray(gameId);
-
-    await redisClient.rPush(fromBaseArrayKey, fromBases.map(String));
-    await redisClient.rPush(toBaseArrayKey, toBases.map(String));
-}
-
-async function CleanupGameContext(gameId:string) {
-
-    const randomNumbersKey = RedisKeys.randomNumbers(gameId);
-    const scoreboardKey = RedisKeys.scoreboard(gameId);
-    const gameEndKey = RedisKeys.gameEnd(gameId);
-    const lobbyMessageKey = RedisKeys.lobbyMessage(gameId);
-    const orderPointsKey = RedisKeys.orderPoints(gameId);
-
-    await redisClient.del(gameId);
-    await redisClient.del(randomNumbersKey);
-    await redisClient.del(scoreboardKey);
-    await redisClient.del(gameEndKey);
-    await redisClient.del(lobbyMessageKey);
-    await redisClient.del(orderPointsKey);
-
-    if(getGamemode(gameId) === GameModes.CHAOS) {
-        const fromBaseArrayKey = RedisKeys.fromBaseArray(gameId);
-        const toBaseArrayKey = RedisKeys.toBaseArray(gameId);
-
-        await redisClient.del(fromBaseArrayKey);
-        await redisClient.del(toBaseArrayKey);
-    }
-}
-
-async function setRounds(gameId:string, roundCount:number, initialValue:number) {
-    // Prepare the fields and values as a key-value pair for the hash
-    const roundData:any = {};
-    for (let i = 1; i <= roundCount; i++) {
-      roundData[`${i}`] = initialValue;
-    }
-    //console.log("Order data: ", roundData);
-    await redisClient.hSet(gameId, roundData);
-  }
-
-  async function SaveResults(scoreboard: ScoreboardEntry[]): Promise<PlayerResult[]> {
-  // Build rows with usernames and placements
-  const rows: GameResultRow[] = scoreboard.map((row, index) => ({
-    username: playerIdToUsername(row.value),
-    score: Math.floor(Number(row.score) || 0),
-    placement: (index + 1) as 1 | 2 | 3 | 4,
-  }));
-
-  // Single Neo4j call to record all results
-  await recordGameResult(rows);
-
-  // Update Redis leaderboard (only if score is better)
-  const zKey = RedisKeys.globalLeaderboard();
-  const pipeline = redisClient.multi();
-
-  for (const row of rows) {
-    pipeline.zScore(zKey, row.username);
-  }
-
-  const scores = await pipeline.exec();
-  const updates: Array<{ score: number; value: string }> = [];
-
-  if (scores) {
-    for (let i = 0; i < rows.length; i++) {
-      // Handle different redis client return types
-      const scoreResult = scores[i];
-      const existingScore = Array.isArray(scoreResult) 
-        ? (scoreResult[1] as number | null)
-        : (scoreResult as number | null);
-      
-      if (existingScore === null || rows[i].score > existingScore) {
-        updates.push({ score: rows[i].score, value: rows[i].username });
-      }
-    }
-  }
-
-  if (updates.length > 0) {
-    await redisClient.zAdd(zKey, updates);
-  }
-
-  // Invalidate page cache
-  const pattern = `${RedisKeys.globalLeaderboard()}:page:*`;
-  const keys = await redisClient.keys(pattern);
-  if (keys.length > 0) {
-    await redisClient.del(keys);
-  }
-
-  // Build proper return format
-  const results: PlayerResult[] = scoreboard.map((row, index) => ({
-    username: playerIdToUsername(row.value),
-    playerId: row.value,
-    score: Math.floor(Number(row.score) || 0),
-    placement: index + 1,
-  }));
-
-  return results;
-}
 
 gameRouter.get("/globalLeaderboard", async (req: any, res: any) => {
   const limitRaw = req.query.limit;

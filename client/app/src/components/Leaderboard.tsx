@@ -90,7 +90,7 @@ const Leaderboard = () => {
               <th className="rank-col">Rank</th>
               <th className="player-col">Player</th>
               <th className="score-col">Total Score</th>
-              <th className="score-col">Best Score</th>
+              <th className="score-col">High Score</th>
               <th className="actions-col">Details</th>
             </tr>
           </thead>
