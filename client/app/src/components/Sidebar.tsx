@@ -50,12 +50,18 @@ function Sidebar() {
   return (
     <>
       {isOpen && <div className="sidebar-overlay" onClick={toggleSidebar}></div>}
-      <div className="header">
+    <div className="header">
+      {username ? (
         <button className="username-display" onClick={toggleSidebar}>
           {username}
         </button>
-      </div>
-      {renderSidebar()}
+      ) : (
+        <button className="login-button" onClick={() => window.location.href = '/login'}>
+          Login
+        </button>
+      )}
+    </div>
+    {username && renderSidebar()}
     </>
   ); // if only you could know what we really are, people who actualy do the work
      //they said that they would do a month ago, maybe longer I stopped counting weeks

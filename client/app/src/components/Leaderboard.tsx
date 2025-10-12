@@ -113,7 +113,7 @@ const Leaderboard = () => {
                         <div className="player-avatar">
                           {entry.username.charAt(0).toUpperCase()}
                         </div>
-                        <span className="player-name">{entry.username}</span>
+                        {/* <span className="player-name">{entry.username}</span> */}
                       </div>
                     </td>
                     <td className="score-cell">
