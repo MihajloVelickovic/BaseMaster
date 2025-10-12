@@ -2,16 +2,20 @@ import React, { useEffect, useState } from "react";
 import "../styles/Sidebar.css";
 import { FaSignOutAlt, FaUser, FaUserFriends } from "react-icons/fa";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../utils/AuthContext";
+
 
 function Sidebar() {
+  const { playerID, logout } = useAuth();
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [username, setUsername] = useState(localStorage.getItem("playerID") || "");
   const navigate = useNavigate();
   
   function handleLogout() {
+    logout();   //added here, it should be here, yea
     toggleSidebar();
-    localStorage.removeItem("playerID");
+    //localStorage.removeItem("playerID");
     navigate("/LoginSignup", { state: { playerIdTransfered: null} });
   }
 
