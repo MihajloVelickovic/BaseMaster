@@ -514,11 +514,13 @@ userRouter.post("/getPlayerStats", authUser, async (req: any, res: any) => {
     
     try {
         const playerAchievementsKey = RedisKeys.playerStats(username);
-        let stats = await redisClient.get(playerAchievementsKey);
+        const cachedStats = await redisClient.get(playerAchievementsKey);
         
-        if (stats === null) {
-            stats = await getPlayerStats(username);
+        if (cachedStats === null) {
+            // Get fresh stats from Neo4j
+            const stats = await getPlayerStats(username);
             
+            // Cache the result
             await redisClient.set(playerAchievementsKey, JSON.stringify(stats));
             await redisClient.expire(
                 playerAchievementsKey,
@@ -527,8 +529,9 @@ userRouter.post("/getPlayerStats", authUser, async (req: any, res: any) => {
             
             return res.status(200).json({ stats });
         } 
-        else 
-            return res.status(200).json({ stats: JSON.parse(stats) });
+        else {
+            return res.status(200).json({ stats: JSON.parse(cachedStats) });
+        }
         
     } catch (error) {
         return res.status(500).json({ message: "Failed to fetch player stats" });
