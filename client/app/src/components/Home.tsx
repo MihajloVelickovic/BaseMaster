@@ -298,7 +298,7 @@ function Home() {
       const { gameId, gameData, players } = response.data;
       const toBase = Number(gameData.toBase);
       const playerNum = gameData.maxPlayers;
-      const gameMode = gameId.split('_')[0];
+      const gameMode = gameData.gamemode;
       const difficulty = gameData.difficulty; 
       const hostId = players[0];
       const roundCount = gameData.roundCount;

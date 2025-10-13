@@ -12,30 +12,59 @@ interface LeaderboardEntry {
   fourths: number;
 }
 
+interface LeaderboardResponse {
+  items: LeaderboardEntry[];
+  nextSkip: number;
+  cached: boolean;
+}
+
 const Leaderboard = () => {
+  const PAGE_SIZE = 16;
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
+  const [currentSkip, setCurrentSkip] = useState(0);
+  const [hasNextPage, setHasNextPage] = useState(false);
 
   useEffect(() => {
     fetchLeaderboard();
-  }, []);
+  }, [currentSkip]);
 
   const fetchLeaderboard = async () => {
     try {
       setLoading(true);
-      const res = await axiosInstance.get("/game/globalLeaderboard", {
-        params: { limit: 20 }
+      const res = await axiosInstance.get<LeaderboardResponse>("/game/globalLeaderboard", {
+        params: { 
+          limit: PAGE_SIZE,
+          skip: currentSkip
+        }
       });
       console.log(res);
-      setLeaderboard(res.data.items || []);
+      const items = res.data.items || [];
+      setLeaderboard(items);
+      // If we got fewer items than requested, there's no next page
+      setHasNextPage(items.length >= PAGE_SIZE);
       setError(null);
     } catch (err) {
       console.error("Error fetching leaderboard", err);
       setError("Failed to load leaderboard");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (hasNextPage) {
+      setCurrentSkip(prev => prev + PAGE_SIZE);
+      setExpandedRow(null); // Close any expanded rows
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (currentSkip > 0) {
+      setCurrentSkip(prev => Math.max(0, prev - PAGE_SIZE));
+      setExpandedRow(null); // Close any expanded rows
     }
   };
 
@@ -51,6 +80,8 @@ const Leaderboard = () => {
       default: return "";
     }
   };
+
+  const getCurrentPage = () => Math.floor(currentSkip / PAGE_SIZE) + 1;
 
   if (loading) {
     return (
@@ -81,7 +112,7 @@ const Leaderboard = () => {
         <button onClick={fetchLeaderboard} className="refresh-button">
           🔄 Refresh
         </button>
-      </div>
+      </div>     
 
       <div className="leaderboard-table-container">
         <table className="leaderboard-table">
@@ -101,11 +132,11 @@ const Leaderboard = () => {
                   {/* Main Row */}
                   <tr 
                     key={entry.username} 
-                    className={`leaderboard-row ${index < 3 ? 'top-three' : ''}`}
+                    className={`leaderboard-row ${currentSkip + index < 3 ? 'top-three' : ''}`}
                   >
                     <td className="rank-cell">
                       <span className="rank-number">
-                        {getMedalEmoji(index + 1) || `#${index + 1}`}
+                        {getMedalEmoji(currentSkip + index + 1) || `#${currentSkip + index + 1}`}
                       </span>
                     </td>
                     <td className="player-cell">
@@ -178,6 +209,27 @@ const Leaderboard = () => {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Pagination Controls - Bottom */}
+      <div className="pagination-controls bottom">
+        <button 
+          onClick={handlePrevPage} 
+          className="pagination-button"
+          disabled={currentSkip === 0}
+        >
+          ← Previous
+        </button>
+        <span className="page-info">
+          Page {getCurrentPage()}
+        </span>
+        <button 
+          onClick={handleNextPage} 
+          className="pagination-button"
+          disabled={!hasNextPage}
+        >
+          Next →
+        </button>
       </div>
     </div>
   );

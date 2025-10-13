@@ -344,7 +344,7 @@ export default function Lobby () {
                         Start Game!
                     </button>
                 ) : (
-                    <div className="waitingText">Waiting for lobby owner to start the game...</div>
+                    <div className="waitingText">Waiting for host to start the game....</div>
                 )}
                 
                 <button className="startGameButton leaveLobbyButton" onClick={handleLeaveLobby}>
