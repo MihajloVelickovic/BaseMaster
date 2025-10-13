@@ -8,10 +8,12 @@ import { IdPrefixes, WebServerTypes } from "./shared_modules/shared_enums";
 import userRouter from "./routers/userRouter";
 import { connectionSuccess, n4jSession, n4jDriver } from "./neo4jClient";
 import { UserService } from "./utils/userService";
-import { ensureUserConstraints } from "./utils/neo4jConstraintsService";
+//import { ensureUserConstraints } from "./utils/neo4jConstraintsService";
 import { ensureGraphConstraints } from "./utils/ensureConstraints";
 import { initializeGraphStructure } from './graph/leaderboard.repo';
 import { initRedisWsBridge } from "./utils/redisWsBridge";
+import { migrateUsersToPlayers } from "./migration/migrateUsersToPlayers";
+import { checkDatabaseState } from "./migration/checkDatabaseState";
 
 // Server state management
 class ServerState {
@@ -208,9 +210,7 @@ let redisWsBridge: any = null;
 async function initializeServer() {
     try {
         console.log("[SYSTEM] Initializing server components...");
-        
-        // Initialize database constraints and structures
-        await ensureUserConstraints();
+
         await ensureGraphConstraints();
         await initializeGraphStructure();
         

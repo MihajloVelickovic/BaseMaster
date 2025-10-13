@@ -2,48 +2,50 @@ import { n4jSession } from "../neo4jClient";
 import { recordGameResult, getGlobalLeaderboard, connectPlayerToLeaderboard } from './leaderboard.repo';
 
 /**
- * Ensure the given User is also labeled :Player and has leaderboard props.
- * Idempotent: safe to call on every register/login.
+ * Ensure Player node exists with all necessary properties.
+ * Used during registration and login.
  */
-export async function upsertPlayerFromUser(username: string, email?: string) {
+export async function upsertPlayer(username: string, email?: string, hashedPassword?: string) {
   const session = n4jSession();
   try {
     await session.executeWrite(tx =>
       tx.run(
         `
-        // Make sure there is a User node for this username (register already does this)
-        MERGE (u:User {username: $username})
-
-        // Upgrade the same node to also be a :Player
-        SET u:Player
-
-        // Set a stable id (we'll use username as id here)
-        SET u.id = coalesce(u.id, $username)
-
-        // Keep email if we learn a new one
-        SET u.email = coalesce($email, u.email)
-
+        // Create or update Player node
+        MERGE (p:Player {username: $username})
+        
+        // Set stable id
+        ON CREATE SET 
+          p.id = $username,
+          p.email = $email,
+          p.password = $hashedPassword,
+          p.createdAt = timestamp()
+        
+        ON MATCH SET
+          p.email = coalesce($email, p.email),
+          p.password = coalesce($hashedPassword, p.password)
+        
         // Initialize leaderboard fields if missing
-        SET u.highestScore = coalesce(u.highestScore, 0),
-            u.firsts       = coalesce(u.firsts, 0),
-            u.seconds      = coalesce(u.seconds, 0),
-            u.thirds       = coalesce(u.thirds, 0),
-            u.fourths      = coalesce(u.fourths, 0),
-
-            // metadata
-            u.createdAt    = coalesce(u.createdAt, timestamp())
+        SET p.highestScore = coalesce(p.highestScore, 0),
+            p.firsts       = coalesce(p.firsts, 0),
+            p.seconds      = coalesce(p.seconds, 0),
+            p.thirds       = coalesce(p.thirds, 0),
+            p.fourths      = coalesce(p.fourths, 0),
+            p.bestScore    = coalesce(p.bestScore, 0),
+            p.totalGames   = coalesce(p.totalGames, 0),
+            p.totalScore   = coalesce(p.totalScore, 0),
+            p.gamesWon     = coalesce(p.gamesWon, 0),
+            p.averageScore = coalesce(p.averageScore, 0)
+        
+        RETURN p
         `,
-        { username, email }
+        { username, email, hashedPassword }
       )
     );
   } finally {
     await session.close();
   }
 }
-
-// export async function recordResult({ username, score, placement }: { username: string; score: number; placement: 1 | 2 | 3 | 4 }) {
-//   await recordGameResult(username, score, placement);
-// }
 
 export async function getLeaderboard({ limit, skip }: { limit: number; skip: number }) {
   return await getGlobalLeaderboard(limit, skip);

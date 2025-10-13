@@ -1,33 +1,32 @@
 import { n4jSession } from "../neo4jClient";
 import { redisClient } from "../redisClient";
 import { CACHE_DURATION } from "../shared_modules/configMaps";
-import { IdPrefixes, CacheTypes } from "../shared_modules/shared_enums";
-
+import { CacheTypes } from "../shared_modules/shared_enums";
 
 export class UserService {
   static async getFriends(username: string): Promise<string[]> {
     const n4jSesh = n4jSession();
 
     try {
-      // Check if user exists
-      const userExists = await n4jSesh.executeRead(async tx => {
+      // Check if player exists
+      const playerExists = await n4jSesh.executeRead(async tx => {
         const result = await tx.run(
-          `RETURN EXISTS{ MATCH(:User {username: $username}) } AS userExists`,
+          `RETURN EXISTS{ MATCH(:Player {username: $username}) } AS playerExists`,
           { username }
         );
-        return result.records[0]?.get("userExists");
+        return result.records[0]?.get("playerExists");
       });
 
-      if (!userExists) {
-        throw new Error(`User '${username}' does not exist`);
+      if (!playerExists) {
+        throw new Error(`Player '${username}' does not exist`);
       }
 
       // Get friends
       const friends = await n4jSesh.executeRead(async tx => {
         const result = await tx.run(
-          `MATCH(u:User {username: $username})
-           OPTIONAL MATCH (u)-[:FRIEND]-(n:User)
-           RETURN collect(n.username) AS friends`,
+          `MATCH(p:Player {username: $username})
+           OPTIONAL MATCH (p)-[:FRIEND]-(f:Player)
+           RETURN collect(f.username) AS friends`,
           { username }
         );
         return result.records[0]?.get("friends") ?? [];
@@ -40,23 +39,18 @@ export class UserService {
   }
 
   static async getCachedFriendList(redisKey: string) {
-    
-    const cachedList = 
-    await redisClient.lRange(redisKey,0,-1);
-
+    const cachedList = await redisClient.lRange(redisKey, 0, -1);
     return cachedList;
   }
 
   static async deleteCachedFriendList(redisKey: string) {
     await redisClient.del(redisKey);
-  }    
+  }
 
   static async cacheFriends(redisKey: string, friends: string[]) {
-    if (friends.length === 0) return; // no-op
+    if (friends.length === 0) return;
     
     await redisClient.rPush(redisKey, friends);
     await redisClient.expire(redisKey, CACHE_DURATION[CacheTypes.GENERIC_CACHE]);
-   }
-
- 
+  }
 }
