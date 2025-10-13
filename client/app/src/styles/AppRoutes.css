@@ -10,6 +10,19 @@ body::before {
 }
 body {
     background-image: url(../../pictures/background_img_01.jpg);
-    background-repeat: no-repeat;
+    background-repeat: repeat;
     background-size: cover;
+    animation: drift 16s ease-in-out infinite alternate;
+}
+
+@keyframes drift {
+  0% {
+    background-position: 0% 0%;
+  }
+  50% {
+    background-position: 8% 4%; /* subtle diagonal drift */
+  }
+  100% {
+    background-position: 0% 0%;
+  }
 }
