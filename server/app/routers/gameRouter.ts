@@ -70,9 +70,13 @@ gameRouter.post("/createGame", async (req: any, res:any) => {
         if(gameOptions.gamemode === GameModes.CHAOS)
             await addChaosBaseArrays(roundCount,gameId);
         
+        const finalLobbyName = 
+        isNullOrWhitespace(lobbyName) || lobbyName === 'NONE' 
+        ? `${hostId}'s` : lobbyName;
+
         var gameData = {difficulty:gameOptions.difficulty, maxPlayers:playerCount,
             currPlayerCount: 1, gameState: GameStates.LOBBY, base: toBase,
-            gamemode:gameOptions.gamemode, roundCount:roundCount
+            gamemode:gameOptions.gamemode, roundCount:roundCount, lobbyName:finalLobbyName
         }
 
         await redisClient.set(gameId, JSON.stringify(gameData)); // set max player count
@@ -80,10 +84,9 @@ gameRouter.post("/createGame", async (req: any, res:any) => {
         await redisClient.hSet(IdPrefixes.LOBBIES_CURR_PLAYERS, gameId,  1); //[gameid,curr,max]
         
         await redisClient.hSet(IdPrefixes.LOBBIES_MAX_PLAYERS, gameId, playerCount);               
-        
-        if(gameOptions.lobbyName !== "NONE")
-            await redisClient.hSet(IdPrefixes.LOBBIES_NAMES, gameId,
-                                   gameOptions.lobbyName);
+                
+        await redisClient.hSet(IdPrefixes.LOBBIES_NAMES, gameId,
+                                finalLobbyName);
         
         const scroeboardKey = RedisKeys.scoreboard(gameId);
         const lobbyPlayersKey = RedisKeys.lobbyPlayers(gameId);
@@ -95,10 +98,10 @@ gameRouter.post("/createGame", async (req: any, res:any) => {
             score:now,
             value:hostId
         });
-                                        
-        res.send({message:`Game created succesfully`, gameID:gameId});
+        console.log("BEFORE send gameData",gameData);                              
+        return res.send({message:`Game created succesfully`, gameID:gameId, gameData});
     } catch (err) {
-        res.status(500).send('Error saving user data to Redis');
+        return res.status(500).send('Error saving user data to Redis');
     }
 });
 
@@ -234,7 +237,7 @@ gameRouter.post("/joinLobby", async (req:any, res:any) => {
         console.log("Success", gameId, parsedData);
 
         publisher.publish(RedisKeys.playerJoin(gameId),
-                            JSON.stringify({playerID:playerId}));
+                            JSON.stringify({playerID:playerId, gameData}));
 
         return res.send({message:"Success", gameId:gameId,
         gameData: {...parsedData, roundCount:roundCount}, players:players, lobbyName: lobbyName || gameId.slice(-5)});

@@ -22,9 +22,10 @@ export default function Lobby () {
     const wsRef = useRef<WebSocket | null>(null);
     var { toBasee = 2, playerNum = 1, gameMode = GameModes.CLASSIC.toString(),
          difficulty = Difficulties.LAYMAN.toString(), gameId = "", playerID,
-          lobbyName, hostId, roundCount, playerIds} = location.state || {};
-    console.log(playerID, 'ovo je player id');
-    console.log(hostId);
+          transferedLobbyName, hostId, roundCount, playerIds} = location.state || {};
+    // console.log(playerID, 'ovo je player id');
+    // console.log(hostId);
+    console.log("Lobby Name Entered Lobby: ", transferedLobbyName)
     const navigate = useNavigate();
     const [startGameFlag, setStartGameFlag] = useState(false);
     //const [friends, setFriends] = useState<string[]>([]);
@@ -39,6 +40,7 @@ export default function Lobby () {
     const { friends,setFriends,friendRequests,setFriendRequests } = useFriendContext();
     const [isInviteOpen, setIsInviteOpen] = useState<boolean>(false);
     const { onlineUsers } = useFriendContext();
+    const [lobbyName, setLobbyName] = useState(transferedLobbyName)
     console.log("playerChat: ", playerChat);
    
     useEffect(() => {
@@ -91,6 +93,8 @@ export default function Lobby () {
                 setPlayers(prevPlayers => 
                     prevPlayers.includes(data.playerId) ? prevPlayers : [...prevPlayers, data.playerId]
                 );
+
+                
 
                 if (data.playerId === playerID) {
                     setPlayerChat(["You joined a lobby."]); // Clear old chat
@@ -215,7 +219,7 @@ export default function Lobby () {
             </div>
         );
     }
-    console.log("player chat pre poslednjeg: ", playerChat);
+    //console.log("player chat pre poslednjeg: ", playerChat);
     const  sendFriendRequest = async (e: React.MouseEvent<HTMLButtonElement>) => {
         const targetPlayerID = e.currentTarget.getAttribute('data-player-id');
         if (!targetPlayerID)
@@ -332,7 +336,7 @@ export default function Lobby () {
             </div>
 
             <div className="LobbyContainer ">
-                <label className="mainLobbyText"> {lobbyName}'s Lobby </label>            
+                <label className="mainLobbyText"> {lobbyName} Lobby </label>            
                 {showLobbyStats()}
 
                 {playerID === hostIdState ? (

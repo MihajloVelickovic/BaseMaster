@@ -162,7 +162,17 @@ function Home() {
 
   useEffect(() => {
     if (gameId) {
-      navigate("/Lobby", { state: { toBasee:toBase, playerNum, gameMode, difficulty, gameId, playerID: playerId? playerId : "", roundCount, lobbyName: playerIdTransfered!=""? playerIdTransfered : "Enie", hostId: playerId? playerId : "" } });
+      navigate("/Lobby", { state: { 
+        toBasee:toBase,
+        playerNum,
+        gameMode, 
+        difficulty, 
+        gameId, 
+        playerID: playerId? playerId : "",
+        roundCount,
+        transferedLobbyName: lobbyName,
+        hostId: playerId? playerId : "" 
+      } });
     }
     // console.log("here");
     // console.log(location.state?.playerIdTransfered, "this is it");
@@ -239,10 +249,11 @@ function Home() {
         var response = await axiosInstance.post('/game/createGame', toSend);
         console.log("response za createGame je: ", response);
         const gId = response.data[`${gameID}`];        //check the name.. if changed
-        console.log("gameId je: ", gId);
+        //console.log("gameId je: ", gId);
+        console.log("LOBBY NAME IS", response.data.gameData.lobbyName)
         setGameId(gId);
 
-        const finalLobbyName = lobbyName.trim() ? lobbyName : `${gId.slice(-5)}`;
+        const finalLobbyName = response.data.gameData.lobbyName?.trim() || "Ennie's";
         setLobbyName(finalLobbyName);
 
     } catch (error:any) {
@@ -284,7 +295,7 @@ function Home() {
       const response = await axiosInstance.post('/game/joinLobby', { gameId: selectedGameId, playerId: playerId!=""? playerId : playerID });
       console.log(response);
 
-      const { gameId, gameData, players, lobbyName } = response.data;
+      const { gameId, gameData, players } = response.data;
       const toBase = Number(gameData.toBase);
       const playerNum = gameData.maxPlayers;
       const gameMode = gameId.split('_')[0];
@@ -292,7 +303,7 @@ function Home() {
       const hostId = players[0];
       const roundCount = gameData.roundCount;
       const playerIds = players;
-      const finalLobbyName = lobbyName;
+      const finalLobbyName = gameData.lobbyName;
 
       navigate("/Lobby", { state: { toBase, playerNum, gameMode,
                            difficulty, gameId: selectedGameId, playerID: playerId? playerId : "",
@@ -397,7 +408,7 @@ function Home() {
             Lobby name:            
           </label>
           <input className="advancedOptionsInput inputFont" 
-          value={lobbyName} onChange={e => setLobbyName(e.target.value.toString().slice(0,10))}/> 
+          value={lobbyName} onChange={e => setLobbyName(e.target.value.toString().slice(0,12))}/> 
           </div>
       </>
     );
@@ -494,21 +505,6 @@ function Home() {
           </>
         )}
       </div>
-
-      {/* <div className="LeaderboardContainer">
-        <h3 className="leaderboardTitle">🌍 Global Leaderboard</h3>
-        <ul className="leaderboardList">
-          {leaderboard.length > 0 ? leaderboard.map((e, i) => (
-            <li key={i} className="leaderboardItem">
-              <span className="rank">#{i + 1}</span>
-              <span className="player">{e.username}</span>
-              <span className="score">{e.bestScore}</span>
-            </li>
-          )) : (
-            <p className="noPlayers">No players yet.</p>
-          )}
-        </ul>
-      </div> */}
     </div>
     {playerID && (
       <div className="chat-container">
