@@ -1,5 +1,5 @@
 import { recordGameResult } from "../graph/leaderboard.repo";
-import { GameResultRow, PlayerResult, ScoreboardEntry } from "../models/types";
+import { GameResultRow, GameResultRowWithRank, PlayerResult, ScoreboardEntry } from "../models/types";
 import { redisClient } from "../redisClient";
 import { BaseValues, GameModes, getGamemode } from "../shared_modules/shared_enums";
 import { RedisKeys } from "./redisKeyService";
@@ -69,63 +69,57 @@ export async function setRounds(gameId:string, roundCount:number, initialValue:n
   await redisClient.hSet(gameId, roundData);
 }
 
-function playerIdToUsername(playerId: string): string {
-  // Your playerId looks like "username_random"
-  // If it ever comes as just "username", this still works.
-  const name = String(playerId).split("_")[0];
-  return name || String(playerId);
-}
-
 export async function SaveResults(scoreboard: ScoreboardEntry[]): Promise<PlayerResult[]> {
-  // Build rows with usernames and placements
-  const rows: GameResultRow[] = scoreboard.map((row, index) => ({
-    username: playerIdToUsername(row.value),
-    score: Math.floor(Number(row.score) || 0),
-    placement: (index + 1) as 1 | 2 | 3 | 4,
-  }));
+  const enrichedRows: Array<{username: string, score: number, rank: number | null}> = [];
 
-  // Single Neo4j call to record all results
-  await recordGameResult(rows);
-
-  // Update Redis leaderboard (only if score is better)
-  const zKey = RedisKeys.globalLeaderboard();
-  const pipeline = redisClient.multi();
-
-  for (const row of rows) {
-    pipeline.zScore(zKey, row.username);
-  }
-
-  const scores = await pipeline.exec();
-  const updates: Array<{ score: number; value: string }> = [];
-
-  if (scores) {
-    for (let i = 0; i < rows.length; i++) {
-      // Handle different redis client return types
-      const scoreResult = scores[i];
-      const existingScore = Array.isArray(scoreResult) 
-        ? (scoreResult[1] as number | null)
-        : (scoreResult as number | null);
-      
-      if (existingScore === null || rows[i].score > existingScore) {
-        updates.push({ score: rows[i].score, value: rows[i].username });
-      }
+  for (const entry of scoreboard) {
+    const username = entry.value;
+    const score = Math.floor(Number(entry.score) || 0);
+    
+    const oldBestScore = await redisClient.zScore(RedisKeys.leaderboardRankings(), username) || 0;
+    
+    if (score > oldBestScore) {
+      await updatePlayerScoreInRedis(username, score);
+      console.log(`[RANK UPDATE] ${username}: ${oldBestScore} -> ${score}`);
     }
+    
+    const rank = await getPlayerRankFromRedis(username);
+    
+    enrichedRows.push({
+      username,
+      score,
+      rank
+    });
   }
 
-  if (updates.length > 0) {
-    await redisClient.zAdd(zKey, updates);
-  }
+  await recordGameResult(enrichedRows);
+  await invalidateLeaderboardCache();
 
-  // Invalidate page cache
-  invalidateLeaderboardCache();
-
-  // Build proper return format
-  const results: PlayerResult[] = scoreboard.map((row, index) => ({
-    username: playerIdToUsername(row.value),
-    playerId: row.value,
+  return scoreboard.map((row, index) => ({
+    username: row.value,
     score: Math.floor(Number(row.score) || 0),
     placement: index + 1,
   }));
+}
 
-  return results;
+export async function getPlayerRankFromRedis(username: string): Promise<number | null> {
+  try {
+    const rankingKey = RedisKeys.leaderboardRankings();
+    const rank = await redisClient.zRevRank(rankingKey, username);
+    return rank !== null ? rank + 1 : null; // Convert 0-indexed to 1-indexed
+  } catch (error) {
+    console.error('[REDIS ERROR] Failed to get player rank:', error);
+    return null;
+  }
+}
+
+export async function updatePlayerScoreInRedis(username: string, newScore: number): Promise<void> {
+  try {
+    await redisClient.zAdd(RedisKeys.leaderboardRankings(), {
+      score: newScore,
+      value: username
+    });
+  } catch (error) {
+    console.error('[REDIS ERROR] Failed to update player score:', error);
+  }
 }

@@ -17,6 +17,8 @@ interface PlayerStats {
   seconds?: number;
   thirds?: number;
   fourths?: number;
+  peakRank?:number;
+  peakRankDate?: string;
 }
 
 interface Achievement {
@@ -123,7 +125,7 @@ function Profile() {
   const calculateWinRate = () => {
     if (!stats || stats.totalGames === 0) return 0;
     const wins = stats.firsts || 0;
-    return ((wins / stats.totalGames) * 100).toFixed(1);
+    return formatPercentage(((wins / stats.totalGames) * 100));
   };
 
   const formatDate = (dateString: string | null | undefined) => {
@@ -171,9 +173,15 @@ function Profile() {
               </span>
               <span className="summary-item">
                 <strong>{stats.bestScore}</strong> Best Score
-              </span>
+              </span>            
               <span className="summary-item">
                 <strong>{stats.friendCount}</strong> Friends
+              </span>
+              <span className="summary-item peak-padding">
+                <strong>{stats.peakRank}</strong> Peak rank
+              </span>
+              <span className="summary-item">
+                <strong>{formatDate(stats.peakRankDate)}</strong> Peak rank date
               </span>
             </div>
           )}

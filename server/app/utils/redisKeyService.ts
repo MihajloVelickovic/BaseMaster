@@ -98,5 +98,9 @@ export class RedisKeys {
   static globalAchievementStats() {
     return `global:achievementsstats`;
   }
+
+  static leaderboardRankings() {
+    return `leaderboard_rankings`;
+  }
 }
 

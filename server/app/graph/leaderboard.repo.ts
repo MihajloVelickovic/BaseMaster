@@ -2,6 +2,8 @@ import { n4jSession } from "../neo4jClient";
 import neo4j from 'neo4j-driver';
 import { formatNeo4jDate } from "../utils/timeConversion";
 import type {Record} from 'neo4j-driver'
+import { redisClient } from "../redisClient";
+import { RedisKeys } from "../utils/redisKeyService";
 
 export interface LeaderboardEntry {
   username: string;
@@ -58,7 +60,23 @@ export async function initializeGraphStructure() {
           RETURN a
         `, achievement);
       }
+
+
+       await tx.run(`
+        MATCH (p:Player)-[:PARTICIPATES_IN]->(lb:Leaderboard {id: 'global'})
+        WHERE p.currentRank IS NULL OR p.peakRank IS NULL
+        WITH p ORDER BY COALESCE(p.bestScore, 0) DESC, p.username ASC
+        WITH collect(p) as players
+        UNWIND range(0, size(players)-1) as idx
+        WITH players[idx] as player, idx + 1 as rank
+        SET player.currentRank = rank,
+            player.peakRank = rank,
+            player.peakRankDate = datetime()
+      `);
+    
     });
+
+    
     console.log("[SYSTEM]: Graph structure initialized.");
   } finally {
     await session.close();
@@ -101,19 +119,17 @@ export async function connectPlayerToLeaderboard(username: string) {
 // Update the recordGameResult function in leaderboard.repo.ts
 
 export async function recordGameResult(
-  rows: Array<{ username: string; score: number; placement: 1 | 2 | 3 | 4 }>
+  rows: Array<{ username: string; score: number; rank: number | null }>
 ): Promise<void> {
   const session = n4jSession();
   try {
     await session.executeWrite(async (tx) => {
-      // Single UNWIND query to update all players
       const result = await tx.run(
         `
         UNWIND $rows AS row
         MATCH (p:Player {username: row.username})-[r:PARTICIPATES_IN]->(lb:Leaderboard {id: 'global'})
         
         SET
-          // Update relationship stats
           r.totalGames = COALESCE(r.totalGames, 0) + 1,
           r.totalScore = COALESCE(r.totalScore, 0) + row.score,
           r.bestScore = CASE
@@ -126,9 +142,7 @@ export async function recordGameResult(
           END,
           r.lastPlayed = datetime(),
           r.lastScore = row.score,
-          r.lastPlacement = row.placement,
           
-          // Update player node properties
           p.totalGames = COALESCE(p.totalGames, 0) + 1,
           p.totalScore = COALESCE(p.totalScore, 0) + row.score,
           p.bestScore = CASE
@@ -140,58 +154,51 @@ export async function recordGameResult(
             ELSE p.bestScoreDate
           END,
           p.averageScore = (COALESCE(p.totalScore, 0) + row.score) / (COALESCE(p.totalGames, 0) + 1),
-          p.lastPlayed = datetime(),
-          
-          // Update placement counts
-          p.firsts = CASE
-            WHEN row.placement = 1 THEN COALESCE(p.firsts, 0) + 1
-            ELSE COALESCE(p.firsts, 0)
-          END,
-          p.seconds = CASE
-            WHEN row.placement = 2 THEN COALESCE(p.seconds, 0) + 1
-            ELSE COALESCE(p.seconds, 0)
-          END,
-          p.thirds = CASE
-            WHEN row.placement = 3 THEN COALESCE(p.thirds, 0) + 1
-            ELSE COALESCE(p.thirds, 0)
-          END,
-          p.fourths = CASE
-            WHEN row.placement = 4 THEN COALESCE(p.fourths, 0) + 1
-            ELSE COALESCE(p.fourths, 0)
-          END,
-          
-          // Legacy gamesWon field
-          p.gamesWon = CASE
-            WHEN row.placement = 1 THEN COALESCE(p.gamesWon, 0) + 1
-            ELSE COALESCE(p.gamesWon, 0)
-          END
+          p.lastPlayed = datetime()
         
         RETURN
           row.username AS username,
+          row.rank AS rank,
           p.totalGames AS totalGames,
           p.totalScore AS totalScore,
           p.bestScore AS bestScore,
           row.score AS lastScore,
-          row.placement AS placement
+          COALESCE(p.peakRank, 999999) AS oldPeakRank
         `,
         { rows }
       );
 
-      // Check achievements for each player in same transaction
       for (const record of result.records) {
         const username = record.get('username');
+        const rank = record.get('rank');
+        const oldPeakRank = record.get('oldPeakRank');
         const totalGames = record.get('totalGames');
         const totalScore = record.get('totalScore');
         const bestScore = record.get('bestScore');
         const lastScore = record.get('lastScore');
-        const placement = record.get('placement');
-
+        
+        if (rank !== null) {
+          if (rank < oldPeakRank) {
+            await tx.run(`
+              MATCH (p:Player {username: $username})
+              SET p.currentRank = $rank,
+                  p.peakRank = $rank,
+                  p.peakRankDate = datetime()
+            `, { username, rank });
+          } else {
+            await tx.run(`
+              MATCH (p:Player {username: $username})
+              SET p.currentRank = $rank
+            `, { username, rank });
+          }
+        }
+        
         await checkAndAwardAchievements(tx, username, {
           totalGames,
           totalScore,
           bestScore,
           lastScore,
-          placement,
+          placement: 1,
         });
       }
     });
@@ -287,6 +294,28 @@ export async function getGlobalLeaderboard(limit: number = 50, skip: number = 0)
   }
 }
 
+export async function getAllPlayersHighscores(): Promise<Array<{username: string, bestScore: number}>> {
+  const session = n4jSession();
+  try {
+    const result = await session.executeRead(async tx => {
+      return await tx.run(`
+        MATCH (p:Player)-[:PARTICIPATES_IN]->(lb:Leaderboard {id: 'global'})
+        RETURN 
+          p.username as username,
+          COALESCE(p.bestScore, 0) as bestScore
+        ORDER BY bestScore DESC
+      `);
+    });
+    
+    return result.records.map(record => ({
+      username: record.get('username'),
+      bestScore: record.get('bestScore')
+    }));
+  } finally {
+    await session.close();
+  }
+}
+
 // Get player's achievements
 export async function getPlayerAchievements(username: string) {
   const session = n4jSession();
@@ -366,6 +395,8 @@ export async function getPlayerStats(username: string) {
           p.seconds as seconds,
           p.thirds as thirds,
           p.fourths as fourths,
+          p.peakRank as peakRank,
+          p.peakRankDate as peakRankDate,
           count(DISTINCT a) as achievementCount,
           count(DISTINCT friends) as friendCount
       `, { username });
@@ -389,7 +420,9 @@ export async function getPlayerStats(username: string) {
       firsts: record.get('firsts') || 0,
       seconds: record.get('seconds') || 0,
       thirds: record.get('thirds') || 0,
-      fourths: record.get('fourths') || 0
+      fourths: record.get('fourths') || 0,
+      peakRank: record.get('peakRank') || 0,
+      peakRankDate: formatNeo4jDate(record.get('peakRankDate'))
     };
   } finally {
     await session.close();
@@ -448,5 +481,37 @@ export async function getAllAchievementsWithStats() {
     };
   } finally {
     await session.close();
+  }
+}
+
+export async function syncLeaderboardToRedis(): Promise<void> {
+  try {
+    console.log('[SYNC] Starting leaderboard sync to Redis...');
+    
+    // Get all players from Neo4j
+    const players = await getAllPlayersHighscores();
+    
+    if (players.length === 0) {
+      console.log('[SYNC] No players to sync');
+      return;
+    }
+    
+    const redisRankingsKey = RedisKeys.leaderboardRankings(); 
+
+    // Clear existing ZSet
+    await redisClient.del(redisRankingsKey);
+    
+    // Batch add to Redis ZSet
+    const members = players.map(p => ({
+      score: p.bestScore,
+      value: p.username
+    }));
+    
+    await redisClient.zAdd(redisRankingsKey, members);
+    
+    console.log(`[SYNC] Synced ${players.length} players to Redis ZSet`);
+  } catch (error) {
+    console.error('[SYNC ERROR] Failed to sync leaderboard to Redis:', error);
+    throw error;
   }
 }

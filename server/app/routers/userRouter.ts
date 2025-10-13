@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { n4jDriver, n4jSession } from "../neo4jClient";
 import { auth, Transaction } from "neo4j-driver";
-import { UserService } from "../utils/userService";
+import { areInvalidMessagePair, UserService } from "../utils/userService";
 import {publisher, redisClient} from "../redisClient";
 import { IdPrefixes, CacheTypes } from "../shared_modules/shared_enums";
 import { upsertPlayer } from "../graph/player.repo";
@@ -12,7 +12,7 @@ import jwt from "jsonwebtoken";
 import { hashPassword, verifyPassword } from "../utils/auth";
 import { CACHE_DURATION } from "../shared_modules/configMaps";
 import { isNullOrWhitespace } from "../utils/stringUtils";
-import { invalidateLeaderboardCache } from "../utils/gameService";
+import { getPlayerRankFromRedis, invalidateLeaderboardCache } from "../utils/gameService";
 
 const userRouter = Router();
 let refreshToks: string[] = [];
@@ -533,7 +533,8 @@ userRouter.post("/getPlayerStats", authUser, async (req: any, res: any) => {
             return res.status(200).json({ stats: JSON.parse(cachedStats) });
         }
         
-    } catch (error) {
+    } catch (error:any) {
+        console.log(error)
         return res.status(500).json({ message: "Failed to fetch player stats" });
     }
 });
@@ -541,14 +542,14 @@ userRouter.post("/getPlayerStats", authUser, async (req: any, res: any) => {
 userRouter.post("/getFriendsWithAchievements", authUser, async (req: any, res: any) => {
     const { username } = req.body;
     
-    if (isNullOrWhitespace(username)) {
+    if (isNullOrWhitespace(username))
         return res.status(400).json({ message: "Username required" });
-    }
+    
     
     try {
         const friends = await getFriendsWithAchievements(username);
         return res.status(200).json({ friends });
-    } catch (error) {
+    } catch (error:any) { //any any any any
         return res.status(500).json({ message: "Failed to fetch friends data" });
     }
 });
@@ -650,13 +651,7 @@ userRouter.post("/getMessages", async (req:any, res:any) => {
     }
 });
 
-const isInvalid = (value:any) => {
-    return !value || typeof value !== 'string' || value.trim() === '';
-}
 
-const areInvalidMessagePair = (sender:any, receiver:any) => {
-    return isInvalid(sender) || isInvalid(receiver) || sender === receiver;
-}
 
 userRouter.get("/getAllAchievementsWithStats", async (req: any, res: any) => {
   try {
@@ -676,6 +671,22 @@ userRouter.get("/getAllAchievementsWithStats", async (req: any, res: any) => {
   } catch (error: any) {
     console.error('[ERROR]: Failed to fetch global stats', error);
     return res.status(500).json({ message: "Failed to fetch global stats" });
+  }
+});
+
+userRouter.get("/getPlayerRank", authUser, async(req:any, res:any) => {
+try {
+    const username = req.query.username;
+
+    if (isNullOrWhitespace(username)) 
+      return res.status(400).json({ error: "Missing username" });
+    
+
+    const rank = await getPlayerRankFromRedis(username);
+    return res.json({ username, rank });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Internal server error" });
   }
 });
 

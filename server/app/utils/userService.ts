@@ -54,3 +54,11 @@ export class UserService {
     await redisClient.expire(redisKey, CACHE_DURATION[CacheTypes.GENERIC_CACHE]);
   }
 }
+
+export const isInvalid = (value:any) => {
+    return !value || typeof value !== 'string' || value.trim() === '';
+}
+
+export const areInvalidMessagePair = (sender:any, receiver:any) => {
+    return isInvalid(sender) || isInvalid(receiver) || sender === receiver;
+}

@@ -11,7 +11,6 @@ export type GameResultRow = {
 
 export type PlayerResult = {
   username: string;
-  playerId: string;
   score: number;
   placement: number;
 };
@@ -28,3 +27,7 @@ export type Neo4jResult = {
   totalScore: number;
   bestScore: number;
 };
+
+export interface GameResultRowWithRank extends GameResultRow {
+  newRank: number | null;
+}

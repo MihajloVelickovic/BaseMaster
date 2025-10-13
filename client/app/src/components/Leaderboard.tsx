@@ -40,6 +40,7 @@ const Leaderboard = () => {
           skip: currentSkip
         }
       });
+      
       console.log(res);
       const items = res.data.items || [];
       setLeaderboard(items);

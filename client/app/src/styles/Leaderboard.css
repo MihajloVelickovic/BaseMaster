@@ -468,3 +468,58 @@
   min-width: 80px;
   text-align: center;
 }
+
+/* Highlight the logged-in player's row when they're on the page */
+.current-player {
+  outline: 2px solid rgba(46, 204, 113, 0.16);
+  background: linear-gradient(90deg, rgba(46,204,113,0.06), rgba(0,0,0,0));
+}
+
+/* Small separated container for out-of-page player */
+.player-separator {
+  padding: 12px 16px;
+  border-top: 2px dashed #e0e0e0;
+  background: #fafafa;
+  margin-top: 12px;
+  border-radius: 8px;
+  display: block;
+  overflow: auto;
+}
+
+/* smaller table inside the separator (keeps consistent cell styles) */
+.leaderboard-table.small {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+/* visually emphasize the separated player */
+.player-highlight-row {
+  background: linear-gradient(90deg, rgba(246, 226, 141, 0.12), rgba(255,255,255,0));
+  border-radius: 6px;
+}
+
+/* short label showing it's the current user */
+.player-you-label {
+  font-size: 12px;
+  color: #2c3e50;
+  margin-left: 8px;
+  opacity: 0.85;
+  font-weight: 600;
+}
+
+/* keep details-row styling consistent for separator's expansion */
+.player-separator .details-row {
+  background: #f8f9fa;
+}
+
+/* keep the separator responsive */
+@media (max-width: 768px) {
+  .player-separator {
+    padding: 8px;
+  }
+
+  .player-you-label {
+    display: none; /* space saving on small screens */
+  }
+}

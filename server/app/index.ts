@@ -10,7 +10,7 @@ import { connectionSuccess, n4jSession, n4jDriver } from "./neo4jClient";
 import { UserService } from "./utils/userService";
 //import { ensureUserConstraints } from "./utils/neo4jConstraintsService";
 import { ensureGraphConstraints } from "./utils/ensureConstraints";
-import { initializeGraphStructure } from './graph/leaderboard.repo';
+import { initializeGraphStructure, syncLeaderboardToRedis } from './graph/leaderboard.repo';
 import { initRedisWsBridge } from "./utils/redisWsBridge";
 import { migrateUsersToPlayers } from "./migration/migrateUsersToPlayers";
 import { checkDatabaseState } from "./migration/checkDatabaseState";
@@ -213,7 +213,7 @@ async function initializeServer() {
 
         await ensureGraphConstraints();
         await initializeGraphStructure();
-        
+        await syncLeaderboardToRedis();
         // Initialize Redis-WebSocket bridge
         redisWsBridge = initRedisWsBridge({ wsClients, userSockets });
         
