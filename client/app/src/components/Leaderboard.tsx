@@ -14,38 +14,44 @@ interface LeaderboardEntry {
 
 interface LeaderboardResponse {
   items: LeaderboardEntry[];
-  nextSkip: number;
+  page: number;
+  pageSize: number;
+  hasNextPage: boolean;
   cached: boolean;
 }
 
 const Leaderboard = () => {
-  const PAGE_SIZE = 16;
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
-  const [currentSkip, setCurrentSkip] = useState(0);
+  const [pageSize, setPageSize] = useState(16);
+  const [currentPage, setCurrentPage] = useState(1);
   const [hasNextPage, setHasNextPage] = useState(false);
+  const [playerRank, setPlayerRank] = useState(0);
+
 
   useEffect(() => {
     fetchLeaderboard();
-  }, [currentSkip]);
+  }, [currentPage]);
 
   const fetchLeaderboard = async () => {
     try {
       setLoading(true);
       const res = await axiosInstance.get<LeaderboardResponse>("/game/globalLeaderboard", {
         params: { 
-          limit: PAGE_SIZE,
-          skip: currentSkip
+          page: currentPage
         }
       });
       
+      console.log("returned page", res.data);
+
       console.log(res);
       const items = res.data.items || [];
       setLeaderboard(items);
       // If we got fewer items than requested, there's no next page
-      setHasNextPage(items.length >= PAGE_SIZE);
+      setPageSize(res.data.pageSize);
+      setHasNextPage(res.data.hasNextPage);
       setError(null);
     } catch (err) {
       console.error("Error fetching leaderboard", err);
@@ -57,14 +63,14 @@ const Leaderboard = () => {
 
   const handleNextPage = () => {
     if (hasNextPage) {
-      setCurrentSkip(prev => prev + PAGE_SIZE);
+      setCurrentPage(prev => prev + 1);
       setExpandedRow(null); // Close any expanded rows
     }
   };
 
   const handlePrevPage = () => {
-    if (currentSkip > 0) {
-      setCurrentSkip(prev => Math.max(0, prev - PAGE_SIZE));
+    if (currentPage > 1) {
+      setCurrentPage(prev => prev - 1);
       setExpandedRow(null); // Close any expanded rows
     }
   };
@@ -82,7 +88,9 @@ const Leaderboard = () => {
     }
   };
 
-  const getCurrentPage = () => Math.floor(currentSkip / PAGE_SIZE) + 1;
+  const getGlobalRank = (index: number) => {
+    return (currentPage - 1) * pageSize + index + 1;
+  };
 
   if (loading) {
     return (
@@ -128,77 +136,80 @@ const Leaderboard = () => {
           </thead>
           <tbody>
             {leaderboard.length > 0 ? (
-              leaderboard.map((entry, index) => (
-                <>
-                  {/* Main Row */}
-                  <tr 
-                    key={entry.username} 
-                    className={`leaderboard-row ${currentSkip + index < 3 ? 'top-three' : ''}`}
-                  >
-                    <td className="rank-cell">
-                      <span className="rank-number">
-                        {getMedalEmoji(currentSkip + index + 1) || `#${currentSkip + index + 1}`}
-                      </span>
-                    </td>
-                    <td className="player-cell">
-                      <div className="player-info">
-                        <div className="player-avatar">
-                          {entry.username.charAt(0).toUpperCase()}
-                        </div>
-                        {/* <span className="player-name">{entry.username}</span> */}
-                      </div>
-                    </td>
-                    <td className="score-cell">
-                      <span className="score-badge total">{entry.totalScore}</span>
-                    </td>
-                    <td className="score-cell">
-                      <span className="score-badge best">{entry.bestScore}</span>
-                    </td>
-                    <td className="actions-cell">
-                      <button 
-                        onClick={() => toggleDetails(entry.username)}
-                        className="details-button"
-                        aria-label="Toggle details"
-                      >
-                        {expandedRow === entry.username ? '▲' : '▼'}
-                      </button>
-                    </td>
-                  </tr>
-
-                  {/* Expanded Details Row */}
-                  {expandedRow === entry.username && (
-                    <tr className="details-row">
-                      <td colSpan={5}>
-                        <div className="placement-details">
-                          <h4>Placement History</h4>
-                          <div className="placement-grid">
-                            <div className="placement-stat">
-                              <span className="medal">🥇</span>
-                              <span className="count">{entry.firsts || 0}</span>
-                              <span className="label">First Place</span>
-                            </div>
-                            <div className="placement-stat">
-                              <span className="medal">🥈</span>
-                              <span className="count">{entry.seconds || 0}</span>
-                              <span className="label">Second Place</span>
-                            </div>
-                            <div className="placement-stat">
-                              <span className="medal">🥉</span>
-                              <span className="count">{entry.thirds || 0}</span>
-                              <span className="label">Third Place</span>
-                            </div>
-                            <div className="placement-stat">
-                              <span className="medal">4️⃣</span>
-                              <span className="count">{entry.fourths || 0}</span>
-                              <span className="label">Fourth Place</span>
-                            </div>
+              leaderboard.map((entry, index) => {
+                const globalRank = getGlobalRank(index);
+                return (
+                  <>
+                    {/* Main Row */}
+                    <tr 
+                      key={entry.username} 
+                      className={`leaderboard-row ${globalRank <= 3 ? 'top-three' : ''}`}
+                    >
+                      <td className="rank-cell">
+                        <span className="rank-number">
+                          {getMedalEmoji(globalRank) || `#${globalRank}`}
+                        </span>
+                      </td>
+                      <td className="player-cell">
+                        <div className="player-info">
+                          <div className="player-avatar">
+                            {entry.username.charAt(0).toUpperCase()}
                           </div>
+                          {/* <span className="player-name">{entry.username}</span> */}
                         </div>
                       </td>
+                      <td className="score-cell">
+                        <span className="score-badge total">{entry.totalScore}</span>
+                      </td>
+                      <td className="score-cell">
+                        <span className="score-badge best">{entry.bestScore}</span>
+                      </td>
+                      <td className="actions-cell">
+                        <button 
+                          onClick={() => toggleDetails(entry.username)}
+                          className="details-button"
+                          aria-label="Toggle details"
+                        >
+                          {expandedRow === entry.username ? '▲' : '▼'}
+                        </button>
+                      </td>
                     </tr>
-                  )}
-                </>
-              ))
+
+                    {/* Expanded Details Row */}
+                    {expandedRow === entry.username && (
+                      <tr className="details-row">
+                        <td colSpan={5}>
+                          <div className="placement-details">
+                            <h4>Placement History</h4>
+                            <div className="placement-grid">
+                              <div className="placement-stat">
+                                <span className="medal">🥇</span>
+                                <span className="count">{entry.firsts || 0}</span>
+                                <span className="label">First Place</span>
+                              </div>
+                              <div className="placement-stat">
+                                <span className="medal">🥈</span>
+                                <span className="count">{entry.seconds || 0}</span>
+                                <span className="label">Second Place</span>
+                              </div>
+                              <div className="placement-stat">
+                                <span className="medal">🥉</span>
+                                <span className="count">{entry.thirds || 0}</span>
+                                <span className="label">Third Place</span>
+                              </div>
+                              <div className="placement-stat">
+                                <span className="medal">4️⃣</span>
+                                <span className="count">{entry.fourths || 0}</span>
+                                <span className="label">Fourth Place</span>
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </>
+                );
+              })
             ) : (
               <tr>
                 <td colSpan={5} className="empty-state">
@@ -217,12 +228,12 @@ const Leaderboard = () => {
         <button 
           onClick={handlePrevPage} 
           className="pagination-button"
-          disabled={currentSkip === 0}
+          disabled={currentPage === 1}
         >
           ← Previous
         </button>
         <span className="page-info">
-          Page {getCurrentPage()}
+          Page {currentPage}
         </span>
         <button 
           onClick={handleNextPage} 

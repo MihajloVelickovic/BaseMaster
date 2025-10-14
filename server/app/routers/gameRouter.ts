@@ -5,7 +5,8 @@ fromStringDiff, fromStringGM, IdPrefixes, BaseValues,
 GameStates,
 fromStringState,
 CacheTypes,
-getGamemode}
+getGamemode,
+PAGE_SIZE}
 from "../shared_modules/shared_enums";
 import { nanoid, random } from 'nanoid';
 import {redisClient, publisher} from "../redisClient";
@@ -575,38 +576,38 @@ gameRouter.post("/getLobbyMessages", async (req:any, res:any) => {
     }
 });
 
-gameRouter.get("/globalLeaderboard", async (req: any, res: any) => {
-  const limitRaw = req.query.limit;
-  const skipRaw = req.query.skip;
- 
-  const limit = Number.isInteger(Number(limitRaw)) 
-    ? Math.min(Math.floor(Math.abs(Number(limitRaw))), 100) // Max 100 per page
-    : 30;
-  const skip = Number.isInteger(Number(skipRaw)) 
-    ? Math.floor(Math.abs(Number(skipRaw))) 
-    : 0;
+gameRouter.get("/globalLeaderboard", async (req: any, res: any) => {  
+  const pageRaw = req.query.page;
+  
+  const page = Number.isInteger(Number(pageRaw)) &&  Number(pageRaw) > 0
+    ? Math.floor(Number(pageRaw)) // Max 100 per page
+    : 1;
+  
+  const skip = (page - 1) * PAGE_SIZE;
  
   try {
     // Create unique cache key for THIS specific page
     // Format: global:leaderboard:page:skip:limit
-    const pageKey = `${RedisKeys.globalLeaderboard()}:page:${skip}:${limit}`;
+    const pageKey = `${RedisKeys.globalLeaderboard()}:page:${page}`;
    
     // Try to get cached page
     const cached = await redisClient.get(pageKey);
    
     if (cached) {
       // Cache hit
-      console.log(`[CACHE HIT] Leaderboard page ${skip}-${skip + limit}`);
+      console.log(`[CACHE HIT] Leaderboard page ${skip}-${skip}`);
       const leaderboard = JSON.parse(cached);
       return res.status(200).json({ 
         items: leaderboard,
-        nextSkip: skip + leaderboard.length,
+        page: page,
+        pageSize: PAGE_SIZE,
+        hasNextPage: leaderboard.length >= PAGE_SIZE,
         cached: true
       });
     }
    
-    console.log(`[CACHE MISS] Fetching leaderboard page ${skip}-${skip + limit} from Neo4j`);
-    const items = await getGlobalLeaderboard(limit, skip);
+    console.log(`[CACHE MISS] Fetching leaderboard page ${skip}-${skip} from Neo4j`);
+    const items = await getGlobalLeaderboard(PAGE_SIZE, skip);
    
     // Cache this page's results
     if (items && items.length > 0) {
@@ -615,13 +616,15 @@ gameRouter.get("/globalLeaderboard", async (req: any, res: any) => {
         CACHE_DURATION[CacheTypes.GENERIC_CACHE], // e.g., 300 seconds
         JSON.stringify(items)
       );
-      console.log(`[CACHE SET] Cached page ${skip}-${skip + limit} for ${CACHE_DURATION[CacheTypes.GENERIC_CACHE]}s`);
+      console.log(`[CACHE SET] Cached page ${skip}-${skip} for ${CACHE_DURATION[CacheTypes.GENERIC_CACHE]}s`);
     }
    
-    return res.status(200).json({ 
-      items, 
-      nextSkip: skip + items.length,
-      cached: false
+    return res.status(200).json({
+        items,
+        page: page,           // Must be a number
+        pageSize: PAGE_SIZE,  // Must be a number, not a string
+        hasNextPage: items.length >= PAGE_SIZE,
+        cached: false
     });
    
   } catch (err: any) {

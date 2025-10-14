@@ -247,23 +247,23 @@ async function checkAndAwardAchievements(tx: any, username: string, stats: any) 
 }
 
 // Get global leaderboard with pagination
-export async function getGlobalLeaderboard(limit: number = 50, skip: number = 0): Promise<LeaderboardEntry[]> {
+export async function getGlobalLeaderboard(pageSize: number = 16, skip: number = 0): Promise<LeaderboardEntry[]> {
   const session = n4jSession();
   try {
     // Convert to Neo4j integer type explicitly
-    const limitInt = neo4j.int(Math.floor(Math.abs(limit)));
+    const limitInt = neo4j.int(Math.floor(Math.abs(pageSize)));
     const skipInt = neo4j.int(Math.floor(Math.abs(skip)));
-    
+   
     const result = await session.executeRead(async tx => {
       return await tx.run(`
         MATCH (p:Player)-[r:PARTICIPATES_IN]->(lb:Leaderboard {id: 'global'})
-        RETURN 
+        RETURN
           p.username as username,
           COALESCE(p.bestScore, r.bestScore, 0) as bestScore,
           COALESCE(p.totalGames, r.totalGames, 0) as totalGames,
           COALESCE(p.totalScore, r.totalScore, 0) as totalScore,
           r.lastPlayed as lastPlayed,
-           COALESCE(p.firsts, 0) AS firsts,
+          COALESCE(p.firsts, 0) AS firsts,
           COALESCE(p.seconds, 0) AS seconds,
           COALESCE(p.thirds, 0) AS thirds,
           COALESCE(p.fourths, 0) AS fourths
@@ -271,17 +271,17 @@ export async function getGlobalLeaderboard(limit: number = 50, skip: number = 0)
         SKIP $skip LIMIT $limit
       `, { skip: skipInt, limit: limitInt });
     });
-
-    return result.records.map((record, index) => {
+    
+    return result.records.map((record) => {
       const totalGames = record.get('totalGames') || 0;
       const totalScore = record.get('totalScore') || 0;
-      
+     
       return {
         username: record.get('username'),
         bestScore: record.get('bestScore') || 0,
         totalGames: totalGames,
         averageScore: totalGames > 0 ? Math.round(totalScore / totalGames) : 0,
-        rank: Math.floor(Math.abs(skip)) + index + 1,
+        // Don't calculate rank here - it should come from Redis sorted set
         firsts: record.get('firsts') || 0,
         seconds: record.get('seconds') || 0,
         thirds: record.get('thirds') || 0,
