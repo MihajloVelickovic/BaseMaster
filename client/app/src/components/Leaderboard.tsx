@@ -182,8 +182,8 @@ const Leaderboard = () => {
                       </td>
                       <td className="player-cell">
                         <div className="player-info">
-                          <div className="player-avatar">
-                            {entry.username.charAt(0).toUpperCase()}
+                          <div className="player-name">
+                            {entry.username}
                           </div>
                           {/* <span className="player-name">{entry.username}</span> */}
                         </div>
@@ -269,8 +269,8 @@ const Leaderboard = () => {
                   </td>
                   <td className="player-cell">
                     <div className="player-info">
-                      <div className="player-avatar">
-                        {playerDetails.username.charAt(0).toUpperCase()}
+                      <div className="player-name">
+                        {playerDetails.username}
                       </div>
                     </div>
                   </td>
