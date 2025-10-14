@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axiosInstance from "../utils/axiosInstance";
 import "../styles/Leaderboard.css";
+import { useLocation } from "react-router-dom";
 
 interface LeaderboardEntry {
   username: string;
@@ -21,6 +22,8 @@ interface LeaderboardResponse {
 }
 
 const Leaderboard = () => {
+  const location = useLocation();
+  var {username } = location.state || {};
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -28,12 +31,19 @@ const Leaderboard = () => {
   const [pageSize, setPageSize] = useState(16);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasNextPage, setHasNextPage] = useState(false);
-  const [playerRank, setPlayerRank] = useState(0);
 
-
+  const [playerDetails, setPlayerDetails] = useState<(LeaderboardEntry & { rank: number }) | null>(null);
+  const [currentUsername, setCurrentUsername] = useState<string | null>(username);
+  
   useEffect(() => {
     fetchLeaderboard();
-  }, [currentPage]);
+  }, [currentPage]); // Only refetch leaderboard when page changes
+
+  useEffect(() => {
+    if (currentUsername) {
+      fetchPlayerDetails();
+    }
+  }, [currentUsername, currentPage]);
 
   const fetchLeaderboard = async () => {
     try {
@@ -42,9 +52,7 @@ const Leaderboard = () => {
         params: { 
           page: currentPage
         }
-      });
-      
-      console.log("returned page", res.data);
+      });            
 
       console.log(res);
       const items = res.data.items || [];
@@ -60,6 +68,28 @@ const Leaderboard = () => {
       setLoading(false);
     }
   };
+
+  const fetchPlayerDetails = async () => {    
+    if (!currentUsername) return;
+    
+    try {
+      const res = await axiosInstance.get("/user/getPlayerRank", {
+        params: { username: currentUsername }
+      });
+      console.log("PlAYER RANK", res.data);
+      setPlayerDetails(res.data);
+    } catch (err) {
+      console.error("Error fetching player details", err);
+      // Don't show error, just don't display player rank
+      setPlayerDetails(null);
+    }
+  };
+
+  const isPlayerOnCurrentPage = () => {
+    if (!playerDetails) return false;
+    return leaderboard.some(entry => entry.username === currentUsername);
+  };
+
 
   const handleNextPage = () => {
     if (hasNextPage) {
@@ -221,6 +251,80 @@ const Leaderboard = () => {
             )}
           </tbody>
         </table>
+      
+      
+      {/* Your Rank Section - Shows only when player is NOT on current page */}
+        {playerDetails && !isPlayerOnCurrentPage() && (
+          <div className="player-rank-section">
+            <div className="player-rank-header">
+              <span className="your-rank-label">📍 Your Rank</span>
+            </div>
+            <table className="leaderboard-table">
+              <tbody>
+                <tr className="leaderboard-row current-player highlight">
+                  <td className="rank-cell">
+                    <span className="rank-number">
+                      {getMedalEmoji(playerDetails.rank) || `#${playerDetails.rank}`}
+                    </span>
+                  </td>
+                  <td className="player-cell">
+                    <div className="player-info">
+                      <div className="player-avatar">
+                        {playerDetails.username.charAt(0).toUpperCase()}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="score-cell">
+                    <span className="score-badge total">{playerDetails.totalScore}</span>
+                  </td>
+                  <td className="score-cell">
+                    <span className="score-badge best">{playerDetails.bestScore}</span>
+                  </td>
+                  <td className="actions-cell">
+                    <button 
+                      onClick={() => toggleDetails(playerDetails.username)}
+                      className="details-button"
+                      aria-label="Toggle details"
+                    >
+                      {expandedRow === playerDetails.username ? '▲' : '▼'}
+                    </button>
+                  </td>
+                </tr>
+                {expandedRow === playerDetails.username && (
+                  <tr className="details-row">
+                    <td colSpan={5}>
+                      <div className="placement-details">
+                        <h4>Placement History</h4>
+                        <div className="placement-grid">
+                          <div className="placement-stat">
+                            <span className="medal">🥇</span>
+                            <span className="count">{playerDetails.firsts || 0}</span>
+                            <span className="label">First Place</span>
+                          </div>
+                          <div className="placement-stat">
+                            <span className="medal">🥈</span>
+                            <span className="count">{playerDetails.seconds || 0}</span>
+                            <span className="label">Second Place</span>
+                          </div>
+                          <div className="placement-stat">
+                            <span className="medal">🥉</span>
+                            <span className="count">{playerDetails.thirds || 0}</span>
+                            <span className="label">Third Place</span>
+                          </div>
+                          <div className="placement-stat">
+                            <span className="medal">4️⃣</span>
+                            <span className="count">{playerDetails.fourths || 0}</span>
+                            <span className="label">Fourth Place</span>
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Pagination Controls - Bottom */}

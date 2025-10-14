@@ -523,3 +523,38 @@
     display: none; /* space saving on small screens */
   }
 }
+
+.player-rank-section {
+  margin-top: 2rem;
+  border-top: 2px solid #e0e0e0;
+  padding-top: 1rem;
+}
+
+.player-rank-header {
+  margin-bottom: 0.5rem;
+  padding: 0.5rem;
+}
+
+.your-rank-label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #666;
+}
+
+.leaderboard-row.current-player {
+  background-color: #fff3cd;
+  border-left: 4px solid #ffc107;
+}
+
+.leaderboard-row.current-player.highlight {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    background-color: #fff3cd;
+  }
+  50% {
+    background-color: #ffe69c;
+  }
+}

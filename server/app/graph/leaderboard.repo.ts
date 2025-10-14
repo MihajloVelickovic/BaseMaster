@@ -267,7 +267,8 @@ export async function getGlobalLeaderboard(pageSize: number = 16, skip: number =
           COALESCE(p.seconds, 0) AS seconds,
           COALESCE(p.thirds, 0) AS thirds,
           COALESCE(p.fourths, 0) AS fourths
-        ORDER BY COALESCE(p.bestScore, r.bestScore, 0) DESC, COALESCE(p.totalGames, r.totalGames, 0) DESC
+        ORDER BY COALESCE(p.bestScore, r.bestScore, 0) DESC,
+        p.username DESC 
         SKIP $skip LIMIT $limit
       `, { skip: skipInt, limit: limitInt });
     });

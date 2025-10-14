@@ -217,7 +217,9 @@ function Header() {
                 <Link to="/" className={`nav-link ${isActive('/') ? 'active' : ''}`}>
                     Play
                 </Link>
-                <Link to="/Leaderboard" className={`nav-link ${isActive('/Leaderboard') ? 'active' : ''}`}>
+                <Link to="/Leaderboard" 
+                state={{ username: playerID }}
+                className={`nav-link ${isActive('/Leaderboard') ? 'active' : ''}`}>
                     Leaderboard
                 </Link>
             </nav>

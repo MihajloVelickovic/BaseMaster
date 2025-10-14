@@ -87,5 +87,5 @@ export const getGamemode = (input: string): GameModes | undefined => {
     return (Object.values(GameModes) as string[]).includes(value) ? (value as GameModes) : undefined;
 };
 
-export const PAGE_SIZE = 16;
+export const PAGE_SIZE = 5;
 

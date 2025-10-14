@@ -3,9 +3,9 @@ import { n4jDriver, n4jSession } from "../neo4jClient";
 import { auth, Transaction } from "neo4j-driver";
 import { areInvalidMessagePair, UserService } from "../utils/userService";
 import {publisher, redisClient} from "../redisClient";
-import { IdPrefixes, CacheTypes } from "../shared_modules/shared_enums";
+import { IdPrefixes, CacheTypes, PAGE_SIZE } from "../shared_modules/shared_enums";
 import { upsertPlayer } from "../graph/player.repo";
-import { connectPlayerToLeaderboard, getPlayerAchievements, getPlayerStats, getFriendsWithAchievements, getAllAchievementsWithStats } from '../graph/leaderboard.repo';
+import { connectPlayerToLeaderboard, getPlayerAchievements, getPlayerStats, getFriendsWithAchievements, getAllAchievementsWithStats, getGlobalLeaderboard } from '../graph/leaderboard.repo';
 import { RedisKeys } from "../utils/redisKeyService";
 import { authUser, JWT_REFRESH, JWT_SECRET } from "../config/config";
 import jwt from "jsonwebtoken";
@@ -674,16 +674,45 @@ userRouter.get("/getAllAchievementsWithStats", async (req: any, res: any) => {
   }
 });
 
-userRouter.get("/getPlayerRank", authUser, async(req:any, res:any) => {
+userRouter.get("/getPlayerRank", async(req:any, res:any) => {
 try {
     const username = req.query.username;
-
-    if (isNullOrWhitespace(username)) 
+    if (!username)
       return res.status(400).json({ error: "Missing username" });
-    
-
+   
     const rank = await getPlayerRankFromRedis(username);
-    return res.json({ username, rank });
+    console.log("PLAYER RANK IS", rank);
+    if (!rank || rank < 1)
+      return res.status(404).json({ error: "Player not found" });
+    
+    const page = Math.ceil(rank / PAGE_SIZE);
+    const skip = (page - 1) * PAGE_SIZE;
+    
+    const pageKey = `${RedisKeys.globalLeaderboard()}:page:${page}`;
+    const cached = await redisClient.get(pageKey);
+    
+    let leaderboardPage;
+    if (cached) 
+      leaderboardPage = JSON.parse(cached);
+    else 
+      leaderboardPage = await getGlobalLeaderboard(PAGE_SIZE, skip);
+    
+    const player = leaderboardPage.find((p: any) => p.username === username);
+    
+    if (!player)
+      return res.status(404).json({ error: "Player not found in page" });
+    
+    return res.json({
+      username: player.username,
+      bestScore: player.bestScore,
+      totalScore: player.totalScore,
+      firsts: player.firsts || 0,
+      seconds: player.seconds || 0,
+      thirds: player.thirds || 0,
+      fourths: player.fourths || 0,
+      rank: rank
+    });
+
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: "Internal server error" });
