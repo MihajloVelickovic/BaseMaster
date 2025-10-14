@@ -40,8 +40,7 @@ function Home() {
   const [roundCount, setRoundCount] = useState(Number(5));    //switch to 15 later
   const [clickedLobbies, setClickedLobbies] = useState<Map<string, boolean>>(new Map());
   // const [playerId, setPlayerId] = useState(playerID);
-
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  
   const [loggedIn, setLoggedIn] = useState<boolean>(true); // TODO: replace with real auth state
 
   const navigate = useNavigate();
@@ -65,9 +64,6 @@ function Home() {
 
 
   useEffect(() => {
-    if (loggedIn) {
-      fetchLeaderboard();
-    }
   }, [loggedIn]);
   
   useEffect(() => {
@@ -187,17 +183,7 @@ function Home() {
   }
 }, [messages]);
 
-  const fetchLeaderboard = async () => {
-    try {
-      const res = await axiosInstance.get("/game/globalLeaderboard", {
-        params: { limit: 20 }
-    });
-      setLeaderboard(res.data.items || []);
-      console.log(res.data);
-    } catch (err) {
-      console.error("Error fetching leaderboard", err);
-    }
-  };
+  
 
   const sendMessage = async () => {
     if (!chatInput.trim() || !activeFriend) return;
@@ -214,26 +200,6 @@ function Home() {
       console.error("Send failed", err);
     }
   };
-
-  // leaderboard component
-  const renderLeaderboard = () => (
-    <div className="LeaderboardContainer">
-      <div className="leaderboardTitle">Global Leaderboard 🌍</div>
-      <ul className="leaderboardList">
-        {leaderboard.length > 0 ? (
-          leaderboard.map((entry, i) => (
-            <li key={i} className="leaderboardItem">
-              <span className="lb-rank">#{i + 1}</span>
-              <span className="lb-name">{entry.username}</span>
-              <span className="lb-score">{entry.bestScore}</span>
-            </li>
-          ))
-        ) : (
-          <li className="leaderboardEmpty">No players yet.</li>
-        )}
-      </ul>
-    </div>
-  );
 
   const createGame = async () => {
     try {

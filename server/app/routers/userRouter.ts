@@ -252,9 +252,11 @@ userRouter.post("/sendFriendRequest", authUser, async(req:any, res:any)=>{
         if(!friendRequest)
             return res.status(400).json({message: "Failed to send friend request"});
 
-        await publisher.publish(`FRIEND_REQUEST_${receiver}`, JSON.stringify({
-            from: sender,
-            message: `${sender} sent you a friend request`
+        await publisher.publish(
+            RedisKeys.friendRequest(receiver),
+            JSON.stringify({
+                from: sender,
+                message: `${sender} sent you a friend request`
         }));
         return res.status(200).json({message: `Friend request to '${receiver}' successfully sent!`});
     }
@@ -315,9 +317,11 @@ userRouter.post("/handleFriendRequest", authUser, async(req:any, res:any)=>{
 
         if(!userResponse){
             n4jSesh.close();
-            await publisher.publish(`FRIEND_DECLINED_${sender}`, JSON.stringify({
-                from: username,
-                message: `${username} declined your friend request`
+            await publisher.publish(
+                RedisKeys.friendRequestDeny(sender),
+                JSON.stringify({
+                    from: username,
+                    message: `${username} declined your friend request`
             }));
             return res.status(400).json({message: `Player '${username}' declined friend request from '${sender}'`});
         }
@@ -341,9 +345,11 @@ userRouter.post("/handleFriendRequest", authUser, async(req:any, res:any)=>{
         if(!makeFriends)
             return res.status(400).json({message: `Failed to establish friendship between '${username}' and '${sender}'`});
 
-        await publisher.publish(`FRIEND_ACCEPTED_${sender}`, JSON.stringify({
-            from: username,
-            message: `${username} accepted your friend request`
+        await publisher.publish(
+            RedisKeys.friendRequestAccept(sender),
+            JSON.stringify({
+                from: username,
+                message: `${username} accepted your friend request`
         }));
         return res.status(200).json({message: `Player '${username}' accepted '${sender}'s friend request!`});        
     }
@@ -426,9 +432,8 @@ userRouter.post("/removeFriend", authUser, async (req: any, res: any) => {
 
         n4jSesh.close();
 
-        if(!deleteFriendRelation) {
-            return res.status(400).json({message: `No friendship found between '${username}' and '${friend}'`}); 
-        }
+        if(!deleteFriendRelation)
+            return res.status(400).json({message: `No friendship found between '${username}' and '${friend}'`});         
 
         const userCacheKey = RedisKeys.friendList(username);
         const friendCacheKey = RedisKeys.friendList(friend); 
@@ -478,7 +483,7 @@ userRouter.post("/getInvites", authUser, async (req:any, res:any) => {
         return res.status(400).json({message:"Missing username argument"});
 
     try {
-        const invites = await redisClient.hGetAll(`${IdPrefixes.INVITE}_${username}`);
+        const invites = await redisClient.hGetAll(RedisKeys.invites(username));
 
         if(!invites)
             return res.status(404).json({message:"No invites found"});
@@ -688,7 +693,7 @@ try {
     const page = Math.ceil(rank / PAGE_SIZE);
     const skip = (page - 1) * PAGE_SIZE;
     
-    const pageKey = `${RedisKeys.globalLeaderboard()}:page:${page}`;
+    const pageKey = RedisKeys.leaderboardPage(page);
     const cached = await redisClient.get(pageKey);
     
     let leaderboardPage;

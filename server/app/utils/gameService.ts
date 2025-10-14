@@ -1,5 +1,5 @@
 import { recordGameResult } from "../graph/leaderboard.repo";
-import { GameResultRow, GameResultRowWithRank, PlayerResult, ScoreboardEntry } from "../models/types";
+import { PlayerResult, ScoreboardEntry } from "../models/types";
 import { redisClient } from "../redisClient";
 import { BaseValues, GameModes, getGamemode } from "../shared_modules/shared_enums";
 import { RedisKeys } from "./redisKeyService";
@@ -15,7 +15,6 @@ export async function invalidateLeaderboardCache() {
 }
 
 export async function addChaosBaseArrays(roundCount:number, gameId:string) {
-    //console.log("Entering chaos bases creation....");
     const fromBases = Array.from({ length: roundCount }, () => 
         Math.floor(Math.random() * (BaseValues.MAX_BASE -
              BaseValues.MIN_BASE + 1)) + BaseValues.MIN_BASE

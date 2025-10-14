@@ -27,23 +27,19 @@ export const JWT_REFRESH: string = process.env.JWT_REFRESH ?? "";
 export function authUser(req: any, res: any, next: any){
     const authFromReq = req.headers["authorization"];
     const token = authFromReq && authFromReq.split(' ')[1];
+    
     if(!token)
         return res.status(401).json({message:"Unauthorized"});
-
-    req.expired = false;
-    const decoded : string| JwtPayload | null = jwt.decode(token) ;
-    if(decoded && typeof decoded === 'object' && 'exp' in decoded) {
-        const exp = Number(decoded.exp);
-        if(exp * 1000 <= Date.now())
-            req.expired = true;
-    }
-    
-    jwt.verify(token, JWT_SECRET, {ignoreExpiration: true}, (error:any, user:any) => {
-        if(error)
+   
+    jwt.verify(token, JWT_SECRET, (error:any, user:any) => {
+        if(error) {
+            if(error.name === 'TokenExpiredError') {
+                return res.status(403).json({message:"Token expired"});
+            }
             return res.status(403).json({message:`${error.message}`});
-        
+        }
+       
         req.user = user;
         next();
     });
-
 }

@@ -8,7 +8,6 @@ import { useFriendContext } from "../utils/FriendContext"
 import { useLobbyContext } from "../utils/LobbyContext";
 import { GiCrossedSwords } from "react-icons/gi";
 import { useAuth } from "../utils/AuthContext";
-import Leaderboard from "./Leaderboard";
 
 function Header() {
     type Invite = {

@@ -47,6 +47,10 @@ export class RedisKeys {
     return 'global_learerboard';
   }
 
+  static leaderboardPage(page:number) {
+    return `${RedisKeys.globalLeaderboard()}:page:${page}`;
+  }
+
   static onlinePlayers() {
     return IdPrefixes.ONLINE_PLAYERS;
   }
@@ -101,6 +105,26 @@ export class RedisKeys {
 
   static leaderboardRankings() {
     return `leaderboard_rankings`;
+  }
+
+  static gameId(gamemode:string) {
+    return `${gamemode}:${nanoid()}`;
+  }
+
+  static friendRequestAccept(sender:string) {
+    return `${IdPrefixes.FRIEND_REQUEST_ACCEPT}:${sender}`
+  }
+
+  static friendRequestDeny(sender:string) {
+    return `${IdPrefixes.FRIEND_REQUEST_DENY}:${sender}`
+  }
+
+  static friendRequest(receiver: string) {
+    return `${IdPrefixes.FRIEND_REQUEST}:${receiver}`
+  }
+
+  static invites(username:string) {
+    return `${IdPrefixes.INVITE}:${username}`;
   }
 }
 

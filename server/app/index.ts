@@ -289,8 +289,8 @@ async function gracefulShutdown(signal: string) {
     if (n4jDriver) {
         shutdownSteps.push(
             Promise.resolve(n4jDriver.close())
-                .then(() => console.log("[SHUTDOWN] Neo4j connection closed"))
-                .catch((err) => console.error("[ERROR] Failed to close Neo4j:", err))
+                   .then(() => console.log("[SHUTDOWN] Neo4j connection closed"))
+                   .catch((err) => console.error("[ERROR] Failed to close Neo4j:", err))
         );
     }
     

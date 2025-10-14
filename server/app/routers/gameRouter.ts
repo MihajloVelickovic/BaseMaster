@@ -1,7 +1,7 @@
 import {Router} from "express";
 import GameOptions from "../models/gameOptions"
 import { GameModes,Difficulties,
-fromStringDiff, fromStringGM, IdPrefixes, BaseValues, 
+fromStringDiff, fromStringGM, IdPrefixes as Prefixes, BaseValues, 
 GameStates,
 fromStringState,
 CacheTypes,
@@ -59,7 +59,7 @@ gameRouter.post("/createGame", async (req: any, res:any) => {
         Math.floor(Math.random() * maxValue) + 1
     );
     
-    var gameId = `${gamemode}:${nanoid()}`; // upisati u redis i vratiti ID
+    var gameId = RedisKeys.gameId(gamemode); // upisati u redis i vratiti ID
     
     console.log(gameOptions.gamemode); //DEBUG
 
@@ -82,11 +82,11 @@ gameRouter.post("/createGame", async (req: any, res:any) => {
 
         await redisClient.set(gameId, JSON.stringify(gameData)); // set max player count
              
-        await redisClient.hSet(IdPrefixes.LOBBIES_CURR_PLAYERS, gameId,  1); //[gameid,curr,max]
+        await redisClient.hSet(Prefixes.LOBBIES_CURR_PLAYERS, gameId,  1); //[gameid,curr,max]
         
-        await redisClient.hSet(IdPrefixes.LOBBIES_MAX_PLAYERS, gameId, playerCount);               
+        await redisClient.hSet(Prefixes.LOBBIES_MAX_PLAYERS, gameId, playerCount);               
                 
-        await redisClient.hSet(IdPrefixes.LOBBIES_NAMES, gameId,
+        await redisClient.hSet(Prefixes.LOBBIES_NAMES, gameId,
                                 finalLobbyName);
         
         const scroeboardKey = RedisKeys.scoreboard(gameId);
@@ -163,8 +163,7 @@ gameRouter.post("/getCurrNum", async (req:any, res:any) => {
             return res.status(404).send({message:"Could not find the toBase"});
         if(!scoreboard)
             return res.status(404).send({message:"Could not find the scoreboard"});
-
-        console.log("sending data to subscriber", scoreboard);
+        
         publisher.publish(RedisKeys.scoreboardUpdate(gameId),
                            JSON.stringify({scoreboard, playerId, points:pointsToAdd}));
 
@@ -179,8 +178,6 @@ gameRouter.post("/getCurrNum", async (req:any, res:any) => {
 
 
 gameRouter.post("/joinLobby", async (req:any, res:any) => {
-    console.log("join Lobby is here"); //DEBUG
-    
     const {
         gameId,
         playerId
@@ -191,11 +188,11 @@ gameRouter.post("/joinLobby", async (req:any, res:any) => {
 
     const scoreboardKey = RedisKeys.scoreboard(gameId);
 
-    const lobbyData = await redisClient.hGet(IdPrefixes.LOBBIES_CURR_PLAYERS, gameId);
+    const lobbyData = await redisClient.hGet(Prefixes.LOBBIES_CURR_PLAYERS, gameId);
 
     const gameData = await redisClient.get(gameId);
 
-    const lobbyName = await redisClient.hGet(IdPrefixes.LOBBIES_NAMES, gameId);
+    const lobbyName = await redisClient.hGet(Prefixes.LOBBIES_NAMES, gameId);
 
     if(!gameData)
         return res.status(404).send({message: "Requested lobby does not exsist"});
@@ -215,7 +212,7 @@ gameRouter.post("/joinLobby", async (req:any, res:any) => {
 
         await redisClient.zAdd(scoreboardKey, { score: 0, value: playerId });
 
-        await redisClient.hIncrBy(IdPrefixes.LOBBIES_CURR_PLAYERS,gameId,1);
+        await redisClient.hIncrBy(Prefixes.LOBBIES_CURR_PLAYERS,gameId,1);
 
         const now=Date.now();
 
@@ -235,7 +232,6 @@ gameRouter.post("/joinLobby", async (req:any, res:any) => {
         const roundsKey = RedisKeys.roundCount(gameId);
         const roundCount = await redisClient.lLen(roundsKey);
         //needed since we may join after the message is sent
-        console.log("JOIN", gameId, parsedData);
 
         publisher.publish(RedisKeys.playerJoin(gameId),
                             JSON.stringify({playerID:playerId, gameData}));
@@ -251,12 +247,12 @@ gameRouter.post("/joinLobby", async (req:any, res:any) => {
 gameRouter.get("/getLobbies", async (req:any, res:any) => {
     try {
         const lobbies_curr_players = 
-        await redisClient.hGetAll(IdPrefixes.LOBBIES_CURR_PLAYERS);
+        await redisClient.hGetAll(Prefixes.LOBBIES_CURR_PLAYERS);
         
         const lobbies_max_players = 
-        await redisClient.hGetAll(IdPrefixes.LOBBIES_MAX_PLAYERS);
+        await redisClient.hGetAll(Prefixes.LOBBIES_MAX_PLAYERS);
 
-        const lobbies_names = await redisClient.hGetAll(IdPrefixes.LOBBIES_NAMES);
+        const lobbies_names = await redisClient.hGetAll(Prefixes.LOBBIES_NAMES);
 
         if(!lobbies_curr_players)
             return res.status(404).send({message:"Could not fin any lobbies!"});
@@ -305,7 +301,7 @@ gameRouter.post("/setGameState", async (req:any, res:any) => {
             return res.status(404).send({message:"Could not fin the game"});
 
         const parcedData = JSON.parse(gameData);
-        //console.log(parcedData);
+
         parcedData.gameState = fromStringState(gameState)
 
         const gameEndKey = RedisKeys.gameEnd(gameId);
@@ -316,14 +312,14 @@ gameRouter.post("/setGameState", async (req:any, res:any) => {
         
         
         const currPlayers = 
-        await redisClient.hGet(IdPrefixes.LOBBIES_CURR_PLAYERS, gameId);
+        await redisClient.hGet(Prefixes.LOBBIES_CURR_PLAYERS, gameId);
         console.log("curr players = ",currPlayers);
         if(!currPlayers)
             return res.status(404).send({message: "could not find curr players"});
 
-        await redisClient.hDel(IdPrefixes.LOBBIES_CURR_PLAYERS, gameId); // remove the data
+        await redisClient.hDel(Prefixes.LOBBIES_CURR_PLAYERS, gameId); // remove the data
 
-        await redisClient.hDel(IdPrefixes.LOBBIES_MAX_PLAYERS, gameId);
+        await redisClient.hDel(Prefixes.LOBBIES_MAX_PLAYERS, gameId);
         
         await redisClient.del(RedisKeys.lobbyPlayers(gameId));
         
@@ -424,7 +420,7 @@ gameRouter.post("/leaveLobby", async (req: any, res: any) => {
     }
 
     try {
-        const lobbyData = await redisClient.hGet(IdPrefixes.LOBBIES_CURR_PLAYERS, gameId);
+        const lobbyData = await redisClient.hGet(Prefixes.LOBBIES_CURR_PLAYERS, gameId);
         const gameData = await redisClient.get(gameId);
 
         if (!lobbyData || !gameData) {
@@ -445,7 +441,7 @@ gameRouter.post("/leaveLobby", async (req: any, res: any) => {
         if (parsedData.currPlayerCount > 1) {
             parsedData.currPlayerCount -= 1;
             await redisClient.set(gameId, JSON.stringify(parsedData));
-            await redisClient.hIncrBy(IdPrefixes.LOBBIES_CURR_PLAYERS, gameId, -1);
+            await redisClient.hIncrBy(Prefixes.LOBBIES_CURR_PLAYERS, gameId, -1);
 
             if(remainingPlayers.length>0)
             {
@@ -455,14 +451,14 @@ gameRouter.post("/leaveLobby", async (req: any, res: any) => {
                 
         } else {
             await CleanupGameContext(gameId);
-            await redisClient.hDel(IdPrefixes.LOBBIES_CURR_PLAYERS, gameId);
-            await redisClient.hDel(IdPrefixes.LOBBIES_MAX_PLAYERS, gameId);
+            await redisClient.hDel(Prefixes.LOBBIES_CURR_PLAYERS, gameId);
+            await redisClient.hDel(Prefixes.LOBBIES_MAX_PLAYERS, gameId);
             await redisClient.del(lobbyPlayersKey);
         }
 
 
         publisher.publish(RedisKeys.playerLeave(gameId), JSON.stringify({
-            type:IdPrefixes.PLAYER_LEAVE,
+            type:Prefixes.PLAYER_LEAVE,
             playerID,
             newHost: newHost
         }));
@@ -512,7 +508,7 @@ gameRouter.post("/leaveGame", async (req: any, res: any) => {
             JSON.stringify({scoreboard, playerID, points: 0}));
 
         publisher.publish(RedisKeys.playerLeave(gameId), JSON.stringify({
-            type:IdPrefixes.PLAYER_LEAVE,
+            type:Prefixes.PLAYER_LEAVE,
             playerID,
         }));
 
@@ -538,7 +534,7 @@ gameRouter.post("/sendLobbyMessage", async (req:any, res:any) => {
         const lobbyMessageKey = RedisKeys.lobbyMessage(gameId);
 
         await redisClient.rPush(lobbyMessageKey,
-                                 JSON.stringify({ playerId, message }));
+                                JSON.stringify({ playerId, message }));
         publisher.publish(RedisKeys.messageUpdate(gameId),
              JSON.stringify({ playerId, message }));
         return res.send({ Message:"SENT", playerId, message });
@@ -554,8 +550,6 @@ gameRouter.post("/getLobbyMessages", async (req:any, res:any) => {
         gameId
     } = req.body;
 
-    console.log(req.body);
-
     if(isNullOrWhitespace(gameId))
         return res.status(400).send({ message: "[ERROR]: Argument gameId missing" });
 
@@ -567,7 +561,7 @@ gameRouter.post("/getLobbyMessages", async (req:any, res:any) => {
         messages = messages.map((e) => {
             return JSON.parse(e);
         })
-        console.log(messages);
+ 
         return res.send({message:"SUCCESS", gmaeId:gameId, messages:messages });
     } 
     catch (err) {
@@ -580,22 +574,20 @@ gameRouter.get("/globalLeaderboard", async (req: any, res: any) => {
   const pageRaw = req.query.page;
   
   const page = Number.isInteger(Number(pageRaw)) &&  Number(pageRaw) > 0
-    ? Math.floor(Number(pageRaw)) // Max 100 per page
+    ? Math.floor(Number(pageRaw)) 
     : 1;
   
   const skip = (page - 1) * PAGE_SIZE;
  
   try {
-    // Create unique cache key for THIS specific page
-    // Format: global:leaderboard:page:skip:limit
-    const pageKey = `${RedisKeys.globalLeaderboard()}:page:${page}`;
+    const pageKey = RedisKeys.leaderboardPage(page);
    
     // Try to get cached page
     const cached = await redisClient.get(pageKey);
    
     if (cached) {
       // Cache hit
-      console.log(`[CACHE HIT] Leaderboard page ${skip}-${skip}`);
+      console.log(`[CACHE HIT] Leaderboard page ${page}-${skip}`);
       const leaderboard = JSON.parse(cached);
       return res.status(200).json({ 
         items: leaderboard,
@@ -606,7 +598,7 @@ gameRouter.get("/globalLeaderboard", async (req: any, res: any) => {
       });
     }
    
-    console.log(`[CACHE MISS] Fetching leaderboard page ${skip}-${skip} from Neo4j`);
+    console.log(`[CACHE MISS] Fetching leaderboard page ${page}-${skip} from Neo4j`);
     const items = await getGlobalLeaderboard(PAGE_SIZE, skip);
    
     // Cache this page's results

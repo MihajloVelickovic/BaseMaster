@@ -45,8 +45,6 @@ function Game() {
   const [playerChat, setPlayerChat] = useState<string[]>([]);
   const [chatInput, setChatInput] = useState("");
   const chatEndRef = useRef<HTMLDivElement>(null);
-  const [wsConnection, setWsConnection] = useState<WebSocket | null>(null);
-  const [isConnecting, setIsConnecting] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
 useEffect(() => {
   chatEndRef.current?.scrollIntoView({ behavior: "smooth" });

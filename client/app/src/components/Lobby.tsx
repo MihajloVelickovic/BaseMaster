@@ -14,9 +14,7 @@ function getUserName (id: string) {
     }
     return "";
 }
-//lobby could use a function of invite friends button
-//OH WAIT we need neo4j for that who could have guessed that have of the
-//project could not be done without it
+
 export default function Lobby () {
     const location = useLocation();
     const wsRef = useRef<WebSocket | null>(null);
