@@ -467,8 +467,6 @@ const leaveGame = async () => {
       {finished && (
         <div className="finishedGameButtons">
           <button className="finishedGameButton" onClick={() => navigate("/")}>Back to Home</button>
-          <button className="finishedGameButton">Back to Lobby</button>
-          <button className="finishedGameButton">Save score!</button>
         </div>
       )}
     </>

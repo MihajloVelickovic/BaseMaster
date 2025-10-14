@@ -13,15 +13,18 @@
 .logo-link {
     display: inline-block;
     margin-right: 20px;
+    align-items: center !important;
 }
 
 .logo-link svg {
     cursor: pointer;
+    align-items: center !important;
 }
 
 .basemaster-logo {
     align-self: center;
     margin-top: -12px;   
+    padding-top: 4px;
     vertical-align: middle;
     margin-left: -10px;
 }
@@ -52,7 +55,7 @@
 .header-nav {
     position: relative;
     display: flex;
-    align-items: stretch;
+    align-items: stretch !important;
     gap: 0;
     height: 100%;
     padding: 0 8px;

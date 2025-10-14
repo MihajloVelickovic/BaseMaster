@@ -681,7 +681,7 @@ try {
       return res.status(400).json({ error: "Missing username" });
    
     const rank = await getPlayerRankFromRedis(username);
-    console.log("PLAYER RANK IS", rank);
+
     if (!rank || rank < 1)
       return res.status(404).json({ error: "Player not found" });
     
