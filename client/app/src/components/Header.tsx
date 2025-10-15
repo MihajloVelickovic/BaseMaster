@@ -132,8 +132,7 @@ function Header() {
         };
     
         return () => {
-            socketRef.current = null;
-            socket.close();
+            
         };
     }, [playerID]);
 
@@ -224,6 +223,8 @@ function Header() {
                 type: "logout",
                 username: playerID
             }));
+            socketRef.current.close();
+            socketRef.current = null;
         }
         
         logout();

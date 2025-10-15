@@ -32,8 +32,15 @@ function FriendList() {
         const data = event.detail;
         console.log('[FriendList] WebSocket message:', data);
 
-        if (data.type === 'FRIEND_ACCEPTED') {
+        if (data.type === 'FRIEND_ACCEPT') {
             // Someone accepted your request
+            setSearchResults(prev => prev.filter(f => f !== data.from));
+            setFriends(prev => [...prev, data.from]);
+        }
+
+        if (data.type === 'FRIEND_DENY') {
+            // Someone accepted your request
+            setSearchResults(prev => prev.filter(f => f !== data.from));
             setFriends(prev => [...prev, data.from]);
         }
 
@@ -44,6 +51,7 @@ function FriendList() {
 
         if (data.type === 'FRIEND_REMOVED') {
             // Someone removed you
+            setSearchResults(prev => prev.filter(f => f !== data.from));
             setFriends(prev => prev.filter(f => f !== data.from));
         }
     };

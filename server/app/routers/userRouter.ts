@@ -323,6 +323,14 @@ userRouter.post("/handleFriendRequest", authUser, async(req:any, res:any)=>{
                     from: username,
                     message: `${username} declined your friend request`
             }));
+
+            await publisher.publish(
+                RedisKeys.friendRequestDeny(username),
+            JSON.stringify({
+                from: sender,
+                message: `${username} accepted your friend request`
+            }));
+
             return res.status(200).json({message: `Player '${username}' declined friend request from '${sender}'`});
         }
 
@@ -336,9 +344,6 @@ userRouter.post("/handleFriendRequest", authUser, async(req:any, res:any)=>{
 
         n4jSesh.close();
         
-        const receiverKey = RedisKeys.friendList(username);
-        const senderKey = RedisKeys.friendList(sender);
-
         await invalidateFriendListCache(sender, username);
 
         if(!makeFriends)
@@ -348,6 +353,13 @@ userRouter.post("/handleFriendRequest", authUser, async(req:any, res:any)=>{
             RedisKeys.friendRequestAccept(sender),
             JSON.stringify({
                 from: username,
+                message: `${username} accepted your friend request`
+        }));
+
+        await publisher.publish(
+            RedisKeys.friendRequestAccept(username),
+            JSON.stringify({
+                from: sender,
                 message: `${username} accepted your friend request`
         }));
         return res.status(200).json({message: `Player '${username}' accepted '${sender}'s friend request!`});        

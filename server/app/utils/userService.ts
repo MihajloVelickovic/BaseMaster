@@ -1,5 +1,6 @@
+import { RedisClientType } from "redis";
 import { n4jSession } from "../neo4jClient";
-import { redisClient } from "../redisClient";
+import { publisher, redisClient } from "../redisClient";
 import { CACHE_DURATION } from "../shared_modules/configMaps";
 import { CacheTypes } from "../shared_modules/shared_enums";
 import { RedisKeys } from "./redisKeyService";
