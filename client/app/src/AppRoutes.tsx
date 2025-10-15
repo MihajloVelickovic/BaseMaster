@@ -21,7 +21,6 @@ const routes = [
     { path: "/Lobby", element: <Lobby />},
     { path: "/LoginSignup", element: <LoginSignup />},
     { path: "/FriendList", element: <FriendList />},
-    {path: "/Sidebar", element: <Sidebar/>},
     {path:"/Profile", element:<Profile/>},
     {path:"/Leaderboard", element:<Leaderboard/>}
     // { path: "/login", element: <LoginSignupPage /> },

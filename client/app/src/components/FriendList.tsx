@@ -92,10 +92,10 @@ function FriendList() {
         user.username === receiver ? { ...user, requestSent: true } : user
       ));
       
-      alert(`Friend request sent to ${receiver}!`);
+      //alert(`Friend request sent to ${receiver}!`);
     } catch (error: any) {
       console.error('Error sending friend request:', error);
-      alert(error.response?.data?.message || 'Failed to send friend request');
+      //alert(error.response?.data?.message || 'Failed to send friend request');
     }
   };
 

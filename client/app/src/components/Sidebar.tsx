@@ -5,17 +5,16 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../utils/AuthContext";
 
 
-function Sidebar() {
+function Sidebar({ onLogout }: { onLogout: () => void }) {
   const { playerID, logout } = useAuth();
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [username, setUsername] = useState(localStorage.getItem("playerID") || "");
   const navigate = useNavigate();
   
-  function handleLogout() {
-    logout();   //added here, it should be here, yea
+   function handleLogout() {
+    onLogout(); // Call the passed function
     toggleSidebar();
-    //localStorage.removeItem("playerID");
     navigate("/LoginSignup", { state: { playerIdTransfered: null} });
   }
 

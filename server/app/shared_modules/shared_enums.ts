@@ -47,7 +47,8 @@ export enum IdPrefixes {
 
 export enum WebServerTypes {
     JOIN_LOBBY = "joinLobby",
-    LOGIN = "login",    
+    LOGIN = "login",
+    LOGOUT = "logout"    
 }
 
 export enum BaseValues {

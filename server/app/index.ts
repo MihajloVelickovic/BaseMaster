@@ -14,6 +14,8 @@ import { initializeGraphStructure, syncLeaderboardToRedis } from './graph/leader
 import { initRedisWsBridge } from "./utils/redisWsBridge";
 import { migrateUsersToPlayers } from "./migration/migrateUsersToPlayers";
 import { checkDatabaseState } from "./migration/checkDatabaseState";
+import { RedisKeys } from "./utils/redisKeyService";
+import { redisClient } from "./redisClient";
 
 // Server state management
 class ServerState {
@@ -141,7 +143,43 @@ wss.on("connection", (ws) => {
                         }
                     }
                     break;
-                    
+                    case WebServerTypes.LOGOUT:  // ADD THIS CASE
+                    if (username && currentUsername) {
+                        console.log(`[SYSTEM] User ${username} logging out`);
+                        
+                        // Remove from userSockets
+                        const sockets = userSockets.get(username);
+                        if (sockets) {
+                            sockets.delete(ws);
+                            
+                            if (sockets.size === 0) {
+                                userSockets.delete(username);
+                                
+                                // Notify friends that user went offline
+                                try {
+                                    const friends = await UserService.getFriends(username);
+                                    friends.forEach((friend: string) => {
+                                        const friendSockets = userSockets.get(friend);
+                                        if (friendSockets) {
+                                            friendSockets.forEach(client => {
+                                                if (client.readyState === WebSocket.OPEN) {
+                                                    client.send(JSON.stringify({
+                                                        type: "USER_OFFLINE",
+                                                        username: username,
+                                                    }));
+                                                }
+                                            });
+                                        }
+                                    });
+                                } catch (err) {
+                                    console.error(`[ERROR] Failed to notify friends of logout:`, err);
+                                }
+                            }
+                        }
+                        
+                        currentUsername = null;
+                    }
+                    break;
                 default:
                     console.log(`[INFO] Unhandled message type: ${type}`);
             }
@@ -189,6 +227,9 @@ wss.on("connection", (ws) => {
                                     });
                                 }
                             });
+                            const onlinePlayers = RedisKeys.onlinePlayers();
+                            await redisClient.sRem(onlinePlayers, currentUsername);
+                             
                         } catch (err) {
                             console.error(`[ERROR] Failed to notify friends of ${currentUsername} going offline:`, err);
                         }

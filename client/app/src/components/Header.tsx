@@ -2,7 +2,7 @@ import { Link, NavLink, useLocation } from "react-router-dom";
 import "../styles/Header.css"
 import Sidebar from "./Sidebar";
 import { FaBell, FaCheck, FaTimes } from "react-icons/fa";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import axiosInstance from "../utils/axiosInstance";
 import { useFriendContext } from "../utils/FriendContext"
 import { useLobbyContext } from "../utils/LobbyContext";
@@ -22,7 +22,7 @@ function Header() {
     const [notifications, setNotifications] = useState<string[]>([]);
     const [invites, setInvites] = useState<Invite[]>([]);
     const [showInvites, setShowInvites] = useState(false);
-    
+    const socketRef = useRef<WebSocket | null>(null);
     const location = useLocation();
     const { joinLobby, setPlayerID: setLobbyPlayerID } = useLobbyContext();
 
@@ -36,7 +36,7 @@ function Header() {
         if (!playerID) return;
     
         const socket = new WebSocket("ws://localhost:1738/");
-    
+        socketRef.current = socket
         socket.onopen = () => {
             socket.send(JSON.stringify({
                 type: "login",
@@ -102,6 +102,7 @@ function Header() {
         };
     
         return () => {
+            socketRef.current = null;
             socket.close();
         };
     }, [playerID]);
@@ -164,12 +165,18 @@ function Header() {
     };
 
     const handleLogout = () => {
-        logout();
+        // Send logout via WebSocket if connected
+        if (socketRef.current?.readyState === WebSocket.OPEN) {
+            socketRef.current.send(JSON.stringify({
+                type: "logout",
+                username: playerID
+            }));
+        }
         
+        logout();
         localStorage.removeItem("accessTok");
         localStorage.removeItem("refreshTok");
-
-        window.location.href = '/';
+        window.location.href = '/LoginSignup';
     };
 
     const renderNotifications = () => (
@@ -259,7 +266,7 @@ function Header() {
                             <GiCrossedSwords className="InviteIcon flippedIconVertical" />
                         )}
                     </div>
-                        <Sidebar/>
+                        <Sidebar onLogout={handleLogout}/>
                     </div>
                 </>
             )}
