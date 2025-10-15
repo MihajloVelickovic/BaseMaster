@@ -66,8 +66,7 @@ function Sidebar({ onLogout }: { onLogout: () => void }) {
     </div>
     {username && renderSidebar()}
     </>
-  ); // if only you could know what we really are, people who actualy do the work
-     //they said that they would do a month ago, maybe longer I stopped counting weeks
+  );
 }
 
 // <button className="close-btn" onClick={toggleSidebar}>

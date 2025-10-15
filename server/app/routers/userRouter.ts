@@ -323,7 +323,7 @@ userRouter.post("/handleFriendRequest", authUser, async(req:any, res:any)=>{
                     from: username,
                     message: `${username} declined your friend request`
             }));
-            return res.status(400).json({message: `Player '${username}' declined friend request from '${sender}'`});
+            return res.status(200).json({message: `Player '${username}' declined friend request from '${sender}'`});
         }
 
         const makeFriends = await n4jSesh.executeWrite(async transaction => {

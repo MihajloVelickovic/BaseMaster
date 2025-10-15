@@ -1,0 +1,391 @@
+/* NotificationDropdown.css */
+
+.notification-dropdown {
+    position: fixed;
+    right: 20px;
+    top: 70px;
+    width: 380px;
+    max-height: 600px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    display: none;
+    z-index: 9999;
+    animation: slideDown 0.2s ease-out;
+}
+
+.notification-dropdown.open {
+    display: flex;
+    flex-direction: column;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.notification-header-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e5e7eb;
+    background: #f9fafb;
+}
+
+.notification-header-bar h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #111827;
+}
+
+.notification-count {
+    background: #ef4444;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.notification-list {
+    overflow-y: auto;
+    max-height: 540px;
+}
+
+.notification-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.notification-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.notification-list::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+.notification-list::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+.notification-section {
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.notification-section:last-child {
+    border-bottom: none;
+}
+
+.section-title {
+    padding: 12px 20px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #6b7280;
+    background: #f9fafb;
+}
+
+.notification-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid #f3f4f6;
+    transition: background 0.15s ease;
+    position: relative;
+}
+
+.notification-item:last-child {
+    border-bottom: none;
+}
+
+.notification-item:hover {
+    background: #f9fafb;
+}
+
+.notification-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+    background: #e5e7eb;
+}
+
+.friend-request-icon {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+
+.game-result-icon {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    font-size: 24px;
+}
+
+.notification-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.notification-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+.notification-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: #111827;
+}
+
+.notification-message {
+    font-size: 14px;
+    color: #4b5563;
+    margin: 0 0 8px 0;
+    line-height: 1.5;
+}
+
+.notification-message strong {
+    color: #111827;
+    font-weight: 600;
+}
+
+.notification-time {
+    font-size: 12px;
+    color: #9ca3af;
+}
+
+.dismiss-btn {
+    background: none;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.15s ease;
+}
+
+.dismiss-btn:hover {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+/* Friend Request Styles */
+.friend-request-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.action-btn {
+    flex: 1;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.15s ease;
+}
+
+.accept-btn {
+    background: #10b981;
+    color: white;
+}
+
+.accept-btn:hover {
+    background: #059669;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.decline-btn {
+    background: #ef4444;
+    color: white;
+}
+
+.decline-btn:hover {
+    background: #dc2626;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+/* Game Result Styles */
+.game-result {
+    background: linear-gradient(to right, #fffbeb 0%, #ffffff 100%);
+}
+
+.game-result-details {
+    display: flex;
+    gap: 16px;
+    margin: 12px 0 8px;
+}
+
+.result-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.stat-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    color: #6b7280;
+    font-weight: 600;
+}
+
+.stat-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #111827;
+}
+
+.stat-value.place {
+    color: #f59e0b;
+}
+
+.stat-value.score {
+    color: #10b981;
+}
+
+/* Empty State */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    color: #9ca3af;
+}
+
+.empty-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.empty-state p {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .notification-dropdown {
+        width: 320px;
+        max-height: 500px;
+    }
+
+    .notification-list {
+        max-height: 440px;
+    }
+
+    .notification-item {
+        padding: 12px 16px;
+        gap: 10px;
+    }
+
+    .notification-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 18px;
+    }
+
+    .game-result-icon {
+        font-size: 20px;
+    }
+
+    .notification-header-bar {
+        padding: 14px 16px;
+    }
+
+    .section-title {
+        padding: 10px 16px 6px;
+    }
+}
+
+@media (max-width: 480px) {
+    .notification-dropdown {
+        width: calc(100vw - 20px);
+        right: 10px;
+        max-height: 450px;
+    }
+}
+
+/* Dark mode support (optional - uncomment if needed) */
+/*
+@media (prefers-color-scheme: dark) {
+    .notification-dropdown {
+        background: #1f2937;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    .notification-header-bar {
+        background: #111827;
+        border-bottom-color: #374151;
+    }
+
+    .notification-header-bar h3 {
+        color: #f9fafb;
+    }
+
+    .notification-item {
+        border-bottom-color: #374151;
+    }
+
+    .notification-item:hover {
+        background: #111827;
+    }
+
+    .section-title {
+        background: #111827;
+        color: #9ca3af;
+    }
+
+    .notification-title {
+        color: #f9fafb;
+    }
+
+    .notification-message {
+        color: #d1d5db;
+    }
+
+    .notification-message strong {
+        color: #f9fafb;
+    }
+
+    .dismiss-btn:hover {
+        background: #374151;
+    }
+
+    .game-result {
+        background: linear-gradient(to right, #1f2937 0%, #111827 100%);
+    }
+
+    .stat-value {
+        color: #f9fafb;
+    }
+}
+*/
