@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { n4jDriver, n4jSession } from "../neo4jClient";
 import { auth, Transaction } from "neo4j-driver";
-import { areInvalidMessagePair, UserService } from "../utils/userService";
+import { areInvalidMessagePair, invalidateFriendListCache, UserService } from "../utils/userService";
 import {publisher, redisClient} from "../redisClient";
 import { IdPrefixes, CacheTypes, PAGE_SIZE } from "../shared_modules/shared_enums";
 import { upsertPlayer } from "../graph/player.repo";
@@ -339,8 +339,7 @@ userRouter.post("/handleFriendRequest", authUser, async(req:any, res:any)=>{
         const receiverKey = RedisKeys.friendList(username);
         const senderKey = RedisKeys.friendList(sender);
 
-        await UserService.deleteCachedFriendList(receiverKey);
-        await UserService.deleteCachedFriendList(senderKey);
+        await invalidateFriendListCache(sender, username);
 
         if(!makeFriends)
             return res.status(400).json({message: `Failed to establish friendship between '${username}' and '${sender}'`});
@@ -438,10 +437,10 @@ userRouter.post("/removeFriend", authUser, async (req: any, res: any) => {
         const userCacheKey = RedisKeys.friendList(username);
         const friendCacheKey = RedisKeys.friendList(friend); 
 
-        await UserService.deleteCachedFriendList(userCacheKey);
-        await UserService.deleteCachedFriendList(friendCacheKey);
+        await invalidateFriendListCache(username, friend);
 
-        await publisher.publish(`FRIEND_REMOVED_${friend}`, JSON.stringify({
+        await publisher.publish(RedisKeys.friendRemoved(friend),
+                                JSON.stringify({
             from: username,
             message: `${username} removed you from friends`
         }));
@@ -460,9 +459,11 @@ userRouter.post("/sendInvite", authUser, async (req:any, res:any) => {
         return res.status(400).json({message: "Missing required parameters: username or friendUsername or gameId"});
 
     try {
-        await redisClient.hSet(`${IdPrefixes.INVITE}_${receiver}`, sender, gameId);
+        const inviteKey = RedisKeys.invite(receiver);
 
-        await publisher.publish(`${IdPrefixes.INVITE}_${receiver}`, JSON.stringify({
+        await redisClient.hSet(inviteKey, sender, gameId);
+
+        await publisher.publish(inviteKey, JSON.stringify({
             from: sender,
             to:receiver,    
             gameId:gameId,

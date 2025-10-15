@@ -29,7 +29,7 @@ function Header() {
     const { joinLobby, setPlayerID: setLobbyPlayerID } = useLobbyContext();
 
     // Calculate unread count from notifications
-    const unreadCount = notifications.filter(n => !n.read).length;
+    const unreadCount = friendRequests.length + notifications.filter(n => !n.read).length;
 
     useEffect(() => {
         if (playerID) {
@@ -136,6 +136,25 @@ function Header() {
             socket.close();
         };
     }, [playerID]);
+
+    useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+        const target = event.target as HTMLElement;
+        
+        // Check if click is outside the bell container
+        if (isOpenNotification && !target.closest('.bell-container')) {
+            setIsOpenNotification(false);
+        }
+    };
+
+        if (isOpenNotification) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isOpenNotification]);
 
     const handleInviteIconClick = () => {
         setShowInvites(prev => !prev);

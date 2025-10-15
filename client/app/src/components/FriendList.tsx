@@ -27,6 +27,34 @@ function FriendList() {
     }
   }, [playerID]);
 
+  useEffect(() => {
+    const handleWebSocketMessage = (event: CustomEvent) => {
+        const data = event.detail;
+        console.log('[FriendList] WebSocket message:', data);
+
+        if (data.type === 'FRIEND_ACCEPTED') {
+            // Someone accepted your request
+            setFriends(prev => [...prev, data.from]);
+        }
+
+        if (data.type === 'FRIEND_REQUEST') {
+            // New friend request
+            setFriendRequests(prev => [...prev, data.from]);
+        }
+
+        if (data.type === 'FRIEND_REMOVED') {
+            // Someone removed you
+            setFriends(prev => prev.filter(f => f !== data.from));
+        }
+    };
+
+    window.addEventListener('ws-message', handleWebSocketMessage as EventListener);
+
+    return () => {
+        window.removeEventListener('ws-message', handleWebSocketMessage as EventListener);
+    };
+}, [setFriends, setFriendRequests]);
+
   const fetchFriends = async () => {
     if (!playerID) return;
     

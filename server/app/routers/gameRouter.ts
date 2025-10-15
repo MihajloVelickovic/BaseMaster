@@ -405,6 +405,17 @@ gameRouter.post("/playerComplete", async (req:any, res:any) => {
             JSON.stringify({ results })
         );
 
+        results.forEach((playerResult: any, index: number) => {
+        const playerId = playerResult.playerId || playerResult.id;
+        publisher.publish(
+            RedisKeys.gameResult(playerId),  // Publish to individual player channel
+            JSON.stringify({
+                place: index + 1,
+                score: playerResult.score,
+                totalPlayers: results.length
+            })
+        );
+    });
     }
     catch(err:any) {
         return res.send({message: `Error with cleanup: ${err}`})

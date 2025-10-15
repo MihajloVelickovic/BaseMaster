@@ -2,6 +2,7 @@ import { n4jSession } from "../neo4jClient";
 import { redisClient } from "../redisClient";
 import { CACHE_DURATION } from "../shared_modules/configMaps";
 import { CacheTypes } from "../shared_modules/shared_enums";
+import { RedisKeys } from "./redisKeyService";
 
 export class UserService {
   static async getFriends(username: string): Promise<string[]> {
@@ -61,4 +62,12 @@ export const isInvalid = (value:any) => {
 
 export const areInvalidMessagePair = (sender:any, receiver:any) => {
     return isInvalid(sender) || isInvalid(receiver) || sender === receiver;
+}
+
+export async function invalidateFriendListCache(sender:string, receiver:string) {
+  const receiverKey = RedisKeys.friendList(receiver);
+  const senderKey = RedisKeys.friendList(sender);
+
+  await UserService.deleteCachedFriendList(receiverKey);
+  await UserService.deleteCachedFriendList(senderKey);
 }

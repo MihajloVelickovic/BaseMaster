@@ -1,7 +1,7 @@
-import React from 'react';
-import { FaCheck, FaTimes, FaTrophy } from 'react-icons/fa';
+import React, { useState } from 'react';
+import { FaCheck, FaTimes } from 'react-icons/fa';
 import { Notification } from '../utils/notifications';
-import { formatTimeAgo, getNotificationIcon, getNotificationColor } from '../utils/notificationHelpers';
+import { formatTimeAgo } from '../utils/notificationHelpers';
 import '../styles/NotificationDropdown.css';
 
 interface NotificationDropdownProps {
@@ -19,16 +19,31 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
     onDeclineRequest,
     onDismiss
 }) => {
+    const [expandedResults, setExpandedResults] = useState<Set<string>>(new Set());
+
     // Separate notifications by type
-    const friendRequestNotifications = notifications.filter(n => n.type === 'FRIEND_REQUEST');
     const gameResultNotifications = notifications.filter(n => n.type === 'GAME_RESULT');
-    const friendResponseNotifications = notifications.filter(n =>   // ADD THIS LINE
-        n.type === 'FRIEND_ACCEPTED' || n.type === 'FRIEND_DECLINED'  // AND THIS LINE
-    ); 
+    const friendResponseNotifications = notifications.filter(n => 
+        n.type === 'FRIEND_ACCEPTED' || n.type === 'FRIEND_DECLINED'
+    );
+    
     const hasAnyNotifications = notifications.length > 0 || friendRequests.length > 0;
+
+    const toggleExpand = (id: string) => {
+        setExpandedResults(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(id)) {
+                newSet.delete(id);
+            } else {
+                newSet.add(id);
+            }
+            return newSet;
+        });
+    };
 
     const renderGameResult = (notification: Notification) => {
         const { place, score, totalPlayers } = notification.actionData || {};
+        const isExpanded = expandedResults.has(notification.id);
         let medalEmoji = '';
         
         if (place === 1) medalEmoji = '🥇';
@@ -51,9 +66,10 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                             <FaTimes />
                         </button>
                     </div>
-                    <div className="game-result-details">
+                    
+                    <div className="game-result-compact">
                         <div className="result-stat">
-                            <span className="stat-label">Place:</span>
+                            <span className="stat-label">Your Place:</span>
                             <span className="stat-value place">{place}/{totalPlayers}</span>
                         </div>
                         <div className="result-stat">
@@ -61,6 +77,22 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                             <span className="stat-value score">{score}</span>
                         </div>
                     </div>
+
+                    <button 
+                        className="expand-btn"
+                        onClick={() => toggleExpand(notification.id)}
+                    >
+                        {isExpanded ? '▼ Show Less' : '▶ View Details'}
+                    </button>
+
+                    {isExpanded && notification.actionData && (
+                        <div className="game-result-expanded">
+                            <pre className="result-data">
+                                {JSON.stringify(notification.actionData, null, 2)}
+                            </pre>
+                        </div>
+                    )}
+
                     <span className="notification-time">{formatTimeAgo(notification.timestamp)}</span>
                 </div>
             </div>
@@ -141,7 +173,6 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                 </div>
             ) : (
                 <div className="notification-list">
-                    {/* Friend Requests Section - NEW requests you received */}
                     {friendRequests.length > 0 && (
                         <div className="notification-section">
                             <div className="section-title">Friend Requests</div>
@@ -149,7 +180,6 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                         </div>
                     )}
 
-                    {/* Game Results Section */}
                     {gameResultNotifications.length > 0 && (
                         <div className="notification-section">
                             <div className="section-title">Game Results</div>
@@ -157,7 +187,6 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                         </div>
                     )}
 
-                    {/* Friend Responses Section - Accepted/Declined notifications */}
                     {friendResponseNotifications.length > 0 && (
                         <div className="notification-section">
                             <div className="section-title">Friend Responses</div>

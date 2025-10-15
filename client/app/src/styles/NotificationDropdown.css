@@ -334,6 +334,55 @@
     }
 }
 
+/* Game Result Compact View */
+.game-result-compact {
+    display: flex;
+    gap: 16px;
+    margin: 12px 0 8px;
+}
+
+/* Expand Button */
+.expand-btn {
+    background: none;
+    border: 1px solid #e5e7eb;
+    color: #6b7280;
+    font-size: 12px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin: 8px 0;
+    transition: all 0.15s ease;
+    font-weight: 600;
+    width: 100%;
+    text-align: left;
+}
+
+.expand-btn:hover {
+    background: #f3f4f6;
+    color: #111827;
+    border-color: #d1d5db;
+}
+
+/* Expanded Result Data */
+.game-result-expanded {
+    margin: 12px 0;
+    padding: 12px;
+    background: #f9fafb;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.result-data {
+    margin: 0;
+    font-size: 11px;
+    color: #4b5563;
+    font-family: 'Courier New', monospace;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
 /* Dark mode support (optional - uncomment if needed) */
 /*
 @media (prefers-color-scheme: dark) {

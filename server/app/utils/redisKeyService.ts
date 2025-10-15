@@ -126,5 +126,17 @@ export class RedisKeys {
   static invites(username:string) {
     return `${IdPrefixes.INVITE}:${username}`;
   }
+
+  static gameResult(playerId:string) {
+    return `${IdPrefixes.GAME_RESULT}:${playerId}`;
+  }
+
+  static friendRemoved(friend:string) {
+    return `${IdPrefixes.FRIEND_REMOVED}:${friend}`;
+  }
+
+  static invite(receiver:string) {
+    return `${IdPrefixes.INVITE}:${receiver}`; 
+  }
 }
 

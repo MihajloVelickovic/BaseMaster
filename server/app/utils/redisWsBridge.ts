@@ -140,7 +140,8 @@ export function initRedisWsBridge({
   friendPatterns.forEach(pattern => {
     subscriber.pSubscribe(pattern, (message:any, channel:any) => {
       try {
-        const toUser = channel.split(":"); // supports underscores in username
+        const parts = channel.split(":"); // supports underscores in username
+        const toUser = parts[parts.length - 1];
         if (userSockets.has(toUser)) {
           userSockets.get(toUser)!.forEach(client => safeSend(client, { type: pattern.split("_")[0], ...JSON.parse(message) }));
         }
@@ -230,35 +231,23 @@ export function initRedisWsBridge({
     }
   };
 
-  subscriber.pSubscribe(`${IdPrefixes.ALL_PLAYERS_COMPLETE}:*`, 
-                      async (message:any, channel:any) => {
-  try {
-    const lobbyId = channel.replace(`${IdPrefixes.ALL_PLAYERS_COMPLETE}:`, "");
-    const payload = JSON.parse(message);
-
-
-   // Send individual results to each player via userSockets
-    // (works even if they left the lobby)
-    if (payload.results && Array.isArray(payload.results)) {
-      payload.results.forEach((playerResult: any, index: number) => {
-        const playerId = playerResult.playerId || playerResult.id; // adjust based on your data structure
+  subscriber.pSubscribe(`${IdPrefixes.GAME_RESULT}:*`, (message:any, channel:any) => {
+    try {
+        const playerId = channel.replace(`${IdPrefixes.GAME_RESULT}:`, "");
+        const payload = JSON.parse(message);
         
         if (userSockets.has(playerId)) {
-          userSockets.get(playerId)!.forEach((client) =>
-            safeSend(client, {
-              type: IdPrefixes.GAME_RESULT,  // Different type for individual results
-              place: index + 1,  // 1st, 2nd, 3rd, etc.
-              score: playerResult.score,
-              totalPlayers: payload.results.length
-            })
-          );
+            userSockets.get(playerId)!.forEach((client) =>
+                safeSend(client, {
+                    type: "GAME_RESULT",
+                    ...payload
+                })
+            );
         }
-      });
+    } catch (err) {
+        console.error("[GAME_RESULT handler error]", err);
     }
-  } catch (err) {
-    console.error("[ALL_PLAYERS_COMPLETE handler error]", err);
-  }
-  });
+});
 
   return { dispose };
 }
