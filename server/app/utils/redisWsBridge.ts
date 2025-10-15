@@ -143,7 +143,7 @@ export function initRedisWsBridge({
         const parts = channel.split(":"); // supports underscores in username
         const toUser = parts[parts.length - 1];
         if (userSockets.has(toUser)) {
-          userSockets.get(toUser)!.forEach(client => safeSend(client, { type: pattern.split("_")[0], ...JSON.parse(message) }));
+          userSockets.get(toUser)!.forEach(client => safeSend(client, { type: pattern.split(":")[0], ...JSON.parse(message) }));
         }
       } catch (err) {
         console.error(`[${pattern} handler error]`, err);

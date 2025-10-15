@@ -434,9 +434,6 @@ userRouter.post("/removeFriend", authUser, async (req: any, res: any) => {
         if(!deleteFriendRelation)
             return res.status(400).json({message: `No friendship found between '${username}' and '${friend}'`});         
 
-        const userCacheKey = RedisKeys.friendList(username);
-        const friendCacheKey = RedisKeys.friendList(friend); 
-
         await invalidateFriendListCache(username, friend);
 
         await publisher.publish(RedisKeys.friendRemoved(friend),
@@ -444,6 +441,13 @@ userRouter.post("/removeFriend", authUser, async (req: any, res: any) => {
             from: username,
             message: `${username} removed you from friends`
         }));
+        
+        await publisher.publish(RedisKeys.friendRemoved(username),
+                                JSON.stringify({
+            from: friend,
+            message: `${username} removed you from friends`
+        }));
+
         return res.status(200).json({message: `Successfully removed '${friend}' from '${username}' friend list`});
     }
     catch (error:any) {
