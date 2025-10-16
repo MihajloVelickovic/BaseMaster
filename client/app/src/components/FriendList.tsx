@@ -27,42 +27,6 @@ function FriendList() {
     }
   }, [playerID]);
 
-  useEffect(() => {
-    const handleWebSocketMessage = (event: CustomEvent) => {
-        const data = event.detail;
-        console.log('[FriendList] WebSocket message:', data);
-
-        if (data.type === 'FRIEND_ACCEPT') {
-            // Someone accepted your request
-            setSearchResults(prev => prev.filter(f => f !== data.from));
-            setFriends(prev => [...prev, data.from]);
-        }
-
-        if (data.type === 'FRIEND_DENY') {
-            // Someone accepted your request
-            setSearchResults(prev => prev.filter(f => f !== data.from));
-            setFriends(prev => [...prev, data.from]);
-        }
-
-        if (data.type === 'FRIEND_REQUEST') {
-            // New friend request
-            setFriendRequests(prev => [...prev, data.from]);
-        }
-
-        if (data.type === 'FRIEND_REMOVED') {
-            // Someone removed you
-            setSearchResults(prev => prev.filter(f => f !== data.from));
-            setFriends(prev => prev.filter(f => f !== data.from));
-        }
-    };
-
-    window.addEventListener('ws-message', handleWebSocketMessage as EventListener);
-
-    return () => {
-        window.removeEventListener('ws-message', handleWebSocketMessage as EventListener);
-    };
-}, [setFriends, setFriendRequests]);
-
   const fetchFriends = async () => {
     if (!playerID) return;
     
@@ -114,6 +78,58 @@ function FriendList() {
     }
   };
 
+  useEffect(() => {
+    const handleWebSocketMessage = (event: CustomEvent) => {
+        const data = event.detail;
+        console.log('[FriendList] WebSocket message for search results:', data);
+
+        // ONLY update local search results, NOT shared context
+        // Header.tsx handles updating friends/friendRequests context
+        
+        if (data.type === 'FRIEND_ACCEPT') {
+            // Someone accepted your request - update their card in search results
+            setSearchResults(prev => prev.map(user => 
+                user.username === data.from 
+                    ? { ...user, requestSent: false, isFriend: true }
+                    : user
+            ));
+        }
+
+        if (data.type === 'FRIEND_DENY') {
+            // Someone declined your request - remove the request badge
+            setSearchResults(prev => prev.map(user => 
+                user.username === data.from 
+                    ? { ...user, requestSent: false, requestReceived: false }
+                    : user
+            ));
+        }
+
+        if (data.type === 'FRIEND_REQUEST') {
+            // Someone sent you a request - update their card
+            setSearchResults(prev => prev.map(user => 
+                user.username === data.from 
+                    ? { ...user, requestReceived: true }
+                    : user
+            ));
+        }
+
+        if (data.type === 'FRIEND_REMOVED') {
+            // Someone removed you - update their card
+            setSearchResults(prev => prev.map(user => 
+                user.username === data.from 
+                    ? { ...user, isFriend: false }
+                    : user
+            ));
+        }
+    };
+
+    window.addEventListener('ws-message', handleWebSocketMessage as EventListener);
+
+    return () => {
+        window.removeEventListener('ws-message', handleWebSocketMessage as EventListener);
+    };
+}, []);
+
   const sendFriendRequest = async (receiver: string) => {
     if (!playerID) return;
 
@@ -149,6 +165,7 @@ function FriendList() {
         setFriends(prev => [...prev, sender]);
       }
       setFriendRequests(prev => prev.filter(req => req !== sender));
+      setSearchResults(prev => prev.filter(user => user.username !== sender));
     } catch (error) {
       console.error('Error handling friend request:', error);
     }

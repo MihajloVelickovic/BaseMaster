@@ -21,17 +21,48 @@ const Notification: React.FC<NotificationDropdownProps> = ({
 }) => {
     const [expandedResults, setExpandedResults] = useState<Set<string>>(new Set());
 
-    const gameResultNotifications = notifications.filter(n => n.type === 'GAME_RESULT');
-    const friendResponseNotifications = notifications.filter(n => 
+    // Deduplicate friend requests (in case of duplicates from context)
+    const uniqueFriendRequests = Array.from(new Set(friendRequests));
+    
+    // Deduplicate notifications by creating unique keys
+    const uniqueNotifications = React.useMemo(() => {
+        const seen = new Map<string, INotification>();
+        
+        notifications.forEach(notification => {
+            const key = notification.type === 'GAME_RESULT'
+                ? `${notification.type}-${notification.actionData?.place}-${notification.actionData?.score}-${notification.actionData?.totalPlayers}`
+                : `${notification.type}-${notification.from || ''}-${notification.id}`;
+            
+            if (!seen.has(key)) {
+                seen.set(key, notification);
+            }
+        });
+        
+        return Array.from(seen.values());
+    }, [notifications]);
+
+    // Separate notifications by type using deduplicated array
+    const gameResultNotifications = uniqueNotifications.filter(n => n.type === 'GAME_RESULT');
+    const friendResponseNotifications = uniqueNotifications.filter(n => 
         n.type === 'FRIEND_ACCEPT' || n.type === 'FRIEND_DENY'
     );
     
     // Only count notifications that will actually be displayed
-    const totalDisplayableNotifications = friendRequests.length + 
+    const totalDisplayableNotifications = uniqueFriendRequests.length + 
                                           gameResultNotifications.length + 
                                           friendResponseNotifications.length;
     const hasAnyNotifications = totalDisplayableNotifications > 0;
 
+    // Debug logging
+    React.useEffect(() => {
+        console.log('[Notification Component Debug]', {
+            'Raw friendRequests': friendRequests,
+            'Raw notifications': notifications,
+            'Unique friendRequests': uniqueFriendRequests,
+            'Unique notifications': uniqueNotifications,
+            'Total displayable': totalDisplayableNotifications
+        });
+    }, [friendRequests, notifications, uniqueFriendRequests, uniqueNotifications, totalDisplayableNotifications]);
     const toggleExpand = (id: string) => {
         setExpandedResults(prev => {
             const newSet = new Set(prev);
@@ -164,7 +195,7 @@ const Notification: React.FC<NotificationDropdownProps> = ({
                 <h3>Notifications</h3>
                 {hasAnyNotifications && (
                     <span className="notification-count">
-                        {friendRequests.length + notifications.length}
+                        {totalDisplayableNotifications}
                     </span>
                 )}
             </div>
@@ -176,10 +207,10 @@ const Notification: React.FC<NotificationDropdownProps> = ({
                 </div>
             ) : (
                 <div className="notification-list">
-                    {friendRequests.length > 0 && (
+                    {uniqueFriendRequests.length > 0 && (
                         <div className="notification-section">
                             <div className="section-title">Friend Requests</div>
-                            {friendRequests.map((username, index) => renderFriendRequest(username, index))}
+                            {uniqueFriendRequests.map((username, index) => renderFriendRequest(username, index))}
                         </div>
                     )}
 

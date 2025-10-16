@@ -11,6 +11,7 @@ import { useAuth } from "../utils/AuthContext";
 import { INotification, NotificationType } from "../utils/notifications";
 import { createNotification, getOrdinalSuffix } from '../utils/notificationHelpers'
 import Notification from './Notification';
+import React from "react";
 
 function Header() {
     type Invite = {
@@ -27,9 +28,25 @@ function Header() {
     const socketRef = useRef<WebSocket | null>(null);
     const location = useLocation();
     const { joinLobby, setPlayerID: setLobbyPlayerID } = useLobbyContext();
-
+    const processedNotifications = useRef<Set<string>>(new Set());
     // Calculate unread count from notifications
-    const unreadCount = friendRequests.length + notifications.filter(n => !n.read).length;
+    const uniqueFriendRequests = Array.from(new Set(friendRequests));
+    const uniqueUnreadNotifications = React.useMemo(() => {
+        const seen = new Map<string, INotification>();
+        notifications
+            .filter(n => !n.read && n.type !== 'FRIEND_REQUEST') // Exclude FRIEND_REQUEST - already counted in friendRequests
+            .forEach(notification => {
+                const key = notification.type === 'GAME_RESULT'
+                    ? `${notification.type}-${notification.actionData?.place}-${notification.actionData?.score}`
+                    : `${notification.type}-${notification.from || ''}`;
+                if (!seen.has(key)) {
+                    seen.set(key, notification);
+                }
+            });
+        return Array.from(seen.values());
+    }, [notifications]);
+
+const unreadCount = uniqueFriendRequests.length + uniqueUnreadNotifications.length;
 
     useEffect(() => {
         if (playerID) {
@@ -62,70 +79,62 @@ function Header() {
         };
     
         socket.onmessage = (event) => {
-            console.log('Notifications:', notifications);
-            console.log('Unread count:', unreadCount);
             const data = JSON.parse(event.data);
             console.log("Received from WebSocket:", data);
 
             if (data.type === "FRIEND_REQUEST") {
-                // Deduplicate friend requests
-                setFriendRequests((prev) => {
-                    if (prev.includes(data.from)) {
-                        return prev; // Already exists, don't add
-                    }
-                    return [...prev, data.from];
-                });
-                
-                // Deduplicate notifications
-                setNotifications((prev) => {
-                    // Check if we already have this notification
-                    const exists = prev.some(n => 
-                        n.type === 'FRIEND_REQUEST' && n.from === data.from
-                    );
-                    if (exists) return prev;
-                    
-                    return [
-                        createNotification('FRIEND_REQUEST', `Friend request from ${data.from}`, data.from),
-                        ...prev
-                    ];
-                });
-            }
+            const key = getNotificationKey('FRIEND_REQUEST', data.from);
             
+            if (processedNotifications.current.has(key)) {
+                console.log('Duplicate FRIEND_REQUEST ignored:', data.from);
+                return;
+            }
+            processedNotifications.current.add(key);
+            
+            setFriendRequests((prev) => {
+                if (prev.includes(data.from)) return prev;
+                return [...prev, data.from];
+            });
+            
+            setNotifications((prev) => [
+                createNotification('FRIEND_REQUEST', `Friend request from ${data.from}`, data.from),
+                ...prev
+            ]);
+        }
+    
             if (data.type === "FRIEND_ACCEPT") {
+                const key = getNotificationKey('FRIEND_ACCEPT', data.from);
+                
+                if (processedNotifications.current.has(key)) {
+                    console.log('Duplicate FRIEND_ACCEPT ignored:', data.from);
+                    return;
+                }
+                processedNotifications.current.add(key);
+                
                 setFriends((prev) => {
-                    if (prev.includes(data.from)) {
-                        return prev; // Already friends
-                    }
+                    if (prev.includes(data.from)) return prev;
                     return [...prev, data.from];
                 });
                 
-                setNotifications((prev) => {
-                    // Check if we already have this notification
-                    const exists = prev.some(n => 
-                        n.type === 'FRIEND_ACCEPT' && n.from === data.from
-                    );
-                    if (exists) return prev;
-                    
-                    return [
-                        createNotification('FRIEND_ACCEPT', `${data.from} accepted your friend request`, data.from),
-                        ...prev
-                    ];
-                });
+                setNotifications((prev) => [
+                    createNotification('FRIEND_ACCEPT', `${data.from} accepted your friend request`, data.from),
+                    ...prev
+                ]);
             }
             
             if (data.type === "FRIEND_DENY") {
-                setNotifications((prev) => {
-                    // Check if we already have this notification
-                    const exists = prev.some(n => 
-                        n.type === 'FRIEND_DENY' && n.from === data.from
-                    );
-                    if (exists) return prev;
-                    
-                    return [
-                        createNotification('FRIEND_DENY', `${data.from} declined your friend request`, data.from),
-                        ...prev
-                    ];
-                });
+                const key = getNotificationKey('FRIEND_DENY', data.from);
+                
+                if (processedNotifications.current.has(key)) {
+                    console.log('Duplicate FRIEND_DENY ignored:', data.from);
+                    return;
+                }
+                processedNotifications.current.add(key);
+                
+                setNotifications((prev) => [
+                    createNotification('FRIEND_DENY', `${data.from} declined your friend request`, data.from),
+                    ...prev
+                ]);
             }
             
             if (data.type === "FRIEND_REMOVED") {
@@ -150,45 +159,35 @@ function Header() {
             }
 
             if (data.type === "INVITE") {
-                const newInvite: Invite = {
-                    message: data.message,
-                    gameId: data.gameId
-                };
-                
-                // Deduplicate invites by gameId
                 setInvites((prev) => {
                     const exists = prev.some(inv => inv.gameId === data.gameId);
                     if (exists) return prev;
-                    return [...prev, newInvite];
+                    return [...prev, {
+                        message: data.message,
+                        gameId: data.gameId
+                    }];
                 });
             }
 
             if (data.type === "GAME_RESULT") {
-                const place = data.place;
-                const score = data.score;
-                const totalPlayers = data.totalPlayers;
+                const { place, score, totalPlayers } = data;
+                const key = getNotificationKey('GAME_RESULT', undefined, { place, score, totalPlayers });
                 
-                setNotifications((prev) => {
-                    // Use a unique identifier for game results (timestamp or a combination)
-                    const notificationId = `${place}-${score}-${totalPlayers}`;
-                    const exists = prev.some(n => 
-                        n.type === 'GAME_RESULT' && 
-                        n.actionData?.place === place &&
-                        n.actionData?.score === score &&
-                        n.actionData?.totalPlayers === totalPlayers
-                    );
-                    if (exists) return prev;
-                    
-                    return [
-                        createNotification(
-                            'GAME_RESULT',
-                            `You placed ${place}${getOrdinalSuffix(place)} with ${score} points!`,
-                            undefined,
-                            { place, score, totalPlayers }
-                        ),
-                        ...prev
-                    ];
-                });
+                if (processedNotifications.current.has(key)) {
+                    console.log('Duplicate GAME_RESULT ignored:', place, score);
+                    return;
+                }
+                processedNotifications.current.add(key);
+                
+                setNotifications((prev) => [
+                    createNotification(
+                        'GAME_RESULT',
+                        `You placed ${place}${getOrdinalSuffix(place)} with ${score} points!`,
+                        undefined,
+                        { place, score, totalPlayers }
+                    ),
+                    ...prev
+                ]);
             }
 
             window.dispatchEvent(new CustomEvent('ws-message', { detail: data }));
@@ -231,6 +230,15 @@ function Header() {
         };
     }, [playerID]);
 
+    // Add this after: const unreadCount = friendRequests.length + notifications.filter(n => !n.read).length;
+
+const getNotificationKey = (type: string, from?: string, actionData?: any) => {
+    if (type === 'GAME_RESULT' && actionData) {
+        return `${type}-${actionData.place}-${actionData.score}-${actionData.totalPlayers}`;
+    }
+    return `${type}-${from || ''}`;
+};
+
     useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
         const target = event.target as HTMLElement;
@@ -253,6 +261,8 @@ function Header() {
     const handleInviteIconClick = () => {
         setShowInvites(prev => !prev);
     };
+
+    // Add this after: const unreadCount = friendRequests.length + notifications.filter(n => !n.read).length;
 
     const removeInvite = (gameId: string) => {
         setInvites(prev => prev.filter(inv => inv.gameId !== gameId));
@@ -279,34 +289,53 @@ function Header() {
         }
     }
 };
-    const handleRequestSelection = async (username: string, selection: boolean) => {
-        try {
-            const response = await axiosInstance.post('/user/handleFriendRequest', {
-                username: playerID,
-                sender: username,
-                userResponse: selection
-            });
-            
-            if (selection === true) {
-                setFriends(prev => [...prev, username]); 
-                console.log("SUCCESSFULLY BECAME FRIENDS!!!!!!");
-            }
-        } catch (err: any) {
-            if (err.response) {
-                console.error("Server responded with error:", err.response.status, err.response.data);
-            } else {
-                console.error("Request error:", err.message);
-            }
-        } finally {
-            setFriendRequests((prev) => prev.filter((req) => req !== username));
-            // Remove the friend request notification
-            setNotifications(prev => prev.filter(n => !(n.type === 'FRIEND_REQUEST' && n.from === username)));
+   const handleRequestSelection = async (username: string, selection: boolean) => {
+    try {
+        const response = await axiosInstance.post('/user/handleFriendRequest', {
+            username: playerID,
+            sender: username,
+            userResponse: selection
+        });
+        
+        if (selection === true) {
+            setFriends(prev => [...prev, username]); 
+            console.log("SUCCESSFULLY BECAME FRIENDS!!!!!!");
         }
-    };
+    } catch (err: any) {
+        if (err.response) {
+            console.error("Server responded with error:", err.response.status, err.response.data);
+        } else {
+            console.error("Request error:", err.message);
+        }
+    } finally {
+        setFriendRequests((prev) => prev.filter((req) => req !== username));
+    
+        // Remove the friend request notification and clean up processed set
+        setNotifications(prev => {
+            const notification = prev.find(n => n.type === 'FRIEND_REQUEST' && n.from === username);
+            if (notification) {
+                const key = getNotificationKey('FRIEND_REQUEST', username);
+                processedNotifications.current.delete(key);
+            }
+            return prev.filter(n => !(n.type === 'FRIEND_REQUEST' && n.from === username));
+        });
+    }
+};
 
     const handleDismissNotification = (id: string) => {
-        setNotifications(prev => prev.filter(n => n.id !== id));
-    };
+    setNotifications(prev => {
+        const notification = prev.find(n => n.id === id);
+        if (notification) {
+            const key = getNotificationKey(
+                notification.type, 
+                notification.from, 
+                notification.actionData
+            );
+            processedNotifications.current.delete(key);
+        }
+        return prev.filter(n => n.id !== id);
+    });
+};
 
     const isActive = (path: string) => {
         return location.pathname === path;
