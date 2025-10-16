@@ -383,58 +383,44 @@
     word-break: break-word;
 }
 
-/* Dark mode support (optional - uncomment if needed) */
-/*
-@media (prefers-color-scheme: dark) {
-    .notification-dropdown {
-        background: #1f2937;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-    }
+/* ============================================================================
+   ADD THESE STYLES TO YOUR EXISTING Notification.css FILE
+   ============================================================================ */
 
-    .notification-header-bar {
-        background: #111827;
-        border-bottom-color: #374151;
-    }
-
-    .notification-header-bar h3 {
-        color: #f9fafb;
-    }
-
-    .notification-item {
-        border-bottom-color: #374151;
-    }
-
-    .notification-item:hover {
-        background: #111827;
-    }
-
-    .section-title {
-        background: #111827;
-        color: #9ca3af;
-    }
-
-    .notification-title {
-        color: #f9fafb;
-    }
-
-    .notification-message {
-        color: #d1d5db;
-    }
-
-    .notification-message strong {
-        color: #f9fafb;
-    }
-
-    .dismiss-btn:hover {
-        background: #374151;
-    }
-
-    .game-result {
-        background: linear-gradient(to right, #1f2937 0%, #111827 100%);
-    }
-
-    .stat-value {
-        color: #f9fafb;
-    }
+/* Update the existing .notification-header-bar or add if it doesn't exist */
+.notification-header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid #e5e7eb;
 }
-*/
+
+/* New wrapper for count badge and clear all button */
+.notification-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* Clear All button styles */
+.clear-all-btn {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #ef4444;
+    background-color: transparent;
+    border: 1px solid #ef4444;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.clear-all-btn:hover {
+    background-color: #ef4444;
+    color: white;
+}
+
+.clear-all-btn:active {
+    transform: scale(0.95);
+}

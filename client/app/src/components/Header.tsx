@@ -249,7 +249,7 @@ const getNotificationKey = (type: string, from?: string, actionData?: any) => {
     if (type === 'GAME_RESULT' && actionData) {
         return `${type}-${actionData.place}-${actionData.score}-${actionData.totalPlayers}`;
     }
-    return `${type}-${from || ''}`;
+    return `${type}-${from || ''}-${Date.now()}`;
 };
 
     useEffect(() => {
@@ -354,6 +354,25 @@ const getNotificationKey = (type: string, from?: string, actionData?: any) => {
         return location.pathname === path;
     };
 
+    const handleClearAllNotifications = () => {
+        setNotifications(prev => {
+            const clearedNotifications = prev.filter(n => n.type === 'FRIEND_REQUEST');
+            
+            prev.forEach(notification => {
+                if (notification.type !== 'FRIEND_REQUEST') {
+                    const key = getNotificationKey(
+                        notification.type,
+                        notification.from,
+                        notification.actionData
+                    );
+                    processedNotifications.current.delete(key);
+                }
+            });
+            
+            return clearedNotifications;
+        });
+    };
+
     const handleLogout = () => {
         if (socketRef.current?.readyState === WebSocket.OPEN) {
             socketRef.current.send(JSON.stringify({
@@ -417,6 +436,7 @@ const getNotificationKey = (type: string, from?: string, actionData?: any) => {
                                     onAcceptRequest={(username) => handleRequestSelection(username, true)}
                                     onDeclineRequest={(username) => handleRequestSelection(username, false)}
                                     onDismiss={handleDismissNotification}
+                                    onClearAll={handleClearAllNotifications}
                                 />
                             )}
                         </div>

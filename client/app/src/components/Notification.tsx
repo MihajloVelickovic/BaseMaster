@@ -10,6 +10,7 @@ interface NotificationDropdownProps {
     onAcceptRequest: (username: string) => void;
     onDeclineRequest: (username: string) => void;
     onDismiss: (id: string) => void;
+    onClearAll?: () => void;
 }
 
 const Notification: React.FC<NotificationDropdownProps> = ({
@@ -17,7 +18,8 @@ const Notification: React.FC<NotificationDropdownProps> = ({
     friendRequests,
     onAcceptRequest,
     onDeclineRequest,
-    onDismiss
+    onDismiss,
+    onClearAll
 }) => {
     const [expandedResults, setExpandedResults] = useState<Set<string>>(new Set());
 
@@ -200,13 +202,26 @@ const Notification: React.FC<NotificationDropdownProps> = ({
     return (
         <div className="notification-dropdown open">
             <div className="notification-header-bar">
-                <h3>Notifications</h3>
+            <h3>Notifications</h3>
+            <div className="notification-header-actions">
                 {hasAnyNotifications && (
-                    <span className="notification-count">
-                        {totalDisplayableNotifications}
-                    </span>
+                    <>
+                        <span className="notification-count">
+                            {totalDisplayableNotifications}
+                        </span>
+                        {(gameResultNotifications.length > 0 || friendResponseNotifications.length > 0) && onClearAll && (
+                            <button 
+                                className="clear-all-btn"
+                                onClick={onClearAll}
+                                title="Clear all notifications"
+                            >
+                                Clear All
+                            </button>
+                        )}
+                    </>
                 )}
             </div>
+        </div>
 
             {!hasAnyNotifications ? (
                 <div className="empty-state">
