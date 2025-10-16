@@ -8,9 +8,9 @@ import { useFriendContext } from "../utils/FriendContext"
 import { useLobbyContext } from "../utils/LobbyContext";
 import { GiCrossedSwords } from "react-icons/gi";
 import { useAuth } from "../utils/AuthContext";
-import { Notification, NotificationType } from "../utils/notifications";
+import { INotification, NotificationType } from "../utils/notifications";
 import { createNotification, getOrdinalSuffix } from '../utils/notificationHelpers'
-import NotificationDropdown from './NotificationDropdown';
+import Notification from './Notification';
 
 function Header() {
     type Invite = {
@@ -21,7 +21,7 @@ function Header() {
     const { playerID, logout } = useAuth();
     const [isOpenNotification, setIsOpenNotification] = useState(false);
     const { friendRequests, setFriends, setFriendRequests, setOnlineUsers } = useFriendContext();
-    const [notifications, setNotifications] = useState<Notification[]>([]);
+    const [notifications, setNotifications] = useState<INotification[]>([]);
     const [invites, setInvites] = useState<Invite[]>([]);
     const [showInvites, setShowInvites] = useState(false);
     const socketRef = useRef<WebSocket | null>(null);
@@ -78,14 +78,14 @@ function Header() {
             if (data.type === "FRIEND_ACCEPTED") {
                 setFriends((prev) => [...prev, data.from]);
                 setNotifications((prev) => [
-                    createNotification('FRIEND_ACCEPTED', `${data.from} accepted your friend request`, data.from),
+                    createNotification('FRIEND_ACCEPT', `${data.from} accepted your friend request`, data.from),
                     ...prev
                 ]);
             }
             
             if (data.type === "FRIEND_DECLINED") {
                 setNotifications((prev) => [
-                    createNotification('FRIEND_DECLINED', `${data.from} declined your friend request`, data.from),
+                    createNotification('FRIEND_DENY', `${data.from} declined your friend request`, data.from),
                     ...prev
                 ]);
             }
@@ -313,7 +313,7 @@ function Header() {
                                 )}
                             </div>
                             {isOpenNotification && (
-                                <NotificationDropdown
+                                <Notification
                                     notifications={notifications}
                                     friendRequests={friendRequests}
                                     onAcceptRequest={(username) => handleRequestSelection(username, true)}

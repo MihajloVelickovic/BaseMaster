@@ -1,13 +1,13 @@
 // src/utils/notificationHelpers.ts
 
-import { Notification, NotificationType } from '../utils/notifications';
+import { INotification, NotificationType } from '../utils/notifications';
 
 export function createNotification(
   type: NotificationType,
   message: string,
   from?: string,
   actionData?: any
-): Notification {
+): INotification {
   return {
     id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     type,
@@ -49,9 +49,9 @@ export function getNotificationIcon(type: NotificationType): string {
   switch (type) {
     case 'FRIEND_REQUEST':
       return '👤';
-    case 'FRIEND_ACCEPTED':
+    case 'FRIEND_ACCEPT':
       return '✅';
-    case 'FRIEND_DECLINED':
+    case 'FRIEND_DENY':
       return '❌';
     case 'GAME_RESULT':
       return '🏆';
@@ -66,9 +66,9 @@ export function getNotificationColor(type: NotificationType): string {
   switch (type) {
     case 'FRIEND_REQUEST':
       return '#3b82f6'; // blue
-    case 'FRIEND_ACCEPTED':
+    case 'FRIEND_ACCEPT':
       return '#10b981'; // green
-    case 'FRIEND_DECLINED':
+    case 'FRIEND_DENY':
       return '#ef4444'; // red
     case 'GAME_RESULT':
       return '#f59e0b'; // amber

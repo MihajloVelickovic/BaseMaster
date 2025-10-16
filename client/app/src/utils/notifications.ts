@@ -1,12 +1,12 @@
 export type NotificationType = 
   | 'FRIEND_REQUEST' 
-  | 'FRIEND_ACCEPTED' 
-  | 'FRIEND_DECLINED' 
+  | 'FRIEND_ACCEPT' 
+  | 'FRIEND_DENY' 
   | 'GAME_RESULT' 
   | 'GAME_INVITE'
   | 'GENERAL';
 
-export interface Notification {
+export interface INotification {
   id: string;
   type: NotificationType;
   from?: string;
@@ -22,7 +22,7 @@ export interface Notification {
 }
 
 export interface NotificationState {
-  notifications: Notification[];
+  notifications: INotification[];
   unreadCount: number;
 }
 

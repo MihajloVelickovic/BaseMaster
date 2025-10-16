@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
 import { FaCheck, FaTimes } from 'react-icons/fa';
-import { Notification } from '../utils/notifications';
+import { INotification } from '../utils/notifications';
 import { formatTimeAgo } from '../utils/notificationHelpers';
-import '../styles/NotificationDropdown.css';
+import '../styles/Notification.css';
 
 interface NotificationDropdownProps {
-    notifications: Notification[];
+    notifications: INotification[];
     friendRequests: string[];
     onAcceptRequest: (username: string) => void;
     onDeclineRequest: (username: string) => void;
     onDismiss: (id: string) => void;
 }
 
-const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
+const Notification: React.FC<NotificationDropdownProps> = ({
     notifications,
     friendRequests,
     onAcceptRequest,
@@ -21,13 +21,16 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
 }) => {
     const [expandedResults, setExpandedResults] = useState<Set<string>>(new Set());
 
-    // Separate notifications by type
     const gameResultNotifications = notifications.filter(n => n.type === 'GAME_RESULT');
     const friendResponseNotifications = notifications.filter(n => 
-        n.type === 'FRIEND_ACCEPTED' || n.type === 'FRIEND_DECLINED'
+        n.type === 'FRIEND_ACCEPT' || n.type === 'FRIEND_DENY'
     );
     
-    const hasAnyNotifications = notifications.length > 0 || friendRequests.length > 0;
+    // Only count notifications that will actually be displayed
+    const totalDisplayableNotifications = friendRequests.length + 
+                                          gameResultNotifications.length + 
+                                          friendResponseNotifications.length;
+    const hasAnyNotifications = totalDisplayableNotifications > 0;
 
     const toggleExpand = (id: string) => {
         setExpandedResults(prev => {
@@ -41,7 +44,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
         });
     };
 
-    const renderGameResult = (notification: Notification) => {
+    const renderGameResult = (notification: INotification) => {
         const { place, score, totalPlayers } = notification.actionData || {};
         const isExpanded = expandedResults.has(notification.id);
         let medalEmoji = '';
@@ -131,9 +134,9 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
         );
     };
 
-    const renderFriendResponse = (notification: Notification) => {
-        const icon = notification.type === 'FRIEND_ACCEPTED' ? '✅' : '❌';
-        const color = notification.type === 'FRIEND_ACCEPTED' ? '#10b981' : '#ef4444';
+    const renderFriendResponse = (notification: INotification) => {
+        const icon = notification.type === 'FRIEND_ACCEPT' ? '✅' : '❌';
+        const color = notification.type === 'FRIEND_ACCEPT' ? '#10b981' : '#ef4444';
 
         return (
             <div className="notification-item" key={notification.id}>
@@ -199,4 +202,4 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
     );
 };
 
-export default NotificationDropdown;
+export default Notification;
