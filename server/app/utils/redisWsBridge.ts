@@ -136,7 +136,7 @@ export function initRedisWsBridge({
   });
 
   // FRIEND_* patterns -> user-specific sockets
-  const friendPatterns = ["FRIEND_REQUEST:*", "FRIEND_ACCEPTED:*", "FRIEND_DECLINED:*", "FRIEND_REMOVED:*"];
+  const friendPatterns = ["FRIEND_REQUEST:*", "FRIEND_ACCEPT:*", "FRIEND_DENY:*", "FRIEND_REMOVED:*"];
   friendPatterns.forEach(pattern => {
     subscriber.pSubscribe(pattern, (message:any, channel:any) => {
       try {
@@ -175,9 +175,9 @@ export function initRedisWsBridge({
   });
 
   // INVITE pattern
-  subscriber.pSubscribe(`${IdPrefixes.INVITE}_*`, (message:any, channel:any) => {
+  subscriber.pSubscribe(`${IdPrefixes.INVITE}:*`, (message:any, channel:any) => {
     try {
-      const toUser = channel.replace(`${IdPrefixes.INVITE}_`, "");
+      const toUser = channel.replace(`${IdPrefixes.INVITE}:`, "");
       if (userSockets.has(toUser)) {
         userSockets.get(toUser)!.forEach(client => safeSend(client, { type: IdPrefixes.INVITE, ...JSON.parse(message) }));
       }

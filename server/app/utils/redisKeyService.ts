@@ -112,11 +112,11 @@ export class RedisKeys {
   }
 
   static friendRequestAccept(sender:string) {
-    return `${IdPrefixes.FRIEND_REQUEST_ACCEPT}:${sender}`
+    return `${IdPrefixes.FRIEND_ACCEPT}:${sender}`
   }
 
   static friendRequestDeny(sender:string) {
-    return `${IdPrefixes.FRIEND_REQUEST_DENY}:${sender}`
+    return `${IdPrefixes.FRIEND_DENY}:${sender}`
   }
 
   static friendRequest(receiver: string) {
