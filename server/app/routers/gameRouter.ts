@@ -15,12 +15,13 @@ import { CACHE_DURATION, DiffcultyModifier, MAX_NUMBER } from "../shared_modules
 import { isNullOrWhitespace } from "../utils/stringUtils";
 import { addChaosBaseArrays, CleanupGameContext, SaveResults, setRounds } from "../utils/gameService";
 import { getGlobalLeaderboard } from "../graph/leaderboard.repo";
+import { authUser } from "../config/config";
 
 
 
 const gameRouter = Router();
 
-gameRouter.post("/createGame", async (req: any, res:any) => {
+gameRouter.post("/createGame", authUser, async (req: any, res:any) => {
     console.log(req.body); //DEBUG
     const {
             gamemode,
@@ -106,7 +107,7 @@ gameRouter.post("/createGame", async (req: any, res:any) => {
     }
 });
 
-gameRouter.post("/getCurrNum", async (req:any, res:any) => {  
+gameRouter.post("/getCurrNum", authUser, async (req:any, res:any) => {  
     console.log(req.body);
     const {
         gameId,
@@ -177,7 +178,7 @@ gameRouter.post("/getCurrNum", async (req:any, res:any) => {
 });
 
 
-gameRouter.post("/joinLobby", async (req:any, res:any) => {
+gameRouter.post("/joinLobby", authUser, async (req:any, res:any) => {
     const {
         gameId,
         playerId
@@ -244,7 +245,7 @@ gameRouter.post("/joinLobby", async (req:any, res:any) => {
     }    
 });
 
-gameRouter.get("/getLobbies", async (req:any, res:any) => {
+gameRouter.get("/getLobbies", authUser, async (req:any, res:any) => {
     try {
         const lobbies_curr_players = 
         await redisClient.hGetAll(Prefixes.LOBBIES_CURR_PLAYERS);
@@ -285,7 +286,7 @@ gameRouter.get("/getLobbies", async (req:any, res:any) => {
     }
 });
 
-gameRouter.post("/setGameState", async (req:any, res:any) => {
+gameRouter.post("/setGameState", authUser, async (req:any, res:any) => {
     const {
         gameId,
         gameState
@@ -342,7 +343,7 @@ gameRouter.post("/setGameState", async (req:any, res:any) => {
 
 });
 
-gameRouter.post("/playerComplete", async (req:any, res:any) => {
+gameRouter.post("/playerComplete", authUser,  async (req:any, res:any) => {
     const {
         playerId: playerId,
         gameId: gameId,
@@ -423,7 +424,7 @@ gameRouter.post("/playerComplete", async (req:any, res:any) => {
 });
 
 
-gameRouter.post("/leaveLobby", async (req: any, res: any) => {
+gameRouter.post("/leaveLobby", authUser, async (req: any, res: any) => {
     const { gameId, playerID } = req.body;
 
     if (isNullOrWhitespace(gameId) || isNullOrWhitespace(playerID)) {
@@ -480,7 +481,7 @@ gameRouter.post("/leaveLobby", async (req: any, res: any) => {
     }
 });
 
-gameRouter.post("/leaveGame", async (req: any, res: any) => {
+gameRouter.post("/leaveGame", authUser, async (req: any, res: any) => {
     const { gameId, playerID } = req.body;
 
     if (isNullOrWhitespace(gameId) || isNullOrWhitespace(playerID)) {
@@ -530,7 +531,7 @@ gameRouter.post("/leaveGame", async (req: any, res: any) => {
     }
 });
 
-gameRouter.post("/sendLobbyMessage", async (req:any, res:any) => {
+gameRouter.post("/sendLobbyMessage", authUser, async (req:any, res:any) => {
     const {
         playerId,
         message,
@@ -556,7 +557,7 @@ gameRouter.post("/sendLobbyMessage", async (req:any, res:any) => {
     }
 });
 
-gameRouter.post("/getLobbyMessages", async (req:any, res:any) => {
+gameRouter.post("/getLobbyMessages", authUser, async (req:any, res:any) => {
     const {
         gameId
     } = req.body;
@@ -581,7 +582,7 @@ gameRouter.post("/getLobbyMessages", async (req:any, res:any) => {
     }
 });
 
-gameRouter.get("/globalLeaderboard", async (req: any, res: any) => {  
+gameRouter.get("/globalLeaderboard", authUser, async (req: any, res: any) => {  
   const pageRaw = req.query.page;
   
   const page = Number.isInteger(Number(pageRaw)) &&  Number(pageRaw) > 0

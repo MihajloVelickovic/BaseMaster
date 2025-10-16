@@ -80,7 +80,7 @@ userRouter.post("/login", async(req: any, res: any) => {
         const token = jwt.sign({emailOrUsername}, JWT_SECRET, {expiresIn: 600});
         const refreshToken = jwt.sign({emailOrUsername}, JWT_REFRESH);
         refreshToks.push(refreshToken);
-        
+        console.log("a");
         return res.status(200).json({message: "Success", user: player, token: token, refresh: refreshToken});
     }
     catch(error:any){
@@ -603,7 +603,7 @@ userRouter.post("/searchUsers", authUser, async (req: any, res: any) => {
     }
 });
 
-userRouter.post("/sendMessage", async (req:any, res:any) => {
+userRouter.post("/sendMessage", authUser, async (req:any, res:any) => {
     const { sender, receiver, messageText} = req.body;
 
     if(isNullOrWhitespace(messageText) || areInvalidMessagePair(sender,receiver))
@@ -636,7 +636,7 @@ userRouter.post("/sendMessage", async (req:any, res:any) => {
     }
 });
 
-userRouter.post("/getMessages", async (req:any, res:any) => {
+userRouter.post("/getMessages", authUser, async (req:any, res:any) => {
     const {sender, receiver} = req.body;
     
     if(areInvalidMessagePair(sender,receiver))
@@ -662,7 +662,7 @@ userRouter.post("/getMessages", async (req:any, res:any) => {
 
 
 
-userRouter.get("/getAllAchievementsWithStats", async (req: any, res: any) => {
+userRouter.get("/getAllAchievementsWithStats", authUser, async (req: any, res: any) => {
   try {
     const cacheKey = RedisKeys.globalAchievementStats();
     const cached = await redisClient.get(cacheKey);
@@ -683,7 +683,7 @@ userRouter.get("/getAllAchievementsWithStats", async (req: any, res: any) => {
   }
 });
 
-userRouter.get("/getPlayerRank", async(req:any, res:any) => {
+userRouter.get("/getPlayerRank", authUser, async(req:any, res:any) => {
 try {
     const username = req.query.username;
     if (!username)

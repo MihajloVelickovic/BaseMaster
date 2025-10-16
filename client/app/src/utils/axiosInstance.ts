@@ -24,6 +24,7 @@ const processQueue = (error: any, token: string | null = null) => {
 axiosInstance.interceptors.request.use(
     (config) => {
         const protectedEndpoints = [
+            '/user/logout',
             '/user/friendRequests',
             '/user/sendFriendRequest',
             '/user/handleFriendRequest',
@@ -35,6 +36,10 @@ axiosInstance.interceptors.request.use(
             '/user/getPlayerStats',
             '/user/getFriendsWithAchievements',
             '/user/searchUsers',
+            '/user/sendMessage',
+            '/user/getMessages',
+            '/user/getAllAchievementsWithStats',
+            '/user/getPlayerRank',
             '/game/createGame',
             '/game/getCurrNum',
             '/game/joinLobby',
