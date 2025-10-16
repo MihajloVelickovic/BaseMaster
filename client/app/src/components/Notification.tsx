@@ -55,16 +55,6 @@ const Notification: React.FC<NotificationDropdownProps> = ({
                                           friendResponseNotifications.length;
     const hasAnyNotifications = totalDisplayableNotifications > 0;
 
-    // Debug logging
-    React.useEffect(() => {
-        console.log('[Notification Component Debug]', {
-            'Raw friendRequests': friendRequests,
-            'Raw notifications': notifications,
-            'Unique friendRequests': uniqueFriendRequests,
-            'Unique notifications': uniqueNotifications,
-            'Total displayable': totalDisplayableNotifications
-        });
-    }, [friendRequests, notifications, uniqueFriendRequests, uniqueNotifications, totalDisplayableNotifications]);
     const toggleExpand = (id: string) => {
         setExpandedResults(prev => {
             const newSet = new Set(prev);
