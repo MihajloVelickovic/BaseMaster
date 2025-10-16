@@ -436,15 +436,16 @@ userRouter.post("/removeFriend", authUser, async (req: any, res: any) => {
         await invalidateFriendListCache(username, friend);
 
         await publisher.publish(RedisKeys.friendRemoved(friend),
-                                JSON.stringify({
+                        JSON.stringify({
             from: username,
             message: `${username} removed you from friends`
         }));
-        
+
+        // Notify the user who initiated the removal (for syncing other tabs/devices)
         await publisher.publish(RedisKeys.friendRemoved(username),
                                 JSON.stringify({
             from: friend,
-            message: `${username} removed you from friends`
+            message: `You removed ${friend} from friends`
         }));
 
         return res.status(200).json({message: `Successfully removed '${friend}' from '${username}' friend list`});

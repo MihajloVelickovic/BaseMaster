@@ -53,6 +53,8 @@ export function getNotificationIcon(type: NotificationType): string {
       return '✅';
     case 'FRIEND_DENY':
       return '❌';
+    case 'FRIEND_REMOVED':
+      return '💔';
     case 'GAME_RESULT':
       return '🏆';
     case 'GAME_INVITE':
@@ -70,6 +72,8 @@ export function getNotificationColor(type: NotificationType): string {
       return '#10b981'; // green
     case 'FRIEND_DENY':
       return '#ef4444'; // red
+    case 'FRIEND_REMOVED':
+      return '#be123c'; // rose-700 (darker red for removed)
     case 'GAME_RESULT':
       return '#f59e0b'; // amber
     case 'GAME_INVITE':

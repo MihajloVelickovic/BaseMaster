@@ -44,7 +44,7 @@ const Notification: React.FC<NotificationDropdownProps> = ({
     // Separate notifications by type using deduplicated array
     const gameResultNotifications = uniqueNotifications.filter(n => n.type === 'GAME_RESULT');
     const friendResponseNotifications = uniqueNotifications.filter(n => 
-        n.type === 'FRIEND_ACCEPT' || n.type === 'FRIEND_DENY'
+        n.type === 'FRIEND_ACCEPT' || n.type === 'FRIEND_DENY' || n.type === 'FRIEND_REMOVED'
     );
     
     // Only count notifications that will actually be displayed
@@ -166,8 +166,16 @@ const Notification: React.FC<NotificationDropdownProps> = ({
     };
 
     const renderFriendResponse = (notification: INotification) => {
-        const icon = notification.type === 'FRIEND_ACCEPT' ? '✅' : '❌';
-        const color = notification.type === 'FRIEND_ACCEPT' ? '#10b981' : '#ef4444';
+        let icon = '✅';
+        let color = '#10b981';
+
+        if (notification.type === 'FRIEND_DENY') {
+            icon = '❌';
+            color = '#ef4444';
+        } else if (notification.type === 'FRIEND_REMOVED') {
+            icon = '💔';
+            color = '#be123c';
+        }
 
         return (
             <div className="notification-item" key={notification.id}>

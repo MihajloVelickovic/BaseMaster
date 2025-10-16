@@ -1,7 +1,8 @@
 export type NotificationType = 
   | 'FRIEND_REQUEST' 
   | 'FRIEND_ACCEPT' 
-  | 'FRIEND_DENY' 
+  | 'FRIEND_DENY'
+  | 'FRIEND_REMOVED' 
   | 'GAME_RESULT' 
   | 'GAME_INVITE'
   | 'GENERAL';

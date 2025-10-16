@@ -138,8 +138,21 @@ const unreadCount = uniqueFriendRequests.length + uniqueUnreadNotifications.leng
             }
             
             if (data.type === "FRIEND_REMOVED") {
-                setFriends((prev) => prev.filter(friend => friend !== data.from));
-            }
+    const key = getNotificationKey('FRIEND_REMOVED', data.from);
+    
+    if (processedNotifications.current.has(key)) {
+        console.log('Duplicate FRIEND_REMOVED ignored:', data.from);
+        return;
+    }
+    processedNotifications.current.add(key);
+    
+    setFriends((prev) => prev.filter(friend => friend !== data.from));
+    
+    setNotifications((prev) => [
+        createNotification('FRIEND_REMOVED', data.message, data.from),
+        ...prev
+    ]);
+}
             
             if (data.type === "USER_ONLINE") {
                 setOnlineUsers((prev) => {
