@@ -75,10 +75,16 @@ wss.on("connection", (ws) => {
         ws.close(1001, 'Server is shutting down');
         return;
     }
-    
+
     activeConnections.add(ws);
     let currentLobby: string | null = null;
     let currentUsername: string | null = null;
+
+    // Heartbeat mechanism - mark connection as alive on pong
+    (ws as any).isAlive = true;
+    ws.on('pong', () => {
+        (ws as any).isAlive = true;
+    });
 
     ws.on("message", async (data: any) => {
         try {
@@ -242,6 +248,24 @@ wss.on("connection", (ws) => {
     ws.on("error", (err) => {
         console.error("[ERROR] WebSocket error:", err);
     });
+});
+
+// Heartbeat interval to detect dead connections
+const heartbeatInterval = setInterval(() => {
+    wss.clients.forEach((ws: any) => {
+        if (ws.isAlive === false) {
+            console.log("[HEARTBEAT] Terminating dead connection");
+            return ws.terminate();
+        }
+
+        ws.isAlive = false;
+        ws.ping(); // Send ping, expecting pong response
+    });
+}, 30000); // Check every 30 seconds
+
+// Clean up heartbeat interval on server close
+wss.on('close', () => {
+    clearInterval(heartbeatInterval);
 });
 
 // Initialize Redis-WS bridge

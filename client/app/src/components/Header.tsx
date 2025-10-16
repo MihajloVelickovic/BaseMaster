@@ -39,9 +39,20 @@ function Header() {
 
     useEffect(() => {
         if (!playerID) return;
-    
+
         const socket = new WebSocket("ws://localhost:1738/");
         socketRef.current = socket;
+
+        // Handle page refresh/close - send logout before connection dies
+        const handleBeforeUnload = () => {
+            if (socket.readyState === WebSocket.OPEN) {
+                // Synchronous send before page unload
+                socket.send(JSON.stringify({
+                    type: "logout",
+                    username: playerID
+                }));
+            }
+        };
         
         socket.onopen = () => {
             socket.send(JSON.stringify({
@@ -130,9 +141,37 @@ function Header() {
         socket.onclose = () => {
             console.log("WebSocket connection closed from Header");
         };
-    
+
+        socket.onerror = (error) => {
+            console.error("WebSocket error in Header:", error);
+        };
+
+        // Add beforeunload listener
+        window.addEventListener('beforeunload', handleBeforeUnload);
+
         return () => {
-            
+            console.log("Header cleanup: Closing WebSocket for", playerID);
+
+            // Remove beforeunload listener
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+
+            // Send logout message if connection is open
+            if (socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({
+                    type: "logout",
+                    username: playerID
+                }));
+                socket.close(1000, "Component unmounting");
+            } else if (socket.readyState === WebSocket.CONNECTING) {
+                // If still connecting, close when it opens
+                socket.addEventListener('open', () => {
+                    socket.send(JSON.stringify({
+                        type: "logout",
+                        username: playerID
+                    }));
+                    socket.close(1000, "Component unmounting");
+                });
+            }
         };
     }, [playerID]);
 

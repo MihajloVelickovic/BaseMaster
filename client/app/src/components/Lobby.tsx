@@ -64,10 +64,13 @@ export default function Lobby () {
     }, [startGameFlag]);
 
     useEffect(() => {
-        const ws = new WebSocket("ws://localhost:1738");
         if (startGameFlag) {
             navigate("/Game", { state: { toBasee:toBasee, playerNum, gameMode, difficulty, gameId, playerID, roundCount } });
+            return;
         }
+
+        const ws = new WebSocket("ws://localhost:1738");
+        wsRef.current = ws; 
 
         ws.onopen = () => {         
             ws.send(JSON.stringify({ type: "joinLobby", gameId, playerID }));
@@ -112,12 +115,26 @@ export default function Lobby () {
             else if(data.type === IdPrefixes.MESSAGE_UPDATE) {
                 console.log("player: ", data.playerId, "message: ", data.playerMessage);
                 setPlayerChat(prevChat => [...prevChat, `${getUserName(data.playerId)}: ${data.playerMessage}`]);
-            }   
+            }
         };
-  
-        return () => ws.close(); // Cleanup WebSocket on unmount
 
-    }, [startGameFlag]);  // This effect runs when `gameId` is updated
+        ws.onerror = (error) => {
+            console.error("WebSocket error in Lobby:", error);
+        };
+
+        ws.onclose = () => {
+            console.log("WebSocket connection closed from Lobby");
+        };
+
+        return () => {
+            console.log("Lobby cleanup: Closing WebSocket");
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.close(1000, "Component unmounting");
+            }
+            wsRef.current = null;
+        };
+
+    }, [gameId, playerID, startGameFlag, navigate, toBasee, playerNum, gameMode, difficulty, roundCount, hostId]);  // Include all dependencies
 
     // function handleStartGame() {
     //     setStartGameFlag(true);
