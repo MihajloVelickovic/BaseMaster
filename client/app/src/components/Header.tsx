@@ -63,31 +63,69 @@ function Header() {
     
         socket.onmessage = (event) => {
             console.log('Notifications:', notifications);
-    console.log('Unread count:', unreadCount);
+            console.log('Unread count:', unreadCount);
             const data = JSON.parse(event.data);
             console.log("Received from WebSocket:", data);
-        
+
             if (data.type === "FRIEND_REQUEST") {
-                setFriendRequests((prev) => [...prev, data.from]);
-                setNotifications((prev) => [
-                    createNotification('FRIEND_REQUEST', `Friend request from ${data.from}`, data.from),
-                    ...prev
-                ]);
+                // Deduplicate friend requests
+                setFriendRequests((prev) => {
+                    if (prev.includes(data.from)) {
+                        return prev; // Already exists, don't add
+                    }
+                    return [...prev, data.from];
+                });
+                
+                // Deduplicate notifications
+                setNotifications((prev) => {
+                    // Check if we already have this notification
+                    const exists = prev.some(n => 
+                        n.type === 'FRIEND_REQUEST' && n.from === data.from
+                    );
+                    if (exists) return prev;
+                    
+                    return [
+                        createNotification('FRIEND_REQUEST', `Friend request from ${data.from}`, data.from),
+                        ...prev
+                    ];
+                });
             }
             
-            if (data.type === "FRIEND_ACCEPTED") {
-                setFriends((prev) => [...prev, data.from]);
-                setNotifications((prev) => [
-                    createNotification('FRIEND_ACCEPT', `${data.from} accepted your friend request`, data.from),
-                    ...prev
-                ]);
+            if (data.type === "FRIEND_ACCEPT") {
+                setFriends((prev) => {
+                    if (prev.includes(data.from)) {
+                        return prev; // Already friends
+                    }
+                    return [...prev, data.from];
+                });
+                
+                setNotifications((prev) => {
+                    // Check if we already have this notification
+                    const exists = prev.some(n => 
+                        n.type === 'FRIEND_ACCEPT' && n.from === data.from
+                    );
+                    if (exists) return prev;
+                    
+                    return [
+                        createNotification('FRIEND_ACCEPT', `${data.from} accepted your friend request`, data.from),
+                        ...prev
+                    ];
+                });
             }
             
-            if (data.type === "FRIEND_DECLINED") {
-                setNotifications((prev) => [
-                    createNotification('FRIEND_DENY', `${data.from} declined your friend request`, data.from),
-                    ...prev
-                ]);
+            if (data.type === "FRIEND_DENY") {
+                setNotifications((prev) => {
+                    // Check if we already have this notification
+                    const exists = prev.some(n => 
+                        n.type === 'FRIEND_DENY' && n.from === data.from
+                    );
+                    if (exists) return prev;
+                    
+                    return [
+                        createNotification('FRIEND_DENY', `${data.from} declined your friend request`, data.from),
+                        ...prev
+                    ];
+                });
             }
             
             if (data.type === "FRIEND_REMOVED") {
@@ -116,7 +154,13 @@ function Header() {
                     message: data.message,
                     gameId: data.gameId
                 };
-                setInvites((prev) => [...prev, newInvite]);
+                
+                // Deduplicate invites by gameId
+                setInvites((prev) => {
+                    const exists = prev.some(inv => inv.gameId === data.gameId);
+                    if (exists) return prev;
+                    return [...prev, newInvite];
+                });
             }
 
             if (data.type === "GAME_RESULT") {
@@ -124,15 +168,27 @@ function Header() {
                 const score = data.score;
                 const totalPlayers = data.totalPlayers;
                 
-                setNotifications((prev) => [
-                    createNotification(
-                        'GAME_RESULT',
-                        `You placed ${place}${getOrdinalSuffix(place)} with ${score} points!`,
-                        undefined,
-                        { place, score, totalPlayers }
-                    ),
-                    ...prev
-                ]);
+                setNotifications((prev) => {
+                    // Use a unique identifier for game results (timestamp or a combination)
+                    const notificationId = `${place}-${score}-${totalPlayers}`;
+                    const exists = prev.some(n => 
+                        n.type === 'GAME_RESULT' && 
+                        n.actionData?.place === place &&
+                        n.actionData?.score === score &&
+                        n.actionData?.totalPlayers === totalPlayers
+                    );
+                    if (exists) return prev;
+                    
+                    return [
+                        createNotification(
+                            'GAME_RESULT',
+                            `You placed ${place}${getOrdinalSuffix(place)} with ${score} points!`,
+                            undefined,
+                            { place, score, totalPlayers }
+                        ),
+                        ...prev
+                    ];
+                });
             }
 
             window.dispatchEvent(new CustomEvent('ws-message', { detail: data }));
