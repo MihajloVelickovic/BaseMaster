@@ -67,14 +67,17 @@ export async function setRounds(gameId:string, roundCount:number, initialValue:n
   //console.log("Order data: ", roundData);
   await redisClient.hSet(gameId, roundData);
 }
-
+//ranke used as placement, need to add it to enriched rows instead of how it is
 export async function SaveResults(scoreboard: ScoreboardEntry[]): Promise<PlayerResult[]> {
-  const enrichedRows: Array<{username: string, score: number, rank: number | null}> = [];
+  const enrichedRows: Array<{username: string, score: number,
+                     placement: number, rank: number | null}> = [];
 
-  for (const entry of scoreboard) {
+
+  for (let index = 0; index < scoreboard.length; index++) {
+    const entry = scoreboard[index];
     const username = entry.value;
     const score = Math.floor(Number(entry.score) || 0);
-    
+    const placement = index + 1;
     const oldBestScore = await redisClient.zScore(RedisKeys.leaderboardRankings(), username) || 0;
     
     if (score > oldBestScore) {
@@ -87,7 +90,8 @@ export async function SaveResults(scoreboard: ScoreboardEntry[]): Promise<Player
     enrichedRows.push({
       username,
       score,
-      rank
+      rank,
+      placement
     });
   }
 

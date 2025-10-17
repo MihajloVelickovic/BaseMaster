@@ -119,7 +119,8 @@ export async function connectPlayerToLeaderboard(username: string) {
 // Update the recordGameResult function in leaderboard.repo.ts
 
 export async function recordGameResult(
-  rows: Array<{ username: string; score: number; rank: number | null }>
+  rows: Array<{username: string, score: number,placement: number,
+               rank: number | null}>
 ): Promise<void> {
   console.log("RECORD RESULTS input", rows);
   const session = n4jSession();
@@ -157,10 +158,10 @@ export async function recordGameResult(
           p.averageScore = (COALESCE(p.totalScore, 0) + row.score) / (COALESCE(p.totalGames, 0) + 1),
           p.lastPlayed = datetime(),
 
-          p.firsts = CASE WHEN row.rank = 1 THEN COALESCE(p.firsts, 0) + 1 ELSE COALESCE(p.firsts, 0) END,
-          p.seconds = CASE WHEN row.rank = 2 THEN COALESCE(p.seconds, 0) + 1 ELSE COALESCE(p.seconds, 0) END,
-          p.thirds = CASE WHEN row.rank = 3 THEN COALESCE(p.thirds, 0) + 1 ELSE COALESCE(p.thirds, 0) END,
-          p.fourths = CASE WHEN row.rank = 4 THEN COALESCE(p.fourths, 0) + 1 ELSE COALESCE(p.fourths, 0) END
+          p.firsts = CASE WHEN row.placement = 1 THEN COALESCE(p.firsts, 0) + 1 ELSE COALESCE(p.firsts, 0) END,
+          p.seconds = CASE WHEN row.placement = 2 THEN COALESCE(p.seconds, 0) + 1 ELSE COALESCE(p.seconds, 0) END,
+          p.thirds = CASE WHEN row.placement = 3 THEN COALESCE(p.thirds, 0) + 1 ELSE COALESCE(p.thirds, 0) END,
+          p.fourths = CASE WHEN row.placement = 4 THEN COALESCE(p.fourths, 0) + 1 ELSE COALESCE(p.fourths, 0) END
 
         RETURN
           row.username AS username,
