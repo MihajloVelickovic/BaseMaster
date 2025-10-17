@@ -46,6 +46,7 @@ userRouter.post("/register", async(req: any, res: any) => {
         return res.status(200).json({message: "Successfully added player!", user: player, token: token, refresh: refreshToken});
     }
     catch(error:any){
+        console.log("[ ERROR ]",error);
         return res.status(500).json({message:"How did this happen....", error: error.message});
     }
 });
