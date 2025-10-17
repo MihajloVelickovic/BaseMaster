@@ -224,36 +224,54 @@ async function checkAndAwardAchievements(tx: any, username: string, stats: any) 
     { code: 'FIRST_WIN', condition: stats.placement === 1 && stats.totalGames >= 1 },
     { code: 'HIGH_SCORER', condition: stats.bestScore >= 1000 },
     { code: 'VETERAN', condition: stats.totalGames >= 50 },
-    { code: 'PERFECTIONIST', condition: stats.lastScore === 2000 }, // Adjust perfect score as needed
+    { code: 'PERFECTIONIST', condition: stats.lastScore === 2000 },
   ];
 
   for (const check of achievementChecks) {
     if (check.condition) {
-      await tx.run(`
-        MATCH (p:Player {username: $username})
+      // Get achievement details
+      const achievementResult = await tx.run(`
         MATCH (a:Achievement {code: $code})
-        MERGE (p)-[r:ACHIEVED]->(a)
-        ON CREATE SET r.achievedAt = datetime()
-        RETURN r
-      `, { username, code: check.code });
+        RETURN a.name as name, a.description as description, a.type as type
+      `, { code: check.code });
+      
+      if (achievementResult.records.length > 0) {
+        const name = achievementResult.records[0].get('name');
+        const description = achievementResult.records[0].get('description');
+        const type = achievementResult.records[0].get('type');
+        
+        // Check if already has achievement
+        const checkResult = await tx.run(`
+          MATCH (p:Player {username: $username})
+          OPTIONAL MATCH (p)-[r:ACHIEVED]->(a:Achievement {code: $code})
+          RETURN r IS NOT NULL as alreadyHas
+        `, { username, code: check.code });
+        
+        const alreadyHas = checkResult.records[0]?.get('alreadyHas');
+        
+        if (!alreadyHas) {
+          // Create achievement relationship
+          await tx.run(`
+            MATCH (p:Player {username: $username})
+            MATCH (a:Achievement {code: $code})
+            CREATE (p)-[r:ACHIEVED]->(a)
+            SET r.achievedAt = datetime()
+            RETURN r
+          `, { username, code: check.code });
+          
+          // Publish notification
+          await publisher.publish(
+            RedisKeys.achievementUnlocked(username),
+            JSON.stringify({
+              name: name,
+              description: description,
+              code: check.code,
+              type: type
+            })
+          );
+        }
+      }
     }
-  }
-
-  // Check friend count achievement
-  const friendResult = await tx.run(`
-    MATCH (p:Player {username: $username})-[:FRIEND]-()
-    RETURN count(*) as friendCount
-  `, { username });
-  
-  const friendCount = friendResult.records[0]?.get('friendCount') || 0;
-  if (friendCount >= 10) {
-    await tx.run(`
-      MATCH (p:Player {username: $username})
-      MATCH (a:Achievement {code: 'SOCIAL_BUTTERFLY'})
-      MERGE (p)-[r:ACHIEVED]->(a)
-      ON CREATE SET r.achievedAt = datetime()
-      RETURN r
-    `, { username });
   }
 }
 
