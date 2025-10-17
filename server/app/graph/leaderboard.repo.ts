@@ -346,7 +346,7 @@ export async function getPlayerAchievements(username: string) {
       name: record.get('name'),
       description: record.get('description'),
       type: record.get('type'),
-      achievedAt: record.get('achievedAt')
+      achievedAt: formatNeo4jDate(record.get('achievedAt'))
     }));
   } finally {
     await session.close();
