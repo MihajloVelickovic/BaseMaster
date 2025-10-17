@@ -15,10 +15,15 @@ export interface INotification {
   timestamp: Date;
   read: boolean;
   actionData?: {
-    gameId?: string;
-    place?: number;
-    score?: number;
-    totalPlayers?: number;
+  gameId?: string;
+  place?: number;
+  score?: number;
+  totalPlayers?: number;
+  fullResults?: Array<{
+    username: string;
+    score: number;
+    placement: number;
+  }>;
   };
 }
 

@@ -16,6 +16,7 @@ import { isNullOrWhitespace } from "../utils/stringUtils";
 import { addChaosBaseArrays, CleanupGameContext, SaveResults, setRounds } from "../utils/gameService";
 import { getGlobalLeaderboard } from "../graph/leaderboard.repo";
 import { authUser } from "../config/config";
+import { PlayerResult } from "../models/types";
 
 
 
@@ -396,8 +397,6 @@ gameRouter.post("/playerComplete", authUser,  async (req:any, res:any) => {
         return res.send({message:"Player status saved"});
     
     try {
-        //Ove dodaj da se sacuvaju stvari u NEO4J, poruke i rezultat
-
         await CleanupGameContext(gameId);
         const results = await SaveResults(scoreboard); // <— now returns standings
 
@@ -406,17 +405,18 @@ gameRouter.post("/playerComplete", authUser,  async (req:any, res:any) => {
             JSON.stringify({ results })
         );
 
-        results.forEach((playerResult: any, index: number) => {
-        const playerId = playerResult.playerId || playerResult.id;
-        publisher.publish(
-            RedisKeys.gameResult(playerId),  // Publish to individual player channel
-            JSON.stringify({
-                place: index + 1,
-                score: playerResult.score,
-                totalPlayers: results.length
-            })
-        );
-    });
+        results.forEach((playerResult: PlayerResult) => {
+            const playerId = playerResult.username;
+            publisher.publish(
+                RedisKeys.gameResult(playerId),  // Publish to individual player channel
+                JSON.stringify({
+                    place: playerResult.placement,
+                    score: playerResult.score,
+                    totalPlayers: results.length,
+                    fullResults: results
+                })
+            );
+        });
     }
     catch(err:any) {
         return res.send({message: `Error with cleanup: ${err}`})

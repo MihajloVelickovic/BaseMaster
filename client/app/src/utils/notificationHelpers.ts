@@ -6,20 +6,27 @@ export function createNotification(
   type: NotificationType,
   message: string,
   from?: string,
-  actionData?: any
+  actionData?: any,
+  fullResults?: Array<{ username: string; score: number; placement: number; }>
 ): INotification {
+  const mergedAction = actionData ? { ...actionData } : {};
+  if (fullResults && fullResults.length) mergedAction.fullResults = fullResults;
+  const actionDataFinal = Object.keys(mergedAction).length ? mergedAction : undefined;
+
   return {
-    id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
     type,
     from,
     message,
     timestamp: new Date(),
     read: false,
-    actionData
+    actionData: actionDataFinal
   };
 }
 
-export function getOrdinalSuffix(num: number): string {
+
+export function getOrdinalSuffix(num?: number): string {
+  if (num == null) return "";   // handle undefined/null
   const j = num % 10;
   const k = num % 100;
   if (j === 1 && k !== 11) return "st";

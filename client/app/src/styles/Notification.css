@@ -424,3 +424,36 @@
 .clear-all-btn:active {
     transform: scale(0.95);
 }
+
+.leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+    font-size: 14px;
+}
+
+.leaderboard-table thead {
+    background-color: #f3f4f6;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.leaderboard-table th {
+    padding: 8px;
+    text-align: left;
+    font-weight: 600;
+    color: #374151;
+}
+
+.leaderboard-table td {
+    padding: 8px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.leaderboard-table .current-player {
+    background-color: #fef3c7;
+    font-weight: 600;
+}
+
+.leaderboard-table tbody tr:hover {
+    background-color: #f9fafb;
+}

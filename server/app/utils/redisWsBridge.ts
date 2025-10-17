@@ -232,15 +232,18 @@ export function initRedisWsBridge({
   };
 
   subscriber.pSubscribe(`${IdPrefixes.GAME_RESULT}:*`, (message:any, channel:any) => {
+    console.log("RedisWSBridge enter");
+    
     try {
         const playerId = channel.replace(`${IdPrefixes.GAME_RESULT}:`, "");
         const payload = JSON.parse(message);
-        
+        console.log("PLAYERID:", playerId);
+        console.log("Payload: ", payload);    
         if (userSockets.has(playerId)) {
             userSockets.get(playerId)!.forEach((client) =>
                 safeSend(client, {
                     type: "GAME_RESULT",
-                    ...payload
+                    actionData: payload
                 })
             );
         }

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FaCheck, FaTimes } from 'react-icons/fa';
 import { INotification } from '../utils/notifications';
-import { formatTimeAgo } from '../utils/notificationHelpers';
+import { formatTimeAgo, getOrdinalSuffix } from '../utils/notificationHelpers';
 import '../styles/Notification.css';
 
 interface NotificationDropdownProps {
@@ -68,62 +68,82 @@ const Notification: React.FC<NotificationDropdownProps> = ({
     };
 
     const renderGameResult = (notification: INotification) => {
-        const { place, score, totalPlayers } = notification.actionData || {};
-        const isExpanded = expandedResults.has(notification.id);
-        let medalEmoji = '';
-        
-        if (place === 1) medalEmoji = '🥇';
-        else if (place === 2) medalEmoji = '🥈';
-        else if (place === 3) medalEmoji = '🥉';
+    const { place, score, totalPlayers, fullResults } = notification.actionData || {};
+    const isExpanded = expandedResults.has(notification.id);
+    let medalEmoji = '';
+    console.log("ACTION DATA", notification.actionData);
+    if (place === 1) medalEmoji = '🥇';
+    else if (place === 2) medalEmoji = '🥈';
+    else if (place === 3) medalEmoji = '🥉';
 
-        return (
-            <div className="notification-item game-result" key={notification.id}>
-                <div className="notification-icon game-result-icon">
-                    {medalEmoji || '🏆'}
-                </div>
-                <div className="notification-content">
-                    <div className="notification-header">
-                        <span className="notification-title">Game Completed!</span>
-                        <button 
-                            className="dismiss-btn"
-                            onClick={() => onDismiss(notification.id)}
-                            aria-label="Dismiss"
-                        >
-                            <FaTimes />
-                        </button>
-                    </div>
-                    
-                    <div className="game-result-compact">
-                        <div className="result-stat">
-                            <span className="stat-label">Your Place:</span>
-                            <span className="stat-value place">{place}/{totalPlayers}</span>
-                        </div>
-                        <div className="result-stat">
-                            <span className="stat-label">Score:</span>
-                            <span className="stat-value score">{score}</span>
-                        </div>
-                    </div>
-
-                    <button 
-                        className="expand-btn"
-                        onClick={() => toggleExpand(notification.id)}
-                    >
-                        {isExpanded ? '▼ Show Less' : '▶ View Details'}
-                    </button>
-
-                    {isExpanded && notification.actionData && (
-                        <div className="game-result-expanded">
-                            <pre className="result-data">
-                                {JSON.stringify(notification.actionData, null, 2)}
-                            </pre>
-                        </div>
-                    )}
-
-                    <span className="notification-time">{formatTimeAgo(notification.timestamp)}</span>
-                </div>
+    return (
+        <div className="notification-item game-result" key={notification.id}>
+            <div className="notification-icon game-result-icon">
+                {medalEmoji || '🏆'}
             </div>
-        );
-    };
+            <div className="notification-content">
+                <div className="notification-header">
+                    <span className="notification-title">Game Completed!</span>
+                    <button 
+                        className="dismiss-btn"
+                        onClick={() => onDismiss(notification.id)}
+                        aria-label="Dismiss"
+                    >
+                        <FaTimes />
+                    </button>
+                </div>
+                
+                <div className="game-result-compact">
+                    <div className="result-stat">
+                        <span className="stat-label">Your Place:</span>
+                        <span className="stat-value place">{place}{getOrdinalSuffix(place)}</span>
+                    </div>
+                    <div className="result-stat">
+                        <span className="stat-label">Score:</span>
+                        <span className="stat-value score">{score}</span>
+                    </div>
+                </div>
+
+                <button 
+                    className="expand-btn"
+                    onClick={() => toggleExpand(notification.id)}
+                >
+                    {isExpanded ? '▼ Show Less' : '▶ View Full Leaderboard'}
+                </button>
+
+                {isExpanded && fullResults && (
+                    <div className="game-result-expanded">
+                        <table className="leaderboard-table">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Player</th>
+                                    <th>Score</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {fullResults.map((result: any) => (
+                                    <tr key={result.username} className={result.placement === place ? 'current-player' : ''}>
+                                        <td>
+                                            {result.placement === 1 ? '🥇' : 
+                                             result.placement === 2 ? '🥈' : 
+                                             result.placement === 3 ? '🥉' : 
+                                             result.placement}
+                                        </td>
+                                        <td>{result.username}</td>
+                                        <td>{result.score}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                <span className="notification-time">{formatTimeAgo(notification.timestamp)}</span>
+            </div>
+        </div>
+    );
+};
 
     const renderFriendRequest = (username: string, index: number) => {
         return (

@@ -183,7 +183,7 @@ const unreadCount = uniqueFriendRequests.length + uniqueUnreadNotifications.leng
             }
 
             if (data.type === "GAME_RESULT") {
-                const { place, score, totalPlayers } = data;
+                const { place, score, totalPlayers, fullResults } = data.actionData;
                 const key = getNotificationKey('GAME_RESULT', undefined, { place, score, totalPlayers });
                 
                 if (processedNotifications.current.has(key)) {
@@ -197,7 +197,7 @@ const unreadCount = uniqueFriendRequests.length + uniqueUnreadNotifications.leng
                         'GAME_RESULT',
                         `You placed ${place}${getOrdinalSuffix(place)} with ${score} points!`,
                         undefined,
-                        { place, score, totalPlayers }
+                        { place, score, totalPlayers, fullResults }
                     ),
                     ...prev
                 ]);
