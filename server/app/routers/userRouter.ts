@@ -5,7 +5,7 @@ import { areInvalidMessagePair, invalidateFriendListCache, UserService } from ".
 import {publisher, redisClient} from "../redisClient";
 import { IdPrefixes, CacheTypes, PAGE_SIZE } from "../shared_modules/shared_enums";
 import { upsertPlayer } from "../graph/player.repo";
-import { connectPlayerToLeaderboard, getPlayerAchievements, getPlayerStats, getFriendsWithAchievements, getAllAchievementsWithStats, getGlobalLeaderboard } from '../graph/leaderboard.repo';
+import { connectPlayerToLeaderboard, getPlayerAchievements, getPlayerStats, getFriendsWithAchievements, getAllAchievementsWithStats, getGlobalLeaderboard, checkAndAwardFriendAchievements } from '../graph/leaderboard.repo';
 import { RedisKeys } from "../utils/redisKeyService";
 import { authUser, JWT_REFRESH, JWT_SECRET } from "../config/config";
 import jwt from "jsonwebtoken";
@@ -346,10 +346,14 @@ userRouter.post("/handleFriendRequest", authUser, async(req:any, res:any)=>{
 
         n4jSesh.close();
         
-        await invalidateFriendListCache(sender, username);
-
+        
         if(!makeFriends)
             return res.status(400).json({message: `Failed to establish friendship between '${username}' and '${sender}'`});
+        
+        await invalidateFriendListCache(sender, username);
+
+        await checkAndAwardFriendAchievements(sender);
+        await checkAndAwardFriendAchievements(username);
 
         await publisher.publish(
             RedisKeys.friendRequestAccept(sender),

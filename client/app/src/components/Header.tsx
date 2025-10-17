@@ -203,6 +203,20 @@ const unreadCount = uniqueFriendRequests.length + uniqueUnreadNotifications.leng
                 ]);
             }
 
+            if (data.type === "ACHIEVEMENT_UNLOCKED") {
+                const { name, description, code, type } = data.actionData;
+                
+                setNotifications((prev) => [
+                    createNotification(
+                        'ACHIEVEMENT_UNLOCKED',
+                        `Achievement Unlocked: ${name}`,
+                        undefined,
+                        { achievement: { name, description, code, type } }
+                    ),
+                    ...prev
+                ]);
+            }
+
             window.dispatchEvent(new CustomEvent('ws-message', { detail: data }));
         };
         

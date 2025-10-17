@@ -22,7 +22,7 @@ const Notification: React.FC<NotificationDropdownProps> = ({
     onClearAll
 }) => {
     const [expandedResults, setExpandedResults] = useState<Set<string>>(new Set());
-
+    
     // Deduplicate friend requests (in case of duplicates from context)
     const uniqueFriendRequests = Array.from(new Set(friendRequests));
     
@@ -42,7 +42,7 @@ const Notification: React.FC<NotificationDropdownProps> = ({
         
         return Array.from(seen.values());
     }, [notifications]);
-
+    const achievementNotifications = uniqueNotifications.filter(n => n.type === 'ACHIEVEMENT_UNLOCKED');
     // Separate notifications by type using deduplicated array
     const gameResultNotifications = uniqueNotifications.filter(n => n.type === 'GAME_RESULT');
     const friendResponseNotifications = uniqueNotifications.filter(n => 
@@ -177,6 +177,36 @@ const Notification: React.FC<NotificationDropdownProps> = ({
         );
     };
 
+    const renderAchievement = (notification: INotification) => {
+        const achievement = notification.actionData?.achievement;
+        
+        return (
+            <div className="notification-item achievement" key={notification.id}>
+                <div className="notification-icon achievement-icon">
+                    🏆
+                </div>
+                <div className="notification-content">
+                    <div className="notification-header">
+                        <span className="notification-title">Achievement Unlocked!</span>
+                        <button 
+                            className="dismiss-btn"
+                            onClick={() => onDismiss(notification.id)}
+                            aria-label="Dismiss"
+                        >
+                            <FaTimes />
+                        </button>
+                    </div>
+                    <p className="notification-message">
+                        <strong>{achievement?.name}</strong>
+                    </p>
+                    <p className="achievement-description">{achievement?.description}</p>
+                    <span className="notification-time">{formatTimeAgo(notification.timestamp)}</span>
+                </div>
+            </div>
+        );
+    };
+
+
     const renderFriendResponse = (notification: INotification) => {
         let icon = '✅';
         let color = '#10b981';
@@ -258,6 +288,13 @@ const Notification: React.FC<NotificationDropdownProps> = ({
                         <div className="notification-section">
                             <div className="section-title">Friend Responses</div>
                             {friendResponseNotifications.map(renderFriendResponse)}
+                        </div>
+                    )}
+
+                    {achievementNotifications.length > 0 && (
+                        <div className="notification-section">
+                            <div className="section-title">Achievements</div>
+                            {achievementNotifications.map(renderAchievement)}
                         </div>
                     )}
                 </div>

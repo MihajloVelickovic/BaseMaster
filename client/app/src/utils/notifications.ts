@@ -5,7 +5,8 @@ export type NotificationType =
   | 'FRIEND_REMOVED' 
   | 'GAME_RESULT' 
   | 'GAME_INVITE'
-  | 'GENERAL';
+  | 'GENERAL'
+  | 'ACHIEVEMENT_UNLOCKED';
 
 export interface INotification {
   id: string;
@@ -24,7 +25,13 @@ export interface INotification {
     score: number;
     placement: number;
   }>;
+  achievement?: {
+    code: string;
+    name: string;
+    description: string;
+    type: string;
   };
+};  
 }
 
 export interface NotificationState {

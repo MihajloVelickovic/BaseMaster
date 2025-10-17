@@ -138,5 +138,9 @@ export class RedisKeys {
   static invite(receiver:string) {
     return `${IdPrefixes.INVITE}:${receiver}`; 
   }
+
+  static achievementUnlocked(username:string) {
+    return `${IdPrefixes.ACHIEVEMENT_UNLOCKED}:${username}`;
+  }
 }
 

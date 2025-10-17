@@ -2,7 +2,7 @@ import { n4jSession } from "../neo4jClient";
 import neo4j from 'neo4j-driver';
 import { formatNeo4jDate } from "../utils/timeConversion";
 import type {Record} from 'neo4j-driver'
-import { redisClient } from "../redisClient";
+import { publisher, redisClient } from "../redisClient";
 import { RedisKeys } from "../utils/redisKeyService";
 
 export interface LeaderboardEntry {
@@ -521,5 +521,73 @@ export async function syncLeaderboardToRedis(): Promise<void> {
   } catch (error) {
     console.error('[SYNC ERROR] Failed to sync leaderboard to Redis:', error);
     throw error;
+  }
+}
+
+export async function checkAndAwardFriendAchievements(username: string): Promise<void> {
+  const session = n4jSession();
+ 
+  try {
+    await session.executeWrite(async tx => {
+      const friendResult = await tx.run(`
+        MATCH (p:Player {username: $username})-[:FRIEND]-()
+        RETURN count(*) as friendCount
+      `, { username });
+     
+      const friendCount = friendResult.records[0]?.get('friendCount') || 0;
+     
+      const achievementsResult = await tx.run(`
+        MATCH (a:Achievement)
+        WHERE a.type = 'SPECIAL' AND (a.code = 'YOU_ARE_MY_BEST_FRIEND' OR a.code = 'SOCIAL_BUTTERFLY')
+        RETURN a.code as code, a.name as name, a.description as description, a.type as type, a.requirement as requirement
+      `);
+     
+      for (const record of achievementsResult.records) {
+        const code = record.get('code');
+        const name = record.get('name');
+        const description = record.get('description');
+        const type = record.get('type');
+        const requirement = record.get('requirement');
+       
+        if (friendCount >= requirement) {
+          // Check if achievement already exists
+          const checkResult = await tx.run(`
+            MATCH (p:Player {username: $username})
+            OPTIONAL MATCH (p)-[r:ACHIEVED]->(a:Achievement {code: $code})
+            RETURN r IS NOT NULL as alreadyHas
+          `, { username, code });
+          
+          const alreadyHas = checkResult.records[0]?.get('alreadyHas');
+          
+          if (!alreadyHas) {
+            // Create the achievement
+            await tx.run(`
+              MATCH (p:Player {username: $username})
+              MATCH (a:Achievement {code: $code})
+              CREATE (p)-[r:ACHIEVED]->(a)
+              SET r.achievedAt = datetime()
+              RETURN r
+            `, { username, code });
+            
+            // Publish notification since this is new
+            await publisher.publish(
+              RedisKeys.achievementUnlocked(username),
+              JSON.stringify({
+                name: name,
+                description: description,
+                code: code,
+                type: type
+              })
+            );
+          }
+        }
+      }
+    });
+  }
+  catch(err:any) {
+    console.log(err);
+  }
+  finally {
+    await session.close();
   }
 }

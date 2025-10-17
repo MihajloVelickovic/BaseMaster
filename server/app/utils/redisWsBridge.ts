@@ -231,6 +231,25 @@ export function initRedisWsBridge({
     }
   };
 
+  subscriber.pSubscribe(`${IdPrefixes.ACHIEVEMENT_UNLOCKED}:*`, (message: any, channel: any) => {
+    try {
+        const playerId = channel.replace(`${IdPrefixes.ACHIEVEMENT_UNLOCKED}:`, "");
+        const payload = JSON.parse(message);
+        
+        if (userSockets.has(playerId)) {
+            userSockets.get(playerId)!.forEach((client) =>
+                safeSend(client, {
+                    type: "ACHIEVEMENT_UNLOCKED",
+                    actionData: payload
+                })
+            );
+        }
+    } 
+    catch (err) {
+        console.error("[ACHIEVEMENT_UNLOCKED handler error]", err);
+    }
+  });
+
   subscriber.pSubscribe(`${IdPrefixes.GAME_RESULT}:*`, (message:any, channel:any) => {
     console.log("RedisWSBridge enter");
     
