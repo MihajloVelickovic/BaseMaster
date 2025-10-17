@@ -111,7 +111,11 @@ export async function connectPlayerToLeaderboard(username: string) {
         RETURN r
       `, { username });
     });
-  } finally {
+  }
+  catch(error:any) {
+    console.log("[ ERROR ]", error);
+  }
+  finally {
     await session.close();
   }
 }

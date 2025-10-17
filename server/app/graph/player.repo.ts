@@ -8,8 +8,8 @@ import { recordGameResult, getGlobalLeaderboard, connectPlayerToLeaderboard } fr
 export async function upsertPlayer(username: string, email?: string, hashedPassword?: string) {
   const session = n4jSession();
   try {
-    await session.executeWrite(tx =>
-      tx.run(
+    await session.executeWrite(async tx =>
+      await tx.run(
         `
         // Create or update Player node
         MERGE (p:Player {username: $username})
@@ -42,7 +42,11 @@ export async function upsertPlayer(username: string, email?: string, hashedPassw
         { username, email, hashedPassword }
       )
     );
-  } finally {
+  }
+  catch(error:any) {
+    console.log("[ ERROR ]", error);
+  }
+  finally {
     await session.close();
   }
 }
