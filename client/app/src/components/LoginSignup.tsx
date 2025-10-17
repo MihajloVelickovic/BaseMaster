@@ -98,7 +98,14 @@ const LoginSignup = () => {
                     });
                     console.log(response);
                     msg = response.data['message'];
-                    userName = response.data.username;
+                    userName = response.data.user.username;
+                    accessTok = response.data.token;
+                    refreshTok = response.data.refresh;
+                    console.log(msg, userName);
+                    localStorage.setItem("playerID",userName);      //will be absolite soon
+                    localStorage.setItem("accessTok", accessTok);
+                    localStorage.setItem("refreshTok", refreshTok);
+                    
                     login(userName);
                     //setUserId(response.data.userId);
                     navigate("/", { state: { playerIdTransfered: userName} });

@@ -20,6 +20,11 @@ let refreshToks: string[] = [];
 userRouter.post("/register", async(req: any, res: any) => {
     console.log("someone is registering 🤫🤫🤫");
     const {email, username, password} = req.body;
+    let player = {
+        username: username,
+        password: password,
+        email: email
+    };
 
     if(isNullOrWhitespace(email) || isNullOrWhitespace(username) ||
        isNullOrWhitespace(password))
@@ -34,7 +39,11 @@ userRouter.post("/register", async(req: any, res: any) => {
         await redisClient.del(RedisKeys.globalLeaderboard());
         await invalidateLeaderboardCache();
         
-        return res.status(200).json({message: `Player successfully created!`, username});
+        const token = jwt.sign({username}, JWT_SECRET, {expiresIn: 600});
+        const refreshToken = jwt.sign({username}, JWT_REFRESH);
+        refreshToks.push(refreshToken);
+        console.log("a");
+        return res.status(200).json({message: "Successfully added player!", user: player, token: token, refresh: refreshToken});
     }
     catch(error:any){
         return res.status(500).json({message:"How did this happen....", error: error.message});
