@@ -144,9 +144,9 @@ userRouter.post("/refreshAccess", (req, res) => {
     if(!refreshToks.includes(token))
         return res.status(403).json({message: "Refresh token invalid"});
 
-    if (typeof verified === 'object' && 'emailOrUsername' in verified){
-        const newTok = jwt.sign({emailOrUsername: verified.emailOrUsername}, JWT_SECRET, {expiresIn: 600});
-        const newRefreshToken = jwt.sign({emailOrUsername: verified.emailOrUsername}, JWT_REFRESH);
+    if (typeof verified === 'object' && 'username' in verified){
+        const newTok = jwt.sign({username: verified.username}, JWT_SECRET, {expiresIn: 600});
+        const newRefreshToken = jwt.sign({username: verified.username}, JWT_REFRESH);
         refreshToks.splice(refreshToks.indexOf(token), 1);
         refreshToks.push(newRefreshToken);
         return res.status(200).json({accessTok: newTok, refreshTok: newRefreshToken});
