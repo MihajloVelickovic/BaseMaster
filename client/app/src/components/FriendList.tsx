@@ -14,7 +14,7 @@ interface SearchResult {
 
 function FriendList() {
   const { playerID } = useAuth();
-  const { friends, setFriends, friendRequests, setFriendRequests, onlineUsers } = useFriendContext();
+  const { friends, setFriends, friendRequests, setFriendRequests, onlineUsers, setOnlineUsers } = useFriendContext();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -33,6 +33,11 @@ function FriendList() {
     try {
       const response = await axiosInstance.post('/user/getFriends', { username: playerID });
       setFriends(response.data.friends || []);
+
+       if (response.data.onlineFriends) {
+        setOnlineUsers(response.data.onlineFriends);
+        console.log('[FriendList] Initial online friends:', response.data.onlineFriends);
+      }
     } catch (error) {
       console.error('Error fetching friends:', error);
     }
