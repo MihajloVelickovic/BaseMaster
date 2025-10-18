@@ -72,3 +72,8 @@ export async function invalidateFriendListCache(sender:string, receiver:string) 
   await UserService.deleteCachedFriendList(receiverKey);
   await UserService.deleteCachedFriendList(senderKey);
 }
+
+export async function isUserOnline(username:string) {
+  const isOnline = await redisClient.sIsMember(RedisKeys.onlinePlayers(), username);
+  return isOnline;
+}

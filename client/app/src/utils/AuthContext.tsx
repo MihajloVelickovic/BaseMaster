@@ -1,10 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import axiosInstance from './axiosInstance';
 
 interface AuthContextType {
   playerID: string | null;
   setPlayerID: (id: string | null) => void;
   login: (username: string) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
   isLoggedIn: boolean;
 }
 
@@ -21,11 +22,28 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.setItem('playerID', username);
   };
 
-  const logout = () => {
-    setPlayerIDState(null);
-    localStorage.removeItem('playerID');
-    localStorage.removeItem('accessTok');
-    localStorage.removeItem('refreshTok');
+  const logout = async () => {
+    try {
+      // Get refresh token from localStorage
+      const refreshToken = localStorage.getItem('refreshTok');
+      
+      if (refreshToken) {
+        // Call backend logout endpoint
+        await axiosInstance.post('/user/logout', {
+          token: refreshToken
+        });
+        console.log('[AuthContext] Successfully logged out from backend');
+      }
+    } catch (error) {
+      console.error('[AuthContext] Error logging out:', error);
+      // Continue with local cleanup even if backend call fails
+    } finally {
+      // Always clear local state, even if backend call fails
+      setPlayerIDState(null);
+      localStorage.removeItem('playerID');
+      localStorage.removeItem('accessTok');
+      localStorage.removeItem('refreshTok');
+    }
   };
 
   const setPlayerID = (id: string | null) => {

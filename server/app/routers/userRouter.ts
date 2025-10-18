@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { n4jDriver, n4jSession } from "../neo4jClient";
 import { auth, Transaction } from "neo4j-driver";
-import { areInvalidMessagePair, invalidateFriendListCache, UserService } from "../utils/userService";
+import { areInvalidMessagePair, invalidateFriendListCache, isUserOnline, UserService } from "../utils/userService";
 import {publisher, redisClient} from "../redisClient";
 import { IdPrefixes, CacheTypes, PAGE_SIZE } from "../shared_modules/shared_enums";
 import { upsertPlayer } from "../graph/player.repo";
@@ -87,8 +87,8 @@ userRouter.post("/login", async(req: any, res: any) => {
         await redisClient.sAdd(RedisKeys.onlinePlayers(), player.username);
         await connectPlayerToLeaderboard(player.username);
         
-        const token = jwt.sign({emailOrUsername}, JWT_SECRET, {expiresIn: 600});
-        const refreshToken = jwt.sign({emailOrUsername}, JWT_REFRESH);
+        const token = jwt.sign({username:player.username}, JWT_SECRET, {expiresIn: 600});
+        const refreshToken = jwt.sign({username:player.username}, JWT_REFRESH);
         refreshToks.push(refreshToken);
         console.log("a");
         return res.status(200).json({message: "Success", user: player, token: token, refresh: refreshToken});
@@ -99,20 +99,33 @@ userRouter.post("/login", async(req: any, res: any) => {
     }
 });
 
-userRouter.post("/logout", authUser, (req, res) => {
+userRouter.post("/logout", authUser, async (req, res) => {
     const {token} = req.body;
-    
-    if (isNullOrWhitespace(token)) 
+   
+    if (isNullOrWhitespace(token))
         return res.status(400).json({message: "Refresh token required"});
-    
-    const tokenIndex = refreshToks.indexOf(token);
-    if (tokenIndex !== -1) {
-        refreshToks.splice(tokenIndex, 1);
-        return res.status(200).json({message: "Successfully logged out"});
+  
+    try {
+        // Decode the token to get the username
+        const decoded = jwt.verify(token, JWT_REFRESH!) as { username: string };
+        const username = decoded.username;
+
+        const tokenIndex = refreshToks.indexOf(token);
+        if (tokenIndex !== -1) {
+            refreshToks.splice(tokenIndex, 1);
+            
+            await redisClient.sRem(RedisKeys.onlinePlayers(), username);
+            console.log(`[LOGOUT] Removed ${username} from online users`);
+            
+            return res.status(200).json({message: "Successfully logged out"});
+        }
+        
+        return res.status(400).json({message: "Invalid refresh token"});
+    } catch (error) {
+        console.error('[LOGOUT ERROR]', error);
+        return res.status(400).json({message: "Invalid token"});
     }
-    
-    return res.status(400).json({message: "Invalid refresh token"});
-})
+});
 
 userRouter.post("/refreshAccess", (req, res) => {
     const {token} = req.body;
@@ -333,7 +346,7 @@ userRouter.post("/handleFriendRequest", authUser, async(req:any, res:any)=>{
                     from: username,
                     message: `${username} declined your friend request`
             }));
-
+            await invalidateFriendListCache(sender, username);
             return res.status(200).json({message: `Player '${username}' declined friend request from '${sender}'`});
         }
 
@@ -379,20 +392,32 @@ userRouter.post("/getFriends", authUser, async(req: any, res: any) => {
         console.log("[ERROR]: Argument username missing");
         return res.status(400).json({message: "Username needed to retrieve friends"});
     }
-    
+   
     try {
         const redisKey = RedisKeys.friendList(username);
         var cachedList = await UserService.getCachedFriendList(redisKey);
-        
+       
+        let friends: string[];
         if(cachedList && cachedList.length > 0) {            
-            return res.status(200).json(
-            {message:`All friends of player '${username}'`, friends:cachedList});
+            friends = cachedList;
+        } else {
+            friends = await UserService.getFriends(username);
+            await UserService.cacheFriends(redisKey, friends);
         }
         
-        const friends = await UserService.getFriends(username);
-        await UserService.cacheFriends(redisKey, friends);
+        const onlineStatuses = await Promise.all(
+            friends.map(friend => isUserOnline(friend))
+        );
 
-        return res.status(200).json({message:`All friends of player '${username}'`, friends});
+        const onlineFriends = friends.filter((_, index) => onlineStatuses[index]);
+        
+        console.log(`[getFriends] User: ${username}, Total: ${friends.length}, Online: ${onlineFriends.length}`);
+        
+        return res.status(200).json({
+            message: `All friends of player '${username}'`,
+            friends: friends,
+            onlineFriends: onlineFriends
+        });
     } catch (error: any) {
         return res.status(400).json({message: error.message});
     }

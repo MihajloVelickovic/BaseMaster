@@ -387,7 +387,7 @@ const getNotificationKey = (type: string, from?: string, actionData?: any) => {
         });
     };
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
         if (socketRef.current?.readyState === WebSocket.OPEN) {
             socketRef.current.send(JSON.stringify({
                 type: "logout",
@@ -397,7 +397,7 @@ const getNotificationKey = (type: string, from?: string, actionData?: any) => {
             socketRef.current = null;
         }
         
-        logout();
+        await logout();
         localStorage.removeItem("accessTok");
         localStorage.removeItem("refreshTok");
         window.location.href = '/LoginSignup';
