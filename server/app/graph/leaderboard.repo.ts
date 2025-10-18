@@ -111,6 +111,8 @@ export async function connectPlayerToLeaderboard(username: string) {
         RETURN r
       `, { username });
     });
+
+    await syncLeaderboardToRedis();
   }
   catch(error:any) {
     console.log("[ ERROR ]", error);
@@ -516,13 +518,13 @@ export async function getAllAchievementsWithStats() {
 
 export async function syncLeaderboardToRedis(): Promise<void> {
   try {
-    console.log('[SYNC] Starting leaderboard sync to Redis...');
+    console.log('[SYSTEM] Starting leaderboard sync to Redis...');
     
     // Get all players from Neo4j
     const players = await getAllPlayersHighscores();
     
     if (players.length === 0) {
-      console.log('[SYNC] No players to sync');
+      console.log('[SYSTEM] No players to sync');
       return;
     }
     
@@ -539,9 +541,9 @@ export async function syncLeaderboardToRedis(): Promise<void> {
     
     await redisClient.zAdd(redisRankingsKey, members);
     
-    console.log(`[SYNC] Synced ${players.length} players to Redis ZSet`);
+    console.log(`[ SYSTEM ] Synced ${players.length} players to Redis ZSet`);
   } catch (error) {
-    console.error('[SYNC ERROR] Failed to sync leaderboard to Redis:', error);
+    console.error('[ ERROR ] Failed to sync leaderboard to Redis:', error);
     throw error;
   }
 }

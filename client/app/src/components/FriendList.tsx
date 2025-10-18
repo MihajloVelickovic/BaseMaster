@@ -78,57 +78,21 @@ function FriendList() {
     }
   };
 
-  useEffect(() => {
-    const handleWebSocketMessage = (event: CustomEvent) => {
-        const data = event.detail;
-        console.log('[FriendList] WebSocket message for search results:', data);
-
-        // ONLY update local search results, NOT shared context
-        // Header.tsx handles updating friends/friendRequests context
-        
-        if (data.type === 'FRIEND_ACCEPT') {
-            // Someone accepted your request - update their card in search results
-            setSearchResults(prev => prev.map(user => 
-                user.username === data.from 
-                    ? { ...user, requestSent: false, isFriend: true }
-                    : user
-            ));
-        }
-
-        if (data.type === 'FRIEND_DENY') {
-            // Someone declined your request - remove the request badge
-            setSearchResults(prev => prev.map(user => 
-                user.username === data.from 
-                    ? { ...user, requestSent: false, requestReceived: false }
-                    : user
-            ));
-        }
-
-        if (data.type === 'FRIEND_REQUEST') {
-            // Someone sent you a request - update their card
-            setSearchResults(prev => prev.map(user => 
-                user.username === data.from 
-                    ? { ...user, requestReceived: true }
-                    : user
-            ));
-        }
-
-        if (data.type === 'FRIEND_REMOVED') {
-            // Someone removed you - update their card
-            setSearchResults(prev => prev.map(user => 
-                user.username === data.from 
-                    ? { ...user, isFriend: false }
-                    : user
-            ));
-        }
-    };
-
-    window.addEventListener('ws-message', handleWebSocketMessage as EventListener);
-
-    return () => {
-        window.removeEventListener('ws-message', handleWebSocketMessage as EventListener);
-    };
-}, []);
+   useEffect(() => {
+    // When friends/friendRequests change in context, update search results to match
+    setSearchResults(prev => prev.map(user => {
+      const isFriend = friends.includes(user.username);
+      const requestReceived = friendRequests.includes(user.username);
+      
+      return {
+        ...user,
+        isFriend,
+        requestReceived,
+        // Clear requestSent if they became a friend or sent you a request
+        requestSent: (isFriend || requestReceived) ? false : user.requestSent
+      };
+    }));
+  }, [friends, friendRequests]);
 
   const sendFriendRequest = async (receiver: string) => {
     if (!playerID) return;

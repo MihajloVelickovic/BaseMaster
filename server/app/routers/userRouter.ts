@@ -5,7 +5,7 @@ import { areInvalidMessagePair, invalidateFriendListCache, UserService } from ".
 import {publisher, redisClient} from "../redisClient";
 import { IdPrefixes, CacheTypes, PAGE_SIZE } from "../shared_modules/shared_enums";
 import { upsertPlayer } from "../graph/player.repo";
-import { connectPlayerToLeaderboard, getPlayerAchievements, getPlayerStats, getFriendsWithAchievements, getAllAchievementsWithStats, getGlobalLeaderboard, checkAndAwardFriendAchievements } from '../graph/leaderboard.repo';
+import { connectPlayerToLeaderboard, getPlayerAchievements, getPlayerStats, getFriendsWithAchievements, getAllAchievementsWithStats, getGlobalLeaderboard, checkAndAwardFriendAchievements, syncLeaderboardToRedis } from '../graph/leaderboard.repo';
 import { RedisKeys } from "../utils/redisKeyService";
 import { authUser, JWT_REFRESH, JWT_SECRET } from "../config/config";
 import jwt from "jsonwebtoken";
@@ -38,11 +38,11 @@ userRouter.post("/register", async(req: any, res: any) => {
         await connectPlayerToLeaderboard(username);
         await redisClient.del(RedisKeys.globalLeaderboard());
         await invalidateLeaderboardCache();
-        
+
         const token = jwt.sign({username}, JWT_SECRET, {expiresIn: 600});
         const refreshToken = jwt.sign({username}, JWT_REFRESH);
         refreshToks.push(refreshToken);
-        console.log("a");
+        
         return res.status(200).json({message: "Successfully added player!", user: player, token: token, refresh: refreshToken});
     }
     catch(error:any){
@@ -709,7 +709,7 @@ try {
     if (!rank || rank < 1)
       return res.status(404).json({ error: "Player not found" });
     
-    const page = Math.ceil(rank / PAGE_SIZE);
+    const page = Math.ceil((rank - 1) / PAGE_SIZE);
     const skip = (page - 1) * PAGE_SIZE;
     
     const pageKey = RedisKeys.leaderboardPage(page);

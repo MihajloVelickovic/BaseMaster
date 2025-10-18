@@ -596,7 +596,9 @@ gameRouter.get("/globalLeaderboard", authUser, async (req: any, res: any) => {
    
     // Try to get cached page
     const cached = await redisClient.get(pageKey);
-   
+    const totalPlayers = await redisClient.zCard(RedisKeys.leaderboardRankings());
+    const hasNextPage = (page * PAGE_SIZE) < totalPlayers;
+
     if (cached) {
       // Cache hit
       console.log(`[CACHE HIT] Leaderboard page ${page}-${skip}`);
@@ -605,7 +607,7 @@ gameRouter.get("/globalLeaderboard", authUser, async (req: any, res: any) => {
         items: leaderboard,
         page: page,
         pageSize: PAGE_SIZE,
-        hasNextPage: leaderboard.length >= PAGE_SIZE,
+        hasNextPage: hasNextPage,
         cached: true
       });
     }
@@ -622,12 +624,12 @@ gameRouter.get("/globalLeaderboard", authUser, async (req: any, res: any) => {
       );
       console.log(`[CACHE SET] Cached page ${skip}-${skip} for ${CACHE_DURATION[CacheTypes.GENERIC_CACHE]}s`);
     }
-   
+
     return res.status(200).json({
         items,
         page: page,           // Must be a number
         pageSize: PAGE_SIZE,  // Must be a number, not a string
-        hasNextPage: items.length >= PAGE_SIZE,
+        hasNextPage: hasNextPage,
         cached: false
     });
    
