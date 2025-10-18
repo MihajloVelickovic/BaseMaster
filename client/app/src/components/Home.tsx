@@ -55,7 +55,7 @@ function Home() {
   const [chatInput, setChatInput] = useState("");
   const [activeFriend, setActiveFriend] = useState<string>(""); 
   const [chatUnreadCount, setChatUnreadCount] = useState(0);
-  const { onlineUsers } = useFriendContext();
+  const { onlineUsers, setOnlineUsers } = useFriendContext();
   interface Friend {
     username: string;
     unread: number;
@@ -84,6 +84,9 @@ function Home() {
       
       setFriends(friendsList);
       const totalUnread = friendsList.reduce((sum:number, f:Friend) => sum + f.unread, 0);
+       if (response.data.onlineFriends)
+        setOnlineUsers(response.data.onlineFriends);
+
       setChatUnreadCount(totalUnread);
     } catch (error) {
       console.error('Error fetching friends:', error);
