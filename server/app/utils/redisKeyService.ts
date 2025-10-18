@@ -150,5 +150,9 @@ export class RedisKeys {
   static playerCurrentRound(gameId:string, username:string) {
     return `${IdPrefixes.CURRENT_ROUND}:${gameId}:${username}`;
   }
+
+  static refreshToken(jtiHash: string): string {
+  return `${IdPrefixes.REFRESH_TOKEN}:${jtiHash}`;
+}
 }
 

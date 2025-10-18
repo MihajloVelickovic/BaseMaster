@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { n4jDriver, n4jSession } from "../neo4jClient";
-import { auth, Transaction } from "neo4j-driver";
+import { auth, Time, Transaction } from "neo4j-driver";
 import { areInvalidMessagePair, invalidateFriendListCache, isUserOnline, UserService } from "../utils/userService";
 import {publisher, redisClient} from "../redisClient";
 import { IdPrefixes, CacheTypes, PAGE_SIZE } from "../shared_modules/shared_enums";
@@ -9,13 +9,14 @@ import { connectPlayerToLeaderboard, getPlayerAchievements, getPlayerStats, getF
 import { RedisKeys } from "../utils/redisKeyService";
 import { authUser, JWT_REFRESH, JWT_SECRET } from "../config/config";
 import jwt from "jsonwebtoken";
-import { hashPassword, verifyPassword } from "../utils/auth";
+import { hashJTI, hashPassword, verifyPassword } from "../utils/auth";
 import { CACHE_DURATION } from "../shared_modules/configMaps";
 import { isNullOrWhitespace } from "../utils/stringUtils";
 import { getPlayerRankFromRedis, invalidateLeaderboardCache } from "../utils/gameService";
+import { nanoid } from "nanoid";
+import { TimeUnit, toSeconds } from "../utils/timeConversion";
 
 const userRouter = Router();
-let refreshToks: string[] = [];
 
 userRouter.post("/register", async(req: any, res: any) => {
     console.log("someone is registering 🤫🤫🤫");
@@ -39,9 +40,19 @@ userRouter.post("/register", async(req: any, res: any) => {
         await redisClient.del(RedisKeys.globalLeaderboard());
         await invalidateLeaderboardCache();
 
+        const jti = nanoid();
+        const jtiHash = hashJTI(jti);
+        
+        // CREATE TOKENS WITH JTI
         const token = jwt.sign({username}, JWT_SECRET, {expiresIn: 600});
-        const refreshToken = jwt.sign({username}, JWT_REFRESH);
-        refreshToks.push(refreshToken);
+        const refreshToken = jwt.sign({username, jti}, JWT_REFRESH);
+        
+        
+        await redisClient.setEx(
+            RedisKeys.refreshToken(jtiHash),
+            toSeconds(7, TimeUnit.DAYS),
+            username
+        );
         
         return res.status(200).json({message: "Successfully added player!", user: player, token: token, refresh: refreshToken});
     }
@@ -87,10 +98,19 @@ userRouter.post("/login", async(req: any, res: any) => {
         await redisClient.sAdd(RedisKeys.onlinePlayers(), player.username);
         await connectPlayerToLeaderboard(player.username);
         
-        const token = jwt.sign({username:player.username}, JWT_SECRET, {expiresIn: 600});
-        const refreshToken = jwt.sign({username:player.username}, JWT_REFRESH);
-        refreshToks.push(refreshToken);
-        console.log("a");
+        const jti = nanoid();
+        const jtiHash = hashJTI(jti);
+        const username = player.username;
+        // CREATE TOKENS WITH JTI
+        const token = jwt.sign({username}, JWT_SECRET, {expiresIn: 600});
+        const refreshToken = jwt.sign({username, jti}, JWT_REFRESH);
+        
+        
+        await redisClient.setEx(
+            RedisKeys.refreshToken(jtiHash),
+            toSeconds(7, TimeUnit.DAYS),
+            username
+        );
         return res.status(200).json({message: "Success", user: player, token: token, refresh: refreshToken});
     }
     catch(error:any){
@@ -106,20 +126,20 @@ userRouter.post("/logout", authUser, async (req, res) => {
         return res.status(400).json({message: "Refresh token required"});
   
     try {
-        // Decode the token to get the username
-        const decoded = jwt.verify(token, JWT_REFRESH!) as { username: string };
+        const decoded = jwt.verify(token, JWT_REFRESH!) as { username: string, jti: string };
         const username = decoded.username;
-
-        const tokenIndex = refreshToks.indexOf(token);
-        if (tokenIndex !== -1) {
-            refreshToks.splice(tokenIndex, 1);
-            
-            await redisClient.sRem(RedisKeys.onlinePlayers(), username);
-            console.log(`[LOGOUT] Removed ${username} from online users`);
-            
-            return res.status(200).json({message: "Successfully logged out"});
-        }
+        const jti = decoded.jti;
         
+        // Hash the JTI
+        const jtiHash = hashJTI(jti);
+        
+        // DELETE JTI FROM REDIS (revoke the token)
+        const deleted = await redisClient.del(RedisKeys.refreshToken(jtiHash));
+        
+        if (deleted === 0)
+            console.log(`[LOGOUT] JTI not found for ${username}, might be already logged out`);
+        
+        await redisClient.sRem(RedisKeys.onlinePlayers(), username);
         return res.status(400).json({message: "Invalid refresh token"});
     } catch (error) {
         console.error('[LOGOUT ERROR]', error);
@@ -127,7 +147,7 @@ userRouter.post("/logout", authUser, async (req, res) => {
     }
 });
 
-userRouter.post("/refreshAccess", (req, res) => {
+userRouter.post("/refreshAccess", async (req, res) => {
     const {token} = req.body;
     const verified = (() => {
         try{
@@ -140,16 +160,38 @@ userRouter.post("/refreshAccess", (req, res) => {
 
     if(!verified)
         return res.status(403).json({message: "Refresh token invalid"});
-
-    if(!refreshToks.includes(token))
-        return res.status(403).json({message: "Refresh token invalid"});
-
-    if (typeof verified === 'object' && 'username' in verified){
-        const newTok = jwt.sign({username: verified.username}, JWT_SECRET, {expiresIn: 600});
-        const newRefreshToken = jwt.sign({username: verified.username}, JWT_REFRESH);
-        refreshToks.splice(refreshToks.indexOf(token), 1);
-        refreshToks.push(newRefreshToken);
+    try {
+     if (typeof verified === 'object' && 'username' in verified && 'jti' in verified){
+        const { username, jti } = verified as { username: string, jti: string };
+        
+        const jtiHash = hashJTI(jti);
+        const storedUsername = await redisClient.get(RedisKeys.refreshToken(jtiHash));
+        
+        if (!storedUsername || storedUsername !== username) 
+            return res.status(403).json({message: "Refresh token has been revoked or is invalid"});
+        
+        
+        await redisClient.del(RedisKeys.refreshToken(jtiHash));
+        
+        const newJti = nanoid();
+        const newJtiHash = hashJTI(newJti);
+        
+        const newTok = jwt.sign({username}, JWT_SECRET, {expiresIn: 600});
+        const newRefreshToken = jwt.sign({username, jti: newJti}, JWT_REFRESH);
+        
+        await redisClient.setEx(
+            RedisKeys.refreshToken(newJtiHash),
+            toSeconds(7, TimeUnit.DAYS),
+            username
+        );
+        
         return res.status(200).json({accessTok: newTok, refreshTok: newRefreshToken});
+    }
+        return res.status(403).json({message: "Invalid token format"});
+    } 
+    catch (error: any) {
+        console.error('[REFRESH ACCESS ERROR]', error);
+        return res.status(500).json({message: "Error refreshing token", error: error.message});
     }
 });
 

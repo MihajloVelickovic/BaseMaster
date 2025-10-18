@@ -46,7 +46,8 @@ export enum IdPrefixes {
     FRIEND_REMOVED = "FRIEND_REMOVED",
     ACHIEVEMENT_UNLOCKED = "ACHIEVEMENT_UNLOCKED",
     CURRENT_ROUND = "current_number",
-    COMPLETED_ROUNDS = "completed_rounds"
+    COMPLETED_ROUNDS = "completed_rounds",
+    REFRESH_TOKEN = "refresh_token"
 }
 
 export enum WebServerTypes {
