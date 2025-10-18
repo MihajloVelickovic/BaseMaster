@@ -65,7 +65,7 @@ export async function initializeGraphStructure() {
        await tx.run(`
         MATCH (p:Player)-[:PARTICIPATES_IN]->(lb:Leaderboard {id: 'global'})
         WHERE p.currentRank IS NULL OR p.peakRank IS NULL
-        WITH p ORDER BY COALESCE(p.bestScore, 0) DESC, p.username ASC
+        WITH p ORDER BY COALESCE(p.totalScore, 0) DESC, p.username ASC
         WITH collect(p) as players
         UNWIND range(0, size(players)-1) as idx
         WITH players[idx] as player, idx + 1 as rank
@@ -298,7 +298,7 @@ export async function getGlobalLeaderboard(pageSize: number = 16, skip: number =
           COALESCE(p.seconds, 0) AS seconds,
           COALESCE(p.thirds, 0) AS thirds,
           COALESCE(p.fourths, 0) AS fourths
-        ORDER BY COALESCE(p.bestScore, r.bestScore, 0) DESC,
+        ORDER BY COALESCE(p.totalScore, r.totalScore, 0) DESC,
         p.username DESC 
         SKIP $skip LIMIT $limit
       `, { skip: skipInt, limit: limitInt });
@@ -326,7 +326,7 @@ export async function getGlobalLeaderboard(pageSize: number = 16, skip: number =
   }
 }
 
-export async function getAllPlayersHighscores(): Promise<Array<{username: string, bestScore: number}>> {
+export async function getAllPlayersHighscores(): Promise<Array<{username: string, totalScore: number}>> {
   const session = n4jSession();
   try {
     const result = await session.executeRead(async tx => {
@@ -335,13 +335,13 @@ export async function getAllPlayersHighscores(): Promise<Array<{username: string
         RETURN 
           p.username as username,
           COALESCE(p.bestScore, 0) as bestScore
-        ORDER BY bestScore DESC
+        ORDER BY p.totalScore DESC
       `);
     });
     
     return result.records.map(record => ({
       username: record.get('username'),
-      bestScore: record.get('bestScore')
+      totalScore: record.get('bestScore')
     }));
   } finally {
     await session.close();
@@ -391,7 +391,7 @@ export async function getFriendsWithAchievements(username: string) {
           r.bestScore as bestScore,
           r.totalGames as totalGames,
           collect(DISTINCT a.name) as achievements
-        ORDER BY r.bestScore DESC
+        ORDER BY r.totalScore DESC
       `, { username });
     });
 
@@ -535,7 +535,7 @@ export async function syncLeaderboardToRedis(): Promise<void> {
     
     // Batch add to Redis ZSet
     const members = players.map(p => ({
-      score: p.bestScore,
+      score: p.totalScore,
       value: p.username
     }));
     
