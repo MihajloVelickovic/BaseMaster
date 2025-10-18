@@ -33,7 +33,6 @@ function getRandomNumber(min:number, max:number) {
 
 function Game() {
   const location = useLocation();
-  const [currRound, setCurrRound] = useState(0);
   const [currNum, setCurrNum] = useState(100);
   const [toBase, setToBase] = useState(2);
   const [fromBase, setFromBase] = useState(10);
@@ -63,53 +62,43 @@ const {
 
 console.log("toBasee je: ", toBasee);
 
-  const getNumberFromServer = async (correct:boolean) => {
-    const toSend = {
-      gameId:gameId,
-      currRound:currRound,
+  const getNumberFromServer = async (correct: boolean) => {
+  try {
+    const response = await axiosInstance.post('/game/submitResult', {
+      gameId,
       playerId: playerID,
-      correct: correct
-    }
-    if (currRound >= roundCount){
+      correct
+    });
+    
+    // Server tells us if game is done
+    const { currRndNum, hasNext, finished, fromBase: newFromBase, toBase: newToBase } = response.data;
+    
+    if (finished || !hasNext) {
       setFinished(true);
-      console.log("in", currRound);
-      var response = await axiosInstance.post('/game/playerComplete',  {playerId: playerID, gameId: gameId, correct:correct});
-      console.log(response);
-      return -1;      //idk, it's unneeded
+      await axiosInstance.post('/game/playerComplete', {
+        playerId: playerID,
+        gameId: gameId,
+        correct: correct
+      });
+      return;
     }
-    console.log("out", currRound);
-    try {
-      var response = await axiosInstance.post('/game/getCurrNum', toSend);
-      const num:number = Number(response.data['currRndNum']);        //check the name.. if changed
-      if (gameMode == GameModes.CHAOS.toString()) {
-        setToBase(Number(response.data['toBase']));
-        setFromBase(Number(response.data['fromBase']));
-        let val = clcBtnCount(BigInt(Number(response.data['toBase'])), maxVal);
-        console.log(toBase, fromBase, val);
-        setNumOfButtons(val);
-        setArrayOfValues(Array.from({length: val}, (_, i) => 0));
-      }
-      else{
-        setArrayOfValues(Array.from({length: numOfButtons}, () => 0));
-      }
-      //console.log(response.data["scoreboard"])
-      console.log(response);
-      setCurrRound(currRound+1);                                  //CHANGE THIS BACK TO +1 WHEN DONE
-      setCurrNum(num);
-      console.log("Current round: ", currRound);
-      return num;  
+    
+    // Update UI for next round
+    setCurrNum(Number(currRndNum));
+    
+    if (gameMode === GameModes.CHAOS.toString()) {
+      setToBase(Number(newToBase));
+      setFromBase(Number(newFromBase));
+      let val = clcBtnCount(BigInt(Number(newToBase)), maxVal);
+      setNumOfButtons(val);
+      setArrayOfValues(Array.from({length: val}, () => 0));
+    } else {
+      setArrayOfValues(Array.from({length: numOfButtons}, () => 0));
     }
-    catch(error:any) {
-      console.error("Error fetching new number:", error.response?.data || error.message);
-
-      // If round limit is reached, disable confirm button
-      if (error.response?.status === 400) {  // Adjust based on server response
-          alert("Max rounds reached! No more numbers will be generated.");
-          setIsConfirmDisabled(true);
-      }
-      return currNum;
-    }
+  } catch (error: any) {
+    console.error("Error submitting result:", error.response?.data || error.message);
   }
+};
 
 
   switch (difficulty) {
@@ -187,7 +176,8 @@ useEffect(() => {
     }));
     
     // NOW it's safe to get the first number - moved here from outside
-    getNumberFromServer(false);
+    //getNumberFromServer(false);
+    fetchInitialNumber();
   };
 
   ws.onmessage = (event) => {
@@ -259,6 +249,32 @@ const sendPlayerChatMessage = async () => {
     setChatInput("");
   } catch (error) {
     console.error("Error sending message:", error);
+  }
+};
+
+const fetchInitialNumber = async () => {
+  try {
+    const response = await axiosInstance.get('/game/getCurrNum', {
+      params: { gameId, playerId: playerID }
+    });
+    
+    const num = Number(response.data.currRndNum);
+    setCurrNum(num);
+    // REMOVE setCurrRound - not needed
+    
+    if (response.data.scoreboard) 
+      setScoreboard(response.data.scoreboard);
+    
+
+    if (gameMode === GameModes.CHAOS.toString()) {
+      setToBase(Number(response.data.toBase));
+      setFromBase(Number(response.data.fromBase));
+      let val = clcBtnCount(BigInt(Number(response.data.toBase)), maxVal);
+      setNumOfButtons(val);
+      setArrayOfValues(Array.from({length: val}, () => 0));
+    }
+  } catch (error) {
+    console.error("Error fetching initial number:", error);
   }
 };
 

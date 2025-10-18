@@ -50,7 +50,8 @@ axiosInstance.interceptors.request.use(
             '/game/leaveGame',
             '/game/sendLobbyMessage',
             '/game/getLobbyMessages',
-            '/game/globalLeaderboard'
+            '/game/globalLeaderboard',
+            '/game/submitResult'
         ];
         
         const needsAuth = protectedEndpoints.some(endpoint => config.url?.includes(endpoint));

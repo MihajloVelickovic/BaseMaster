@@ -3,3 +3,8 @@ node_modules/
 .vscode/
 
 hurl/
+
+# Claude Code config (personal)
+CLAUDE.md
+.claude/
+.claudeignore

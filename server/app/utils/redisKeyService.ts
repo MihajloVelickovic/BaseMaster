@@ -142,5 +142,13 @@ export class RedisKeys {
   static achievementUnlocked(username:string) {
     return `${IdPrefixes.ACHIEVEMENT_UNLOCKED}:${username}`;
   }
+
+  static gameCompletionLock(gameId: string): string {
+    return `lock:${IdPrefixes.GAME_END}:${gameId}`;
+  }
+
+  static playerCurrentRound(gameId:string, username:string) {
+    return `${IdPrefixes.CURRENT_ROUND}:${gameId}:${username}`;
+  }
 }
 

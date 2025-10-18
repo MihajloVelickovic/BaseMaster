@@ -18,7 +18,7 @@ export enum IdPrefixes {
     ORDER_POINTS = "op",
     FROM_BASE = "fb",
     TO_BASE = "tb",
-    GAME_END = "ge",
+    GAME_END = "game_end",
     GAME_STARTED = "GAME STARTED",
     LOBBIES_CURR_PLAYERS = "LOBBIES_CURR",
     LOBBIES_MAX_PLAYERS = "LOBBIES_MAX",
@@ -44,7 +44,9 @@ export enum IdPrefixes {
     FRIEND_DENY = "FRIEND_DENY",
     FRIEND_REQUEST = "FRIEND_REQUEST",
     FRIEND_REMOVED = "FRIEND_REMOVED",
-    ACHIEVEMENT_UNLOCKED = "ACHIEVEMENT_UNLOCKED"
+    ACHIEVEMENT_UNLOCKED = "ACHIEVEMENT_UNLOCKED",
+    CURRENT_ROUND = "current_number",
+    COMPLETED_ROUNDS = "completed_rounds"
 }
 
 export enum WebServerTypes {

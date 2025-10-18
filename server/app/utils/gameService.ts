@@ -39,6 +39,12 @@ export async function CleanupGameContext(gameId: string) {
   const lobbyMessageKey = RedisKeys.lobbyMessage(gameId);
   const orderPointsKey = RedisKeys.orderPoints(gameId);
   
+  const pattern = `current_number:${gameId}:*`;
+  const keys = await redisClient.keys(pattern);
+  if (keys.length > 0)
+    await redisClient.del(keys);
+  
+
   const multi = redisClient.multi();
   
   multi.del(gameId);
@@ -61,7 +67,7 @@ export async function CleanupGameContext(gameId: string) {
 export async function setRounds(gameId:string, roundCount:number, initialValue:number) {
   // Prepare the fields and values as a key-value pair for the hash
   const roundData:any = {};
-  for (let i = 1; i <= roundCount; i++) {
+  for (let i = 0; i < roundCount; i++) {
     roundData[`${i}`] = initialValue;
   }
   //console.log("Order data: ", roundData);

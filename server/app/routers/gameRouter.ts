@@ -1,4 +1,4 @@
-import {Router} from "express";
+import {json, Router} from "express";
 import GameOptions from "../models/gameOptions"
 import { GameModes,Difficulties,
 fromStringDiff, fromStringGM, IdPrefixes as Prefixes, BaseValues, 
@@ -81,6 +81,9 @@ gameRouter.post("/createGame", authUser, async (req: any, res:any) => {
             currPlayerCount: 1, gameState: GameStates.LOBBY, base: toBase,
             gamemode:gameOptions.gamemode, roundCount:roundCount, lobbyName:finalLobbyName
         }
+        const scroeboardKey = RedisKeys.scoreboard(gameId);
+        const lobbyPlayersKey = RedisKeys.lobbyPlayers(gameId);
+        const currNumKey = RedisKeys.playerCurrentRound(gameId, hostId);
 
         await redisClient.set(gameId, JSON.stringify(gameData)); // set max player count
              
@@ -90,10 +93,8 @@ gameRouter.post("/createGame", authUser, async (req: any, res:any) => {
                 
         await redisClient.hSet(Prefixes.LOBBIES_NAMES, gameId,
                                 finalLobbyName);
-        
-        const scroeboardKey = RedisKeys.scoreboard(gameId);
-        const lobbyPlayersKey = RedisKeys.lobbyPlayers(gameId);
-
+        await redisClient.set(currNumKey, 0);
+               
         await redisClient.zAdd(scroeboardKey, { score: 0, value: hostId });                              
         
         const now = Date.now();
@@ -108,53 +109,133 @@ gameRouter.post("/createGame", authUser, async (req: any, res:any) => {
     }
 });
 
-gameRouter.post("/getCurrNum", authUser, async (req:any, res:any) => {  
-    console.log(req.body);
-    const {
-        gameId,
-        currRound,
-        playerId,
-        correct
-    } = req.body;
+gameRouter.post("/submitResult", authUser, async (req:any, res:any) => {  
+    const { gameId, playerId, correct } = req.body;
 
-    if(isNullOrWhitespace(gameId) || currRound === null || 
-       isNullOrWhitespace(playerId) || correct === null)
+    if(isNullOrWhitespace(gameId) || isNullOrWhitespace(playerId) 
+       || correct === null)
         return res.status(400).send('Invalid body');
     
     try {
         const randomNumsKey = RedisKeys.randomNumbers(gameId);
+        const playerCurrNumKey = RedisKeys.playerCurrentRound(gameId, playerId);
 
+        const currRoundRaw = await redisClient.get(playerCurrNumKey);
+        if(!currRoundRaw)
+            return res.status(404).send('Could not find curr round');
+
+        const currRound = Number(currRoundRaw);
+        if(isNaN(currRound))
+            return res.status(500).send('Invalid round number found');
+
+        // Get CURRENT round data for scoring
         const num = await redisClient.lIndex(randomNumsKey, currRound);
+        if(!num)
+            return res.status(404).send({message:"Could not find the number"});
 
-        var fromBase ,toBase, orderBonus=0;
+        const gameDataRaw = await redisClient.get(gameId);
+        if(!gameDataRaw)
+            return res.status(404).send('Could not find game with specified id');
 
+        const gameData:GameOptions = JSON.parse(gameDataRaw);
         const gamemode = getGamemode(gameId);
         
+        // Calculate score for CURRENT round
         const scoreboardKey = RedisKeys.scoreboard(gameId);        
+        let orderBonus = 0;
         
-        if(currRound > 0 && correct) {
+        if(correct) {
             const orderPointsKey = RedisKeys.orderPoints(gameId);
-            orderBonus = await 
-            redisClient.hIncrBy(orderPointsKey, `${currRound}`, -1);
-            console.log(`Order bonus: ${orderBonus+1}`);
+            orderBonus = await redisClient.hIncrBy(orderPointsKey, `${currRound}`, -1);
         }
         
         const basePoints = 100;
         const pointsToAdd = orderBonus * basePoints;
-
-        await redisClient.zIncrBy(scoreboardKey, pointsToAdd, playerId );
+        await redisClient.zIncrBy(scoreboardKey, pointsToAdd, playerId);
         
-        const scoreboard =
-        await redisClient.zRangeWithScores(scoreboardKey, 0, -1);
-        
+        const scoreboard = await redisClient.zRangeWithScores(scoreboardKey, 0, -1);
         scoreboard.reverse();
+
+        publisher.publish(RedisKeys.scoreboardUpdate(gameId),
+            JSON.stringify({scoreboard, playerId, points:pointsToAdd}));
+
+        // NOW increment to next round
+        await redisClient.incr(playerCurrNumKey);
+        const nextRound = currRound + 1;
+        
+        // Check if there's a next round
+        const hasNext = nextRound < gameData.roundCount;
+        
+        if (!hasNext) {
+            return res.send({ 
+                hasNext: false,
+                finished: true
+            });
+        }
+
+        // Get NEXT round data
+        const nextNum = await redisClient.lIndex(randomNumsKey, nextRound);
+        if(!nextNum)
+            return res.status(404).send({message:"Could not find next number"});
 
         if(gamemode === GameModes.CHAOS) {
             const fromBaseArrKey = RedisKeys.fromBaseArray(gameId);
             const toBaseArrayKey = RedisKeys.toBaseArray(gameId);
+            const fromBase = await redisClient.lIndex(fromBaseArrKey, nextRound);
+            const toBase = await redisClient.lIndex(toBaseArrayKey, nextRound);
+            
+            if(!fromBase || !toBase)
+                return res.status(404).send({message:"Could not find bases"});
+            
+            return res.send({
+                currRndNum: nextNum,
+                fromBase,
+                toBase,
+                hasNext: true,
+                finished: false
+            });
+        }
 
-            fromBase = await redisClient.lIndex(fromBaseArrKey,currRound);
-            toBase = await redisClient.lIndex(toBaseArrayKey,currRound);
+        return res.send({
+            currRndNum: nextNum,
+            hasNext: true,
+            finished: false
+        });
+    } catch (err) {
+        return res.status(500).send('Error processing submission');
+    }
+});
+
+gameRouter.get("/getCurrNum", authUser, async (req:any, res:any) => {  
+    const { gameId, playerId } = req.query;
+
+    if(isNullOrWhitespace(gameId))
+        return res.status(400).send('Missing gameId');
+    if(isNullOrWhitespace(playerId))
+        return res.status(400).send('Missing playerId');
+
+    try {
+        const playerRoundKey = RedisKeys.playerCurrentRound(gameId as string, playerId as string);
+        const currRoundRaw = await redisClient.get(playerRoundKey);
+        const currRound = currRoundRaw !== null ? parseInt(currRoundRaw) : 0;
+
+        const randomNumsKey = RedisKeys.randomNumbers(gameId as string);
+        const num = await redisClient.lIndex(randomNumsKey, currRound);
+             
+        const gameDataRaw = await redisClient.get(gameId);
+
+        if(!gameDataRaw)
+            return res.status(404).send({ message: "Could not find the game" });
+
+        const gameData:GameOptions = JSON.parse(gameDataRaw);
+
+        const gamemode = getGamemode(gameId as string);
+        let fromBase, toBase;
+        if (gamemode === GameModes.CHAOS) {
+            const fromBaseArrKey = RedisKeys.fromBaseArray(gameId as string);
+            const toBaseArrayKey = RedisKeys.toBaseArray(gameId as string);
+            fromBase = await redisClient.lIndex(fromBaseArrKey, currRound);
+            toBase = await redisClient.lIndex(toBaseArrayKey, currRound);
         }
 
         if(!num)
@@ -163,21 +244,22 @@ gameRouter.post("/getCurrNum", authUser, async (req:any, res:any) => {
             return res.status(404).send({message:"Could not find the fromBase"});
         if(!toBase && gamemode === GameModes.CHAOS)
             return res.status(404).send({message:"Could not find the toBase"});
-        if(!scoreboard)
-            return res.status(404).send({message:"Could not find the scoreboard"});
         
-        publisher.publish(RedisKeys.scoreboardUpdate(gameId),
-                           JSON.stringify({scoreboard, playerId, points:pointsToAdd}));
+        const scoreboardKey = RedisKeys.scoreboard(gameId as string);
+        const scoreboard = await redisClient.zRangeWithScores(scoreboardKey, 0, -1);
+        const hasNext = gameData.roundCount > currRound;
 
-        if(gamemode !== GameModes.CHAOS)
-            return res.send({currRndNum:num});
+        if (gamemode !== GameModes.CHAOS)
+            return res.send({ currRndNum: num, hasNext, scoreboard });
         else
-            return res.send({currRndNum:num, fromBase:fromBase, toBase:toBase});
-    } catch (err) {
+            return res.send({ currRndNum: num, fromBase,
+                              toBase, hasNext, scoreboard  });
+    }
+    catch(error:any) {
+        console.log("[ ERROR ]: ", error);
         return res.status(500).send('Error saving user data to Redis');
     }
 });
-
 
 gameRouter.post("/joinLobby", authUser, async (req:any, res:any) => {
     const {
@@ -215,6 +297,9 @@ gameRouter.post("/joinLobby", authUser, async (req:any, res:any) => {
         await redisClient.zAdd(scoreboardKey, { score: 0, value: playerId });
 
         await redisClient.hIncrBy(Prefixes.LOBBIES_CURR_PLAYERS,gameId,1);
+
+        const playerRoundKey = RedisKeys.playerCurrentRound(gameId, playerId);
+        await redisClient.set(playerRoundKey, 0);
 
         const now=Date.now();
 
@@ -363,25 +448,25 @@ gameRouter.post("/playerComplete", authUser,  async (req:any, res:any) => {
         return res.status(404).send({message:"Could not find the game"});
 
     const parcedData:GameOptions = JSON.parse(gameData);
-    const currRound = parcedData.roundCount;
+    const currRound = parcedData.roundCount - 1;
     var orderBonus = 0;   
     
     const difficulty = parcedData.difficulty;
 
-    if(correct) {
-        const orderPointsKey = RedisKeys.orderPoints(gameId);
-        orderBonus = await 
-        redisClient.hIncrBy(orderPointsKey, `${currRound}`, -1);
-    }
+    // if(correct) {
+    //     const orderPointsKey = RedisKeys.orderPoints(gameId);
+    //     orderBonus = await 
+    //     redisClient.hIncrBy(orderPointsKey, `${currRound}`, -1);
+    // }
     
-    const basePoints = 100;
-    const pointsToAdd = orderBonus * basePoints * DiffcultyModifier[difficulty];
-    await redisClient.zIncrBy(scoreboardKey, pointsToAdd, playerId );
+    // const basePoints = 100;
+    // const pointsToAdd = orderBonus * basePoints * DiffcultyModifier[difficulty];
+    // await redisClient.zIncrBy(scoreboardKey, pointsToAdd, playerId );
     const scoreboard = await redisClient.zRangeWithScores(scoreboardKey, 0, -1);
     scoreboard.reverse();
 
     publisher.publish(RedisKeys.scoreboardUpdate(gameId),
-        JSON.stringify({scoreboard, playerId, pointsToAdd}));
+        JSON.stringify({scoreboard, playerId, pointsToAdd:0}));
     
     const gameEndKey = RedisKeys.gameEnd(gameId);
 
@@ -396,6 +481,18 @@ gameRouter.post("/playerComplete", authUser,  async (req:any, res:any) => {
     if(remainingPlayers > 0 ) 
         return res.send({message:"Player status saved"});
     
+    const lockKey = RedisKeys.gameCompletionLock(gameId);
+    const lockAcquired = await redisClient.set(
+        lockKey, 
+        playerId,  // store who got the lock
+        { NX: true, EX: 10 }  // NX: only if not exists, EX: expire in 10s
+    );
+
+    if(!lockAcquired) {
+        console.log(`[RACE] ${playerId} lost race for game ${gameId} completion`);
+        return res.send({message:"Game already being completed"});
+    }
+
     try {
         await CleanupGameContext(gameId);
         const results = await SaveResults(scoreboard); // <— now returns standings
@@ -420,6 +517,9 @@ gameRouter.post("/playerComplete", authUser,  async (req:any, res:any) => {
     }
     catch(err:any) {
         return res.send({message: `Error with cleanup: ${err}`})
+    }
+    finally {
+        await redisClient.del(lockKey);
     }   
 });
 
@@ -446,6 +546,8 @@ gameRouter.post("/leaveLobby", authUser, async (req: any, res: any) => {
 
         await redisClient.zRem(scoreboardKey, playerID);
         await redisClient.zRem(lobbyPlayersKey, playerID);
+        const playerRoundKey = RedisKeys.playerCurrentRound(gameId, playerID);
+        await redisClient.del(playerRoundKey);
 
         const remainingPlayers = await redisClient.zRange(lobbyPlayersKey,0,-1);
 
@@ -502,6 +604,9 @@ gameRouter.post("/leaveGame", authUser, async (req: any, res: any) => {
         const lobbyPlayersKey = RedisKeys.lobbyPlayers(gameId);
 
         await redisClient.zRem(scoreboardID, playerID);
+
+        const playerRoundKey = RedisKeys.playerCurrentRound(gameId, playerID);
+        await redisClient.del(playerRoundKey);
 
         const scoreboard = await redisClient.zRangeWithScores(scoreboardID, 0, -1);
         const remainingPlayers = await redisClient.decr(gameEndKey);
