@@ -1,9 +1,8 @@
 import { Router } from "express";
 import { n4jDriver, n4jSession } from "../neo4jClient";
-import { auth, Time, Transaction } from "neo4j-driver";
 import { areInvalidMessagePair, invalidateFriendListCache, isUserOnline, UserService } from "../utils/userService";
 import {publisher, redisClient} from "../redisClient";
-import { IdPrefixes, CacheTypes, PAGE_SIZE } from "../shared_modules/shared_enums";
+import { CacheTypes, PAGE_SIZE } from "../shared_modules/shared_enums";
 import { upsertPlayer } from "../graph/player.repo";
 import { connectPlayerToLeaderboard, getPlayerAchievements, getPlayerStats, getFriendsWithAchievements, getAllAchievementsWithStats, getGlobalLeaderboard, checkAndAwardFriendAchievements, syncLeaderboardToRedis } from '../graph/leaderboard.repo';
 import { RedisKeys } from "../utils/redisKeyService";

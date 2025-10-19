@@ -8,7 +8,6 @@ CacheTypes,
 getGamemode,
 PAGE_SIZE}
 from "../shared_modules/shared_enums";
-import { nanoid, random } from 'nanoid';
 import {redisClient, publisher} from "../redisClient";
 import { RedisKeys } from "../utils/redisKeyService";
 import { CACHE_DURATION, DiffcultyModifier, MAX_NUMBER } from "../shared_modules/configMaps";
@@ -16,7 +15,6 @@ import { isNullOrWhitespace } from "../utils/stringUtils";
 import { addChaosBaseArrays, CleanupGameContext, SaveResults, setRounds } from "../utils/gameService";
 import { getGlobalLeaderboard } from "../graph/leaderboard.repo";
 import { authUser } from "../config/config";
-import { PlayerResult } from "../models/types";
 
 
 

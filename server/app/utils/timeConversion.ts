@@ -6,7 +6,7 @@ export enum TimeUnit {
   MONTHS  = "M"
 }
 
-export function toSeconds(value: number, unit: TimeUnit): number {
+export function toSeconds(value: number, unit: TimeUnit = TimeUnit.SECONDS): number {
   switch (unit) {
     case TimeUnit.SECONDS: return value;
     case TimeUnit.MINUTES: return value * 60;

@@ -8,14 +8,12 @@ import { IdPrefixes, WebServerTypes } from "./shared_modules/shared_enums";
 import userRouter from "./routers/userRouter";
 import { connectionSuccess, n4jSession, n4jDriver } from "./neo4jClient";
 import { UserService } from "./utils/userService";
-//import { ensureUserConstraints } from "./utils/neo4jConstraintsService";
 import { ensureGraphConstraints } from "./utils/ensureConstraints";
 import { initializeGraphStructure, syncLeaderboardToRedis } from './graph/leaderboard.repo';
 import { initRedisWsBridge } from "./utils/redisWsBridge";
-import { migrateUsersToPlayers } from "./migration/migrateUsersToPlayers";
-import { checkDatabaseState } from "./migration/checkDatabaseState";
 import { RedisKeys } from "./utils/redisKeyService";
 import { redisClient } from "./redisClient";
+import { TimeUnit, toSeconds } from "./utils/timeConversion";
 
 // Server state management
 class ServerState {
@@ -25,12 +23,11 @@ class ServerState {
     isActive() {
         return !this.isShuttingDown;
     }
-    
+
     startShutdown(): Promise<void> {
-        if (this.shutdownPromise) {
+        if (this.shutdownPromise)
             return this.shutdownPromise;
-        }
-        
+
         this.isShuttingDown = true;
         this.shutdownPromise = Promise.resolve();
         return this.shutdownPromise;
@@ -55,9 +52,9 @@ app.use(cors(corsOptions));
 
 // Add health check endpoint
 app.get('/health', (req, res) => {
-    if (!serverState.isActive()) {
+    if (!serverState.isActive())
         return res.status(503).json({ status: 'shutting_down' });
-    }
+
     res.json({ status: 'healthy' });
 });
 
@@ -82,95 +79,73 @@ wss.on("connection", (ws) => {
 
     // Heartbeat mechanism - mark connection as alive on pong
     (ws as any).isAlive = true;
-    ws.on('pong', () => {
-        (ws as any).isAlive = true;
-    });
+    ws.on('pong', () => (ws as any).isAlive = true);
 
     ws.on("message", async (data: any) => {
         try {
-            // Skip processing if shutting down
             if (!serverState.isActive()) return;
-            
+
             const message = JSON.parse(data.toString());
-            const { type, gameId, playerID, username } = message;
-            
+            const { type, gameId, username } = message;
+
             switch (type) {
                 case WebServerTypes.JOIN_LOBBY:
                 case IdPrefixes.SCOREBOARD_UPDATE:
                     if (gameId) {
-                        if (!wsClients.has(gameId)) {
+                        if (!wsClients.has(gameId))
                             wsClients.set(gameId, new Set());
-                        }
+
                         wsClients.get(gameId)!.add(ws);
                         currentLobby = gameId;
-                        console.log(`[SYSTEM] Player ${playerID} joined lobby ${gameId}`);
                     }
                     break;
-                    
+
                 case WebServerTypes.LOGIN:
                     if (username) {
                         currentUsername = username;
 
-                        if (!userSockets.has(username)) {
+                        if (!userSockets.has(username))
                             userSockets.set(username, new Set());
-                        }
-                        userSockets.get(username)!.add(ws);
-                        console.log(`[SYSTEM] User ${username} connected`);
 
-                        // Add to Redis online players set
+                        userSockets.get(username)!.add(ws);
                         await redisClient.sAdd(RedisKeys.onlinePlayers(), username);
-                        console.log(`[SYSTEM] Added ${username} to Redis online players`);
 
                         // Notify friends of online status
                         try {
                             const friends = await UserService.getFriends(username);
-                            console.log(`[SYSTEM] ${username} has ${friends.length} friends`);
 
                             // Notify friends that user is online
                             friends.forEach((friend: string) => {
                                 const friendSockets = userSockets.get(friend);
                                 if (friendSockets) {
-                                    console.log(`[SYSTEM] Notifying ${friend} that ${username} is online (${friendSockets.size} sockets)`);
                                     friendSockets.forEach(client => {
-                                        console.log(`[SYSTEM] Friend ${friend} socket readyState: ${client.readyState} (0=CONNECTING, 1=OPEN, 2=CLOSING, 3=CLOSED)`);
                                         if (client.readyState === WebSocket.OPEN) {
                                             client.send(JSON.stringify({
                                                 type: "USER_ONLINE",
                                                 username,
                                             }));
-                                            console.log(`[SYSTEM] Sent USER_ONLINE message to ${friend} for ${username}`);
-                                        } else {
-                                            console.log(`[SYSTEM] Skipped sending to ${friend} - socket not OPEN`);
                                         }
                                     });
-                                } else {
-                                    console.log(`[SYSTEM] ${friend} is not connected (no sockets found)`);
                                 }
                             });
 
                             // Send list of online friends to the user
                             const onlineFriends = friends.filter((f: string) => userSockets.has(f));
-                            console.log(`[SYSTEM] Sending ${onlineFriends.length} online friends to ${username}: [${onlineFriends.join(', ')}]`);
-                            console.log(`[SYSTEM] ${username}'s WebSocket readyState: ${ws.readyState} (0=CONNECTING, 1=OPEN, 2=CLOSING, 3=CLOSED)`);
                             if (ws.readyState === WebSocket.OPEN) {
                                 ws.send(JSON.stringify({
                                     type: "ONLINE_FRIENDS",
                                     friends: onlineFriends,
                                 }));
-                                console.log(`[SYSTEM] Sent ONLINE_FRIENDS message to ${username}`);
-                            } else {
-                                console.log(`[SYSTEM] Cannot send ONLINE_FRIENDS to ${username} - socket not OPEN`);
                             }
-                        } catch (err) {
+                        }
+                        catch (err:any) {
                             console.error(`[ERROR] Failed to process friend notifications for ${username}:`, err);
                         }
                     }
                     break;
-                    case WebServerTypes.LOGOUT:  // ADD THIS CASE
-                    if (username && currentUsername) {
-                        console.log(`[SYSTEM] User ${username} logging out`);
 
-                        // Remove from userSockets
+                case WebServerTypes.LOGOUT:
+                    if (username && currentUsername) {
                         const sockets = userSockets.get(username);
                         if (sockets) {
                             sockets.delete(ws);
@@ -181,8 +156,8 @@ wss.on("connection", (ws) => {
                                 // Remove from Redis online players set
                                 try {
                                     await redisClient.sRem(RedisKeys.onlinePlayers(), username);
-                                    console.log(`[SYSTEM] Removed ${username} from Redis online players`);
-                                } catch (err) {
+                                }
+                                catch (err) {
                                     console.error(`[ERROR] Failed to remove ${username} from Redis online players:`, err);
                                 }
 
@@ -202,7 +177,8 @@ wss.on("connection", (ws) => {
                                             });
                                         }
                                     });
-                                } catch (err) {
+                                }
+                                catch (err) {
                                     console.error(`[ERROR] Failed to notify friends of logout:`, err);
                                 }
                             }
@@ -211,24 +187,21 @@ wss.on("connection", (ws) => {
                         currentUsername = null;
                     }
                     break;
-                default:
-                    console.log(`[INFO] Unhandled message type: ${type}`);
             }
-        } catch (err) {
+        }
+        catch (err:any) {
             console.error("[ERROR] Failed to parse WebSocket message:", err);
         }
     });
 
     ws.on("close", async () => {
         activeConnections.delete(ws);
-        
+
         // Clean up lobby association
         if (currentLobby && wsClients.has(currentLobby)) {
             wsClients.get(currentLobby)!.delete(ws);
-            if (wsClients.get(currentLobby)!.size === 0) {
+            if (wsClients.get(currentLobby)!.size === 0)
                 wsClients.delete(currentLobby);
-            }
-            console.log(`[SYSTEM] Client disconnected from lobby ${currentLobby}`);
         }
 
         // Clean up user association
@@ -239,18 +212,13 @@ wss.on("connection", (ws) => {
 
                 if (sockets.size === 0) {
                     userSockets.delete(currentUsername);
-                    console.log(`[SYSTEM] ${currentUsername} is now offline (connection closed)`);
 
                     // Notify friends of offline status (only if not shutting down)
                     if (serverState.isActive()) {
                         try {
-                            // Remove from Redis online players set
-                            const onlinePlayers = RedisKeys.onlinePlayers();
-                            await redisClient.sRem(onlinePlayers, currentUsername);
-                            console.log(`[SYSTEM] Removed ${currentUsername} from Redis online players on close`);
+                            await redisClient.sRem(RedisKeys.onlinePlayers(), currentUsername);
 
                             const friends = await UserService.getFriends(currentUsername);
-                            console.log(`[SYSTEM] Notifying ${friends.length} friends that ${currentUsername} is offline`);
                             friends.forEach((friend: string) => {
                                 const friendSockets = userSockets.get(friend);
                                 if (friendSockets) {
@@ -264,7 +232,8 @@ wss.on("connection", (ws) => {
                                     });
                                 }
                             });
-                        } catch (err) {
+                        }
+                        catch (err:any) {
                             console.error(`[ERROR] Failed to notify friends of ${currentUsername} going offline:`, err);
                         }
                     }
@@ -273,7 +242,7 @@ wss.on("connection", (ws) => {
         }
     });
 
-    ws.on("error", (err) => {
+    ws.on("error", (err:any) => {
         console.error("[ERROR] WebSocket error:", err);
     });
 });
@@ -281,20 +250,15 @@ wss.on("connection", (ws) => {
 // Heartbeat interval to detect dead connections
 const heartbeatInterval = setInterval(() => {
     wss.clients.forEach((ws: any) => {
-        if (ws.isAlive === false) {
-            console.log("[HEARTBEAT] Terminating dead connection");
+        if (ws.isAlive === false)
             return ws.terminate();
-        }
 
         ws.isAlive = false;
-        ws.ping(); // Send ping, expecting pong response
+        ws.ping();
     });
-}, 30000); // Check every 30 seconds
+}, toSeconds(30, TimeUnit.SECONDS));
 
-// Clean up heartbeat interval on server close
-wss.on('close', () => {
-    clearInterval(heartbeatInterval);
-});
+wss.on('close', () => clearInterval(heartbeatInterval));
 
 // Initialize Redis-WS bridge
 let redisWsBridge: any = null;
@@ -304,25 +268,21 @@ async function initializeServer() {
     try {
         console.log("[SYSTEM] Initializing server components...");
 
-        // Clear stale online players from Redis on startup
         try {
             await redisClient.del(RedisKeys.onlinePlayers());
-            console.log("[SYSTEM] Cleared stale online players from Redis");
-        } catch (err) {
+        }
+        catch (err:any) {
             console.error("[ERROR] Failed to clear online players from Redis:", err);
         }
 
         await ensureGraphConstraints();
         await initializeGraphStructure();
         await syncLeaderboardToRedis();
-        // Initialize Redis-WebSocket bridge
         redisWsBridge = initRedisWsBridge({ wsClients, userSockets });
-        
-        // Mount routers
+
         app.use("/game", gameRouter);
         app.use("/user", userRouter);
-        
-        // Start server
+
         await new Promise<void>((resolve) => {
             server.listen(SERVER_PORT, () => {
                 console.log(`[SYSTEM] Server running on port ${SERVER_PORT}`);
@@ -330,8 +290,8 @@ async function initializeServer() {
                 resolve();
             });
         });
-        
-    } catch (error) {
+    }
+    catch (error) {
         console.error("[FATAL] Failed to initialize server:", error);
         process.exit(1);
     }
@@ -340,33 +300,28 @@ async function initializeServer() {
 // Graceful shutdown handler
 async function gracefulShutdown(signal: string) {
     console.log(`\n[SYSTEM] ${signal} received. Starting graceful shutdown...`);
-    
-    // Prevent multiple shutdown attempts
+
     await serverState.startShutdown();
-    
+
     const shutdownSteps = [];
-    
-    // Step 1: Stop accepting new connections
+
     console.log("[SHUTDOWN] Stopping new connections...");
     wss.close();
-    
-    // Step 2: Close existing WebSocket connections gracefully
+
     console.log("[SHUTDOWN] Closing WebSocket connections...");
     const wsClosePromises = Array.from(activeConnections).map(ws => {
         return new Promise<void>((resolve) => {
             if (ws.readyState === WebSocket.OPEN) {
                 ws.close(1001, 'Server shutting down');
                 ws.once('close', resolve);
-                // Timeout after 5 seconds
                 setTimeout(resolve, 5000);
-            } else {
-                resolve();
             }
+            else 
+                resolve();
         });
     });
     shutdownSteps.push(Promise.all(wsClosePromises));
-    
-    // Step 3: Close HTTP server
+
     shutdownSteps.push(
         new Promise<void>((resolve) => {
             console.log("[SHUTDOWN] Closing HTTP server...");
@@ -376,8 +331,7 @@ async function gracefulShutdown(signal: string) {
             });
         })
     );
-    
-    // Step 4: Cleanup Redis subscriptions
+
     if (redisWsBridge?.dispose) {
         shutdownSteps.push(
             redisWsBridge.dispose()
@@ -385,28 +339,27 @@ async function gracefulShutdown(signal: string) {
                 .catch((err: any) => console.error("[ERROR] Failed to close Redis:", err))
         );
     }
-    
-    // Step 5: Close Neo4j connections
+
     if (n4jDriver) {
         shutdownSteps.push(
             Promise.resolve(n4jDriver.close())
-                   .then(() => console.log("[SHUTDOWN] Neo4j connection closed"))
-                   .catch((err) => console.error("[ERROR] Failed to close Neo4j:", err))
+                .then(() => console.log("[SHUTDOWN] Neo4j connection closed"))
+                .catch((err) => console.error("[ERROR] Failed to close Neo4j:", err))
         );
     }
-    
-    // Wait for all shutdown steps with timeout
+
     try {
         await Promise.race([
             Promise.all(shutdownSteps),
-            new Promise((_, reject) => 
+            new Promise((_, reject) =>
                 setTimeout(() => reject(new Error('Shutdown timeout')), 15000)
             )
         ]);
-        
+
         console.log("[SHUTDOWN] Graceful shutdown completed");
         process.exit(0);
-    } catch (error) {
+    }
+    catch (error) {
         console.error("[ERROR] Shutdown error:", error);
         console.error("[SHUTDOWN] Forcing exit...");
         process.exit(1);
@@ -425,11 +378,7 @@ process.on('uncaughtException', (error) => {
 
 process.on('unhandledRejection', (reason, promise) => {
     console.error('[FATAL] Unhandled Rejection at:', promise, 'reason:', reason);
-    // Log but don't shut down for unhandled rejections in production
-    // You might want to change this based on your needs
-    if (process.env.NODE_ENV === 'development') {
-        gracefulShutdown('UNHANDLED_REJECTION');
-    }
+    gracefulShutdown('UNHANDLED_REJECTION');
 });
 
 // Initialize and start the server
