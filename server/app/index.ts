@@ -110,13 +110,16 @@ wss.on("connection", (ws) => {
                 case WebServerTypes.LOGIN:
                     if (username) {
                         currentUsername = username;
-                        
+
                         if (!userSockets.has(username)) {
                             userSockets.set(username, new Set());
                         }
                         userSockets.get(username)!.add(ws);
                         console.log(`[SYSTEM] User ${username} connected`);
-                        
+
+                        // Add to Redis online players set
+                        await redisClient.sAdd(RedisKeys.onlinePlayers(), username);
+
                         // Notify friends of online status
                         try {
                             const friends = await UserService.getFriends(username);
