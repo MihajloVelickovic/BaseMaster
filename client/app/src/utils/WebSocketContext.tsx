@@ -41,25 +41,33 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children, 
   const INITIAL_RECONNECT_DELAY = 1000;
 
   const connect = useCallback(() => {
-    if (!username) return;
+    if (!username) {
+      console.log('[WebSocketContext] Cannot connect - no username');
+      return;
+    }
+
+    console.log(`[WebSocketContext] Attempting to connect for user: ${username}`);
 
     // Clear any existing connection
     if (wsRef.current) {
+      console.log('[WebSocketContext] Closing existing connection before reconnecting');
       isManualCloseRef.current = true;
       wsRef.current.close();
       wsRef.current = null;
     }
 
     try {
+      console.log('[WebSocketContext] Creating new WebSocket connection to ws://localhost:1738');
       const ws = new WebSocket('ws://localhost:1738');
       wsRef.current = ws;
 
       ws.onopen = () => {
-        console.log('WebSocket connected');
+        console.log('[WebSocketContext] WebSocket connected');
         setIsConnected(true);
         reconnectAttemptsRef.current = 0;
 
         // Send LOGIN message to identify this connection
+        console.log(`[WebSocketContext] Sending LOGIN message for user: ${username}`);
         ws.send(JSON.stringify({
           type: 'login',
           username: username
@@ -145,6 +153,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children, 
 
       // Send LOGOUT message before closing
       if (wsRef.current.readyState === WebSocket.OPEN) {
+        console.log(`[WebSocketContext] Sending LOGOUT message for user: ${username}`);
         wsRef.current.send(JSON.stringify({
           type: 'logout',
           username: username

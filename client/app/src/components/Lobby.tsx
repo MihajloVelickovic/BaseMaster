@@ -96,7 +96,17 @@ export default function Lobby () {
 
     const handleMessageUpdate = useCallback((data: any) => {
         console.log("Lobby received MESSAGE_UPDATE:", data.playerId, data.playerMessage);
-        setPlayerChat(prevChat => [...prevChat, `${getUserName(data.playerId)}: ${data.playerMessage}`]);
+        const newMessage = `${getUserName(data.playerId)}: ${data.playerMessage}`;
+
+        // Avoid adding duplicate messages if we already added it optimistically
+        setPlayerChat(prevChat => {
+            // Check if the last message is identical (happens when we sent it ourselves)
+            if (prevChat.length > 0 && prevChat[prevChat.length - 1] === newMessage) {
+                console.log("Duplicate message detected (own message echoed back), skipping");
+                return prevChat;
+            }
+            return [...prevChat, newMessage];
+        });
     }, []);
 
     // Navigate to game when flag is set
@@ -143,9 +153,14 @@ export default function Lobby () {
     async function sendPlayerChatMessage() {
         if (!chatInput.trim()) return; // Prevent sending empty messages
 
+        const messageToSend = chatInput;
+        setChatInput(""); // Clear input immediately
+
         try {
-            await axiosInstance.post('/game/sendLobbyMessage', { playerId: playerID, message: chatInput, gameId });
-            setChatInput(""); // Clear input after sending
+            // Optimistically add message to local state immediately
+            setPlayerChat(prevChat => [...prevChat, `${getUserName(playerID)}: ${messageToSend}`]);
+
+            await axiosInstance.post('/game/sendLobbyMessage', { playerId: playerID, message: messageToSend, gameId });
         } catch (error) {
             console.error("Error sending message:", error);
         }

@@ -17,7 +17,13 @@ export function initRedisWsBridge({
   // Helper to safe-send
   const safeSend = (client: WebSocket, payload: unknown) => {
     try {
-      if (client.readyState === 1) client.send(JSON.stringify(payload));
+      if (client.readyState === 1) {
+        const message = JSON.stringify(payload);
+        client.send(message);
+        console.log(`[RedisWsBridge] Sent message:`, message);
+      } else {
+        console.log(`[RedisWsBridge] Cannot send - client readyState is ${client.readyState} (not OPEN)`);
+      }
     } catch (err) {
       // optional: log or remove client if broken
       console.error("[WS SEND ERROR]", err);
@@ -140,10 +146,22 @@ export function initRedisWsBridge({
   friendPatterns.forEach(pattern => {
     subscriber.pSubscribe(pattern, (message:any, channel:any) => {
       try {
+        console.log(`[RedisWsBridge] Received message on channel: ${channel}`);
+        console.log(`[RedisWsBridge] Message content:`, message);
         const parts = channel.split(":"); // supports underscores in username
         const toUser = parts[parts.length - 1];
+        const messageType = pattern.split(":")[0];
+        console.log(`[RedisWsBridge] Extracted toUser: ${toUser}, messageType: ${messageType}`);
+
         if (userSockets.has(toUser)) {
-          userSockets.get(toUser)!.forEach(client => safeSend(client, { type: pattern.split(":")[0], ...JSON.parse(message) }));
+          const sockets = userSockets.get(toUser)!;
+          console.log(`[RedisWsBridge] Found ${sockets.size} socket(s) for user ${toUser}`);
+          sockets.forEach(client => {
+            console.log(`[RedisWsBridge] Client readyState: ${client.readyState}`);
+            safeSend(client, { type: messageType, ...JSON.parse(message) });
+          });
+        } else {
+          console.log(`[RedisWsBridge] No sockets found for user: ${toUser}`);
         }
       } catch (err) {
         console.error(`[${pattern} handler error]`, err);
@@ -151,28 +169,8 @@ export function initRedisWsBridge({
     });
   });
 
-  // USER_ONLINE / USER_OFFLINE (non-pattern subscribe)
-  subscriber.subscribe("USER_ONLINE", (message:any) => {
-    try {
-      const { username } = JSON.parse(message);
-      userSockets.forEach((sockets) => {
-        sockets.forEach((client) => safeSend(client, { type: "USER_ONLINE", username }));
-      });
-    } catch (err) {
-      console.error("[USER_ONLINE handler error]", err);
-    }
-  });
-
-  subscriber.subscribe("USER_OFFLINE", (message) => {
-    try {
-      const { username } = JSON.parse(message);
-      userSockets.forEach((sockets) => {
-        sockets.forEach((client) => safeSend(client, { type: "USER_OFFLINE", username }));
-      });
-    } catch (err) {
-      console.error("[USER_OFFLINE handler error]", err);
-    }
-  });
+  // NOTE: USER_ONLINE / USER_OFFLINE are handled directly in index.ts via WebSocket,
+  // not through Redis pub/sub. No need to subscribe here.
 
   // INVITE pattern
   subscriber.pSubscribe(`${IdPrefixes.INVITE}:*`, (message:any, channel:any) => {

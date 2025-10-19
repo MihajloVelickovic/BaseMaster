@@ -119,33 +119,47 @@ wss.on("connection", (ws) => {
 
                         // Add to Redis online players set
                         await redisClient.sAdd(RedisKeys.onlinePlayers(), username);
+                        console.log(`[SYSTEM] Added ${username} to Redis online players`);
 
                         // Notify friends of online status
                         try {
                             const friends = await UserService.getFriends(username);
-                            
+                            console.log(`[SYSTEM] ${username} has ${friends.length} friends`);
+
                             // Notify friends that user is online
                             friends.forEach((friend: string) => {
                                 const friendSockets = userSockets.get(friend);
                                 if (friendSockets) {
+                                    console.log(`[SYSTEM] Notifying ${friend} that ${username} is online (${friendSockets.size} sockets)`);
                                     friendSockets.forEach(client => {
+                                        console.log(`[SYSTEM] Friend ${friend} socket readyState: ${client.readyState} (0=CONNECTING, 1=OPEN, 2=CLOSING, 3=CLOSED)`);
                                         if (client.readyState === WebSocket.OPEN) {
                                             client.send(JSON.stringify({
                                                 type: "USER_ONLINE",
                                                 username,
                                             }));
+                                            console.log(`[SYSTEM] Sent USER_ONLINE message to ${friend} for ${username}`);
+                                        } else {
+                                            console.log(`[SYSTEM] Skipped sending to ${friend} - socket not OPEN`);
                                         }
                                     });
+                                } else {
+                                    console.log(`[SYSTEM] ${friend} is not connected (no sockets found)`);
                                 }
                             });
-                            
+
                             // Send list of online friends to the user
                             const onlineFriends = friends.filter((f: string) => userSockets.has(f));
+                            console.log(`[SYSTEM] Sending ${onlineFriends.length} online friends to ${username}: [${onlineFriends.join(', ')}]`);
+                            console.log(`[SYSTEM] ${username}'s WebSocket readyState: ${ws.readyState} (0=CONNECTING, 1=OPEN, 2=CLOSING, 3=CLOSED)`);
                             if (ws.readyState === WebSocket.OPEN) {
                                 ws.send(JSON.stringify({
                                     type: "ONLINE_FRIENDS",
                                     friends: onlineFriends,
                                 }));
+                                console.log(`[SYSTEM] Sent ONLINE_FRIENDS message to ${username}`);
+                            } else {
+                                console.log(`[SYSTEM] Cannot send ONLINE_FRIENDS to ${username} - socket not OPEN`);
                             }
                         } catch (err) {
                             console.error(`[ERROR] Failed to process friend notifications for ${username}:`, err);
@@ -155,15 +169,23 @@ wss.on("connection", (ws) => {
                     case WebServerTypes.LOGOUT:  // ADD THIS CASE
                     if (username && currentUsername) {
                         console.log(`[SYSTEM] User ${username} logging out`);
-                        
+
                         // Remove from userSockets
                         const sockets = userSockets.get(username);
                         if (sockets) {
                             sockets.delete(ws);
-                            
+
                             if (sockets.size === 0) {
                                 userSockets.delete(username);
-                                
+
+                                // Remove from Redis online players set
+                                try {
+                                    await redisClient.sRem(RedisKeys.onlinePlayers(), username);
+                                    console.log(`[SYSTEM] Removed ${username} from Redis online players`);
+                                } catch (err) {
+                                    console.error(`[ERROR] Failed to remove ${username} from Redis online players:`, err);
+                                }
+
                                 // Notify friends that user went offline
                                 try {
                                     const friends = await UserService.getFriends(username);
@@ -185,7 +207,7 @@ wss.on("connection", (ws) => {
                                 }
                             }
                         }
-                        
+
                         currentUsername = null;
                     }
                     break;
@@ -214,15 +236,21 @@ wss.on("connection", (ws) => {
             const sockets = userSockets.get(currentUsername);
             if (sockets) {
                 sockets.delete(ws);
-                
+
                 if (sockets.size === 0) {
                     userSockets.delete(currentUsername);
-                    console.log(`[SYSTEM] ${currentUsername} is now offline`);
-                    
+                    console.log(`[SYSTEM] ${currentUsername} is now offline (connection closed)`);
+
                     // Notify friends of offline status (only if not shutting down)
                     if (serverState.isActive()) {
                         try {
+                            // Remove from Redis online players set
+                            const onlinePlayers = RedisKeys.onlinePlayers();
+                            await redisClient.sRem(onlinePlayers, currentUsername);
+                            console.log(`[SYSTEM] Removed ${currentUsername} from Redis online players on close`);
+
                             const friends = await UserService.getFriends(currentUsername);
+                            console.log(`[SYSTEM] Notifying ${friends.length} friends that ${currentUsername} is offline`);
                             friends.forEach((friend: string) => {
                                 const friendSockets = userSockets.get(friend);
                                 if (friendSockets) {
@@ -236,9 +264,6 @@ wss.on("connection", (ws) => {
                                     });
                                 }
                             });
-                            const onlinePlayers = RedisKeys.onlinePlayers();
-                            await redisClient.sRem(onlinePlayers, currentUsername);
-                             
                         } catch (err) {
                             console.error(`[ERROR] Failed to notify friends of ${currentUsername} going offline:`, err);
                         }
@@ -278,6 +303,14 @@ let redisWsBridge: any = null;
 async function initializeServer() {
     try {
         console.log("[SYSTEM] Initializing server components...");
+
+        // Clear stale online players from Redis on startup
+        try {
+            await redisClient.del(RedisKeys.onlinePlayers());
+            console.log("[SYSTEM] Cleared stale online players from Redis");
+        } catch (err) {
+            console.error("[ERROR] Failed to clear online players from Redis:", err);
+        }
 
         await ensureGraphConstraints();
         await initializeGraphStructure();

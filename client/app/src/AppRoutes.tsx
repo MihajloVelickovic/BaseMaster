@@ -32,23 +32,23 @@ const routes = [
 const AppContent = () => {
     const { playerID } = useAuth();
 
+    console.log('[AppContent] Current playerID for WebSocket:', playerID);
+
     return (
-        <AuthProvider>
-            <WebSocketProvider username={playerID}>
-                <FriendProvider>
-                    <LobbyProvider>
-                        <Header />
-                        <div className='BelowHeader'>
-                            <Routes>
-                                {routes.map((route, index) => (
-                                    <Route key={index} path={route.path} element={route.element} />
-                                ))}
-                            </Routes>
-                        </div>
-                    </LobbyProvider>
-                </FriendProvider>
-            </WebSocketProvider>
-        </AuthProvider>
+        <WebSocketProvider username={playerID}>
+            <FriendProvider>
+                <LobbyProvider>
+                    <Header />
+                    <div className='BelowHeader'>
+                        <Routes>
+                            {routes.map((route, index) => (
+                                <Route key={index} path={route.path} element={route.element} />
+                            ))}
+                        </Routes>
+                    </div>
+                </LobbyProvider>
+            </FriendProvider>
+        </WebSocketProvider>
     );
 };
 

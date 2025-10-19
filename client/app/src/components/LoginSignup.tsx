@@ -113,7 +113,7 @@ const LoginSignup = () => {
                     console.log("Unknown action..");
                     setFormErrors({ serverResponse: "Unknown action.." });    
                 }
-            } catch (error: any) {                
+            } catch (error: any) {
                 let msg = "Something went wrong. Please try again.";
 
                 if (error.response?.data?.message) {
@@ -121,6 +121,8 @@ const LoginSignup = () => {
                 } else if (error.message) {
                 msg = error.message; // fallback to generic error message
                 }
+
+                setFormErrors({ serverResponse: msg });
             }
         }
     };

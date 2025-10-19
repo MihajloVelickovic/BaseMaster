@@ -37,7 +37,8 @@ export enum IdPrefixes {
     PLAYER_JOIN = "PLAYER_JOIN",
     PLAYER_LEAVE = "PLAYER_LEAVE",
     LOBBY_PLAYERS = "lp",
-    MESSAGE = "msg"
+    MESSAGE = "msg",
+    PRIVATE_MESSAGE_UPDATE = "PRIVATE_MESSAGE_UPDATE"
 }
 
 export enum BaseValues {

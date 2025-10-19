@@ -1,10 +1,11 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import "../styles/Home.css"
-import { JSXElementConstructor, ReactElement, ReactNode, ReactPortal, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { JSXElementConstructor, ReactElement, ReactNode, ReactPortal, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import axiosInstance from "../utils/axiosInstance";   //ovde za sad ne treba
-import {GameModes, Difficulties} from "../shared_modules/shared_enums"
+import {GameModes, Difficulties, IdPrefixes} from "../shared_modules/shared_enums"
 import { useAuth } from '../utils/AuthContext';
 import { useFriendContext } from '../utils/FriendContext';
+import { useWebSocket } from '../utils/WebSocketContext';
 
 //export const roundCount = 15;
 const maxValue = 255;
@@ -93,35 +94,52 @@ function Home() {
     }
   };
 
-  useEffect(() => {
-  const handleWSMessage = (event: any) => {
-    const data = event.detail;
-    
-    if (data.type === "PRIVATE_MESSAGE_UPDATE") {
-      const { from, to, text, timestamp } = data;
+  const { subscribe, unsubscribe } = useWebSocket();
 
-      const otherPerson = from === playerID ? to : from;
-      if(otherPerson === activeFriend) {
-        setMessages((prev) =>
-          [...prev, { from, to, text, timestamp }].sort(
-            (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-          )
+  const handlePrivateMessageUpdate = useCallback((data: any) => {
+    console.log("Home received PRIVATE_MESSAGE_UPDATE:", data);
+    const { from, to, text, timestamp } = data;
+
+    const otherPerson = from === playerID ? to : from;
+
+    if(otherPerson === activeFriend) {
+      const newMessage = { from, to, text, timestamp };
+      setMessages((prev) => {
+        // Avoid duplicates - check if this exact message already exists
+        const isDuplicate = prev.some(m =>
+          m.from === from &&
+          m.to === to &&
+          m.text === text &&
+          Math.abs(new Date(m.timestamp).getTime() - new Date(timestamp).getTime()) < 1000
         );
-      }
-      else {
-        setFriends((prevFriends) =>
-          prevFriends.map(f =>
-            f.username === from ? { ...f, unread: f.unread + 1 } : f
-          )
+
+        if (isDuplicate) {
+          console.log("Duplicate private message detected, skipping");
+          return prev;
+        }
+
+        return [...prev, newMessage].sort(
+          (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
         );
-        setChatUnreadCount((c) => c + 1);
-      }
+      });
     }
-  };
+    else {
+      setFriends((prevFriends) =>
+        prevFriends.map(f =>
+          f.username === from ? { ...f, unread: f.unread + 1 } : f
+        )
+      );
+      setChatUnreadCount((c) => c + 1);
+    }
+  }, [activeFriend, playerID]);
 
-  window.addEventListener('ws-message', handleWSMessage);
-  return () => window.removeEventListener('ws-message', handleWSMessage);
-}, [activeFriend, playerID, chatOpen]);
+  useEffect(() => {
+    subscribe(IdPrefixes.PRIVATE_MESSAGE_UPDATE, handlePrivateMessageUpdate);
+
+    return () => {
+      unsubscribe(IdPrefixes.PRIVATE_MESSAGE_UPDATE, handlePrivateMessageUpdate);
+    };
+  }, [subscribe, unsubscribe, handlePrivateMessageUpdate]);
 
   useEffect(() => {
     if (!activeFriend || !playerId) return;
@@ -190,17 +208,31 @@ function Home() {
 
   const sendMessage = async () => {
     if (!chatInput.trim() || !activeFriend) return;
+
+    const messageText = chatInput.trim();
     const payload = {
       sender: playerId,
       receiver: activeFriend,
-      messageText: chatInput.trim(),
+      messageText: messageText,
     };
+
+    // Optimistically add message to local state immediately
+    const optimisticMessage = {
+      from: playerId,
+      to: activeFriend,
+      text: messageText,
+      timestamp: new Date().toISOString()
+    };
+
+    setMessages((prev) => [...prev, optimisticMessage]);
+    setChatInput("");
 
     try {
       await axiosInstance.post("/user/sendMessage", payload);
-      setChatInput("");
     } catch (err) {
       console.error("Send failed", err);
+      // Optionally remove the optimistic message on error
+      // setMessages((prev) => prev.filter(m => m !== optimisticMessage));
     }
   };
 

@@ -29,15 +29,16 @@ function FriendList() {
 
   const fetchFriends = async () => {
     if (!playerID) return;
-    
+
     try {
       const response = await axiosInstance.post('/user/getFriends', { username: playerID });
       setFriends(response.data.friends || []);
 
-       if (response.data.onlineFriends) {
-        setOnlineUsers(response.data.onlineFriends);
-        console.log('[FriendList] Initial online friends:', response.data.onlineFriends);
-      }
+      // Always set onlineFriends, even if it's an empty array
+      const onlineFriends = response.data.onlineFriends || [];
+      setOnlineUsers(onlineFriends);
+      console.log('[FriendList] Friends:', response.data.friends);
+      console.log('[FriendList] Initial online friends:', onlineFriends);
     } catch (error) {
       console.error('Error fetching friends:', error);
     }

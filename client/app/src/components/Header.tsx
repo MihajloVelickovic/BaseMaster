@@ -130,21 +130,28 @@ const unreadCount = uniqueFriendRequests.length + uniqueUnreadNotifications.leng
     }, []);
 
     const handleUserOnline = useCallback((data: any) => {
+        console.log('[Header] Received USER_ONLINE:', data.username);
         setOnlineUsers((prev) => {
             if (!prev.includes(data.username)) {
+                console.log('[Header] Adding user to online list:', data.username);
                 return [...prev, data.username];
             }
             return prev;
         });
-    }, []);
+    }, [setOnlineUsers]);
 
     const handleUserOffline = useCallback((data: any) => {
-        setOnlineUsers((prev) => prev.filter(name => name !== data.username));
-    }, []);
+        console.log('[Header] Received USER_OFFLINE:', data.username);
+        setOnlineUsers((prev) => {
+            console.log('[Header] Removing user from online list:', data.username);
+            return prev.filter(name => name !== data.username);
+        });
+    }, [setOnlineUsers]);
 
     const handleOnlineFriends = useCallback((data: any) => {
+        console.log('[Header] Received ONLINE_FRIENDS:', data.friends);
         setOnlineUsers(data.friends);
-    }, []);
+    }, [setOnlineUsers]);
 
     const handleInvite = useCallback((data: any) => {
         setInvites((prev) => {
