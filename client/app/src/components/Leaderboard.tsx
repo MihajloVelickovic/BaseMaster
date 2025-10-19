@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, memo } from "react";
 import axiosInstance from "../utils/axiosInstance";
 import "../styles/Leaderboard.css";
 import { useLocation } from "react-router-dom";
@@ -122,25 +122,6 @@ const Leaderboard = () => {
     return (currentPage - 1) * pageSize + index + 1;
   };
 
-  if (loading) {
-    return (
-      <div className="leaderboard-page">
-        <div className="loading-spinner">Loading leaderboard...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="leaderboard-page">
-        <div className="error-message">{error}</div>
-        <button onClick={fetchLeaderboard} className="retry-button">
-          Retry
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div className="leaderboard-page">
       <div className="leaderboard-header">
@@ -148,11 +129,22 @@ const Leaderboard = () => {
           <span className="globe-icon">🌍</span>
           Global Leaderboard
         </h1>
-        <button onClick={fetchLeaderboard} className="refresh-button">
+        <button onClick={fetchLeaderboard} className="refresh-button" disabled={loading}>
           🔄 Refresh
         </button>
-      </div>     
+      </div>
 
+      {error ? (
+        <div className="error-message-container">
+          <div className="error-message">{error}</div>
+          <button onClick={fetchLeaderboard} className="retry-button">
+            Retry
+          </button>
+        </div>
+      ) : loading ? (
+        <div className="loading-spinner">Loading leaderboard...</div>
+      ) : (
+        <>
       <div className="leaderboard-table-container">
         <table className="leaderboard-table">
           <thead>
@@ -329,8 +321,8 @@ const Leaderboard = () => {
 
       {/* Pagination Controls - Bottom */}
       <div className="pagination-controls bottom">
-        <button 
-          onClick={handlePrevPage} 
+        <button
+          onClick={handlePrevPage}
           className="pagination-button"
           disabled={currentPage === 1}
         >
@@ -339,14 +331,16 @@ const Leaderboard = () => {
         <span className="page-info">
           Page {currentPage}
         </span>
-        <button 
-          onClick={handleNextPage} 
+        <button
+          onClick={handleNextPage}
           className="pagination-button"
           disabled={!hasNextPage}
         >
           Next →
         </button>
       </div>
+        </>
+      )}
     </div>
   );
 };

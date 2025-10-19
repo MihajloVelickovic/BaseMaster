@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import "../styles/Header.css"
 import Sidebar from "./Sidebar";
 import { FaBell, FaCheck, FaTimes } from "react-icons/fa";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import axiosInstance from "../utils/axiosInstance";
 import { useFriendContext } from "../utils/FriendContext"
 import { useLobbyContext } from "../utils/LobbyContext";
@@ -12,6 +12,7 @@ import { INotification, NotificationType } from "../utils/notifications";
 import { createNotification, getOrdinalSuffix } from '../utils/notificationHelpers'
 import Notification from './Notification';
 import React from "react";
+import { useWebSocket } from "../utils/WebSocketContext";
 
 function Header() {
     type Invite = {
@@ -25,10 +26,10 @@ function Header() {
     const [notifications, setNotifications] = useState<INotification[]>([]);
     const [invites, setInvites] = useState<Invite[]>([]);
     const [showInvites, setShowInvites] = useState(false);
-    const socketRef = useRef<WebSocket | null>(null);
     const location = useLocation();
     const { joinLobby, setPlayerID: setLobbyPlayerID } = useLobbyContext();
     const processedNotifications = useRef<Set<string>>(new Set());
+    const { subscribe, unsubscribe } = useWebSocket();
     // Calculate unread count from notifications
     const uniqueFriendRequests = Array.from(new Set(friendRequests));
     const uniqueUnreadNotifications = React.useMemo(() => {
@@ -54,208 +55,176 @@ const unreadCount = uniqueFriendRequests.length + uniqueUnreadNotifications.leng
         }
     }, [playerID, setLobbyPlayerID]);
 
-    useEffect(() => {
-        if (!playerID) return;
+    // Message handlers using useCallback to maintain stable references
+    const handleFriendRequest = useCallback((data: any) => {
+        console.log('Received FRIEND_REQUEST:', data);
+        const key = getNotificationKey('FRIEND_REQUEST', data.from);
 
-        const socket = new WebSocket("ws://localhost:1738/");
-        socketRef.current = socket;
-
-        // Handle page refresh/close - send logout before connection dies
-        const handleBeforeUnload = () => {
-            if (socket.readyState === WebSocket.OPEN) {
-                // Synchronous send before page unload
-                socket.send(JSON.stringify({
-                    type: "logout",
-                    username: playerID
-                }));
-            }
-        };
-        
-        socket.onopen = () => {
-            socket.send(JSON.stringify({
-                type: "login",
-                username: playerID
-            }));
-        };
-    
-        socket.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            console.log("Received from WebSocket:", data);
-
-            if (data.type === "FRIEND_REQUEST") {
-            const key = getNotificationKey('FRIEND_REQUEST', data.from);
-            
-            if (processedNotifications.current.has(key)) {
-                console.log('Duplicate FRIEND_REQUEST ignored:', data.from);
-                return;
-            }
-            processedNotifications.current.add(key);
-            
-            setFriendRequests((prev) => {
-                if (prev.includes(data.from)) return prev;
-                return [...prev, data.from];
-            });
-            
-            setNotifications((prev) => [
-                createNotification('FRIEND_REQUEST', `Friend request from ${data.from}`, data.from),
-                ...prev
-            ]);
+        if (processedNotifications.current.has(key)) {
+            console.log('Duplicate FRIEND_REQUEST ignored:', data.from);
+            return;
         }
-    
-            if (data.type === "FRIEND_ACCEPT") {
-                const key = getNotificationKey('FRIEND_ACCEPT', data.from);
-                
-                if (processedNotifications.current.has(key)) {
-                    console.log('Duplicate FRIEND_ACCEPT ignored:', data.from);
-                    return;
-                }
-                processedNotifications.current.add(key);
-                
-                setFriends((prev) => {
-                    if (prev.includes(data.from)) return prev;
-                    return [...prev, data.from];
-                });
-                
-                setNotifications((prev) => [
-                    createNotification('FRIEND_ACCEPT', `${data.from} accepted your friend request`, data.from),
-                    ...prev
-                ]);
-            }
-            
-            if (data.type === "FRIEND_DENY") {
-                const key = getNotificationKey('FRIEND_DENY', data.from);
-                
-                if (processedNotifications.current.has(key)) {
-                    console.log('Duplicate FRIEND_DENY ignored:', data.from);
-                    return;
-                }
-                processedNotifications.current.add(key);
-                
-                setNotifications((prev) => [
-                    createNotification('FRIEND_DENY', `${data.from} declined your friend request`, data.from),
-                    ...prev
-                ]);
-            }
-            
-            if (data.type === "FRIEND_REMOVED") {
-    const key = getNotificationKey('FRIEND_REMOVED', data.from);
-    
-    if (processedNotifications.current.has(key)) {
-        console.log('Duplicate FRIEND_REMOVED ignored:', data.from);
-        return;
-    }
-    processedNotifications.current.add(key);
-    
-    setFriends((prev) => prev.filter(friend => friend !== data.from));
-    
-    setNotifications((prev) => [
-        createNotification('FRIEND_REMOVED', data.message, data.from),
-        ...prev
-    ]);
-}
-            
-            if (data.type === "USER_ONLINE") {
-                setOnlineUsers((prev) => {
-                    if (!prev.includes(data.username)) {
-                        return [...prev, data.username];
-                    }
-                    return prev;
-                });
-            }
-            
-            if (data.type === "USER_OFFLINE") {
-                setOnlineUsers((prev) => prev.filter(name => name !== data.username));
-            }
+        processedNotifications.current.add(key);
 
-            if (data.type === "ONLINE_FRIENDS") {
-                setOnlineUsers(data.friends); 
+        setFriendRequests((prev) => {
+            if (prev.includes(data.from)) return prev;
+            return [...prev, data.from];
+        });
+
+        setNotifications((prev) => [
+            createNotification('FRIEND_REQUEST', `Friend request from ${data.from}`, data.from),
+            ...prev
+        ]);
+    }, [setFriendRequests, setNotifications]);
+
+    const handleFriendAccept = useCallback((data: any) => {
+        const key = getNotificationKey('FRIEND_ACCEPT', data.from);
+
+        if (processedNotifications.current.has(key)) {
+            console.log('Duplicate FRIEND_ACCEPT ignored:', data.from);
+            return;
+        }
+        processedNotifications.current.add(key);
+
+        setFriends((prev) => {
+            if (prev.includes(data.from)) return prev;
+            return [...prev, data.from];
+        });
+
+        setNotifications((prev) => [
+            createNotification('FRIEND_ACCEPT', `${data.from} accepted your friend request`, data.from),
+            ...prev
+        ]);
+    }, []);
+
+    const handleFriendDeny = useCallback((data: any) => {
+        const key = getNotificationKey('FRIEND_DENY', data.from);
+
+        if (processedNotifications.current.has(key)) {
+            console.log('Duplicate FRIEND_DENY ignored:', data.from);
+            return;
+        }
+        processedNotifications.current.add(key);
+
+        setNotifications((prev) => [
+            createNotification('FRIEND_DENY', `${data.from} declined your friend request`, data.from),
+            ...prev
+        ]);
+    }, []);
+
+    const handleFriendRemoved = useCallback((data: any) => {
+        const key = getNotificationKey('FRIEND_REMOVED', data.from);
+
+        if (processedNotifications.current.has(key)) {
+            console.log('Duplicate FRIEND_REMOVED ignored:', data.from);
+            return;
+        }
+        processedNotifications.current.add(key);
+
+        setFriends((prev) => prev.filter(friend => friend !== data.from));
+
+        setNotifications((prev) => [
+            createNotification('FRIEND_REMOVED', data.message, data.from),
+            ...prev
+        ]);
+    }, []);
+
+    const handleUserOnline = useCallback((data: any) => {
+        setOnlineUsers((prev) => {
+            if (!prev.includes(data.username)) {
+                return [...prev, data.username];
             }
+            return prev;
+        });
+    }, []);
 
-            if (data.type === "INVITE") {
-                setInvites((prev) => {
-                    const exists = prev.some(inv => inv.gameId === data.gameId);
-                    if (exists) return prev;
-                    return [...prev, {
-                        message: data.message,
-                        gameId: data.gameId
-                    }];
-                });
-            }
+    const handleUserOffline = useCallback((data: any) => {
+        setOnlineUsers((prev) => prev.filter(name => name !== data.username));
+    }, []);
 
-            if (data.type === "GAME_RESULT") {
-                const { place, score, totalPlayers, fullResults } = data.actionData;
-                const key = getNotificationKey('GAME_RESULT', undefined, { place, score, totalPlayers });
-                
-                if (processedNotifications.current.has(key)) {
-                    console.log('Duplicate GAME_RESULT ignored:', place, score);
-                    return;
-                }
-                processedNotifications.current.add(key);
-                
-                setNotifications((prev) => [
-                    createNotification(
-                        'GAME_RESULT',
-                        `You placed ${place}${getOrdinalSuffix(place)} with ${score} points!`,
-                        undefined,
-                        { place, score, totalPlayers, fullResults }
-                    ),
-                    ...prev
-                ]);
-            }
+    const handleOnlineFriends = useCallback((data: any) => {
+        setOnlineUsers(data.friends);
+    }, []);
 
-            if (data.type === "ACHIEVEMENT_UNLOCKED") {
-                const { name, description, code, type } = data.actionData;
-                
-                setNotifications((prev) => [
-                    createNotification(
-                        'ACHIEVEMENT_UNLOCKED',
-                        `Achievement Unlocked: ${name}`,
-                        undefined,
-                        { achievement: { name, description, code, type } }
-                    ),
-                    ...prev
-                ]);
-            }
+    const handleInvite = useCallback((data: any) => {
+        setInvites((prev) => {
+            const exists = prev.some(inv => inv.gameId === data.gameId);
+            if (exists) return prev;
+            return [...prev, {
+                message: data.message,
+                gameId: data.gameId
+            }];
+        });
+    }, []);
 
-            window.dispatchEvent(new CustomEvent('ws-message', { detail: data }));
-        };
-        
-        socket.onclose = () => {
-            console.log("WebSocket connection closed from Header");
-        };
+    const handleGameResult = useCallback((data: any) => {
+        const { place, score, totalPlayers, fullResults } = data.actionData;
+        const key = getNotificationKey('GAME_RESULT', undefined, { place, score, totalPlayers });
 
-        socket.onerror = (error) => {
-            console.error("WebSocket error in Header:", error);
-        };
+        if (processedNotifications.current.has(key)) {
+            console.log('Duplicate GAME_RESULT ignored:', place, score);
+            return;
+        }
+        processedNotifications.current.add(key);
 
-        // Add beforeunload listener
-        window.addEventListener('beforeunload', handleBeforeUnload);
+        setNotifications((prev) => [
+            createNotification(
+                'GAME_RESULT',
+                `You placed ${place}${getOrdinalSuffix(place)} with ${score} points!`,
+                undefined,
+                { place, score, totalPlayers, fullResults }
+            ),
+            ...prev
+        ]);
+    }, []);
+
+    const handleAchievementUnlocked = useCallback((data: any) => {
+        const { name, description, code, type } = data.actionData;
+        const key = getNotificationKey('ACHIEVEMENT_UNLOCKED', undefined, { name, code });
+
+        if (processedNotifications.current.has(key)) {
+            console.log('Duplicate ACHIEVEMENT_UNLOCKED ignored:', name);
+            return;
+        }
+        processedNotifications.current.add(key);
+
+        setNotifications((prev) => [
+            createNotification(
+                'ACHIEVEMENT_UNLOCKED',
+                `Achievement Unlocked: ${name}`,
+                undefined,
+                { achievement: { name, description, code, type } }
+            ),
+            ...prev
+        ]);
+    }, []);
+
+    // Subscribe to WebSocket messages
+    useEffect(() => {
+        subscribe('FRIEND_REQUEST', handleFriendRequest);
+        subscribe('FRIEND_ACCEPT', handleFriendAccept);
+        subscribe('FRIEND_DENY', handleFriendDeny);
+        subscribe('FRIEND_REMOVED', handleFriendRemoved);
+        subscribe('USER_ONLINE', handleUserOnline);
+        subscribe('USER_OFFLINE', handleUserOffline);
+        subscribe('ONLINE_FRIENDS', handleOnlineFriends);
+        subscribe('INVITE', handleInvite);
+        subscribe('GAME_RESULT', handleGameResult);
+        subscribe('ACHIEVEMENT_UNLOCKED', handleAchievementUnlocked);
 
         return () => {
-            console.log("Header cleanup: Closing WebSocket for", playerID);
-
-            // Remove beforeunload listener
-            window.removeEventListener('beforeunload', handleBeforeUnload);
-
-            // Send logout message if connection is open
-            if (socket.readyState === WebSocket.OPEN) {
-                socket.send(JSON.stringify({
-                    type: "logout",
-                    username: playerID
-                }));
-                socket.close(1000, "Component unmounting");
-            } else if (socket.readyState === WebSocket.CONNECTING) {
-                // If still connecting, close when it opens
-                socket.addEventListener('open', () => {
-                    socket.send(JSON.stringify({
-                        type: "logout",
-                        username: playerID
-                    }));
-                    socket.close(1000, "Component unmounting");
-                });
-            }
+            unsubscribe('FRIEND_REQUEST', handleFriendRequest);
+            unsubscribe('FRIEND_ACCEPT', handleFriendAccept);
+            unsubscribe('FRIEND_DENY', handleFriendDeny);
+            unsubscribe('FRIEND_REMOVED', handleFriendRemoved);
+            unsubscribe('USER_ONLINE', handleUserOnline);
+            unsubscribe('USER_OFFLINE', handleUserOffline);
+            unsubscribe('ONLINE_FRIENDS', handleOnlineFriends);
+            unsubscribe('INVITE', handleInvite);
+            unsubscribe('GAME_RESULT', handleGameResult);
+            unsubscribe('ACHIEVEMENT_UNLOCKED', handleAchievementUnlocked);
         };
-    }, [playerID]);
+    }, [subscribe, unsubscribe, handleFriendRequest, handleFriendAccept, handleFriendDeny, handleFriendRemoved, handleUserOnline, handleUserOffline, handleOnlineFriends, handleInvite, handleGameResult, handleAchievementUnlocked]);
 
     // Add this after: const unreadCount = friendRequests.length + notifications.filter(n => !n.read).length;
 
@@ -388,15 +357,7 @@ const getNotificationKey = (type: string, from?: string, actionData?: any) => {
     };
 
     const handleLogout = async () => {
-        if (socketRef.current?.readyState === WebSocket.OPEN) {
-            socketRef.current.send(JSON.stringify({
-                type: "logout",
-                username: playerID
-            }));
-            socketRef.current.close();
-            socketRef.current = null;
-        }
-        
+        // WebSocket context handles LOGOUT message automatically
         await logout();
         localStorage.removeItem("accessTok");
         localStorage.removeItem("refreshTok");

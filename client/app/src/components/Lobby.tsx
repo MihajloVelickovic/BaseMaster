@@ -3,10 +3,11 @@ import { GameModes, Difficulties, GameStates, IdPrefixes } from "../shared_modul
 import "../styles/Lobby.css";
 //import { roundCount } from "./Home";
 import axiosInstance from "../utils/axiosInstance";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { FaBell, FaCheck, FaPlus, FaTimes, FaUserPlus } from "react-icons/fa";
 import { useFriendContext } from "../utils/FriendContext"
 import { STATUS_CODES } from "http";
+import { useWebSocket } from "../utils/WebSocketContext";
 
 function getUserName (id: string) {
     if (id && id != "") {
@@ -17,7 +18,8 @@ function getUserName (id: string) {
 
 export default function Lobby () {
     const location = useLocation();
-    const wsRef = useRef<WebSocket | null>(null);
+    const { subscribe, unsubscribe, sendMessage } = useWebSocket();
+    const hasJoinedLobby = useRef(false);
     var { toBasee = 2, playerNum = 1, gameMode = GameModes.CLASSIC.toString(),
          difficulty = Difficulties.LAYMAN.toString(), gameId = "", playerID,
           transferedLobbyName, hostId, roundCount, playerIds} = location.state || {};
@@ -31,7 +33,7 @@ export default function Lobby () {
     (Array.isArray(playerIds) ? playerIds : playerID ? [playerID] : []);
     const [hostIdState, setHostIdState] = useState(hostId);
     const [playerChat, setPlayerChat] = useState<string[]>([]);
-    const [chatInput, setChatInput] = useState(""); 
+    const [chatInput, setChatInput] = useState("");
     const chatEndRef = useRef<HTMLDivElement | null>(null);
     const [isOpen, setIsOpen] = useState(false);
     //const [friendRequests, setFriendRequests] = useState<string[]>([]);
@@ -60,81 +62,79 @@ export default function Lobby () {
 
     const startGameRef = useRef(false);
     useEffect(() => {
-        startGameRef.current = startGameFlag; 
+        startGameRef.current = startGameFlag;
     }, [startGameFlag]);
 
-    useEffect(() => {
-        if (startGameFlag) {
-            navigate("/Game", { state: { toBasee:toBasee, playerNum, gameMode, difficulty, gameId, playerID, roundCount } });
-            return;
+    // Message handlers
+    const handleGameStarted = useCallback((data: any) => {
+        console.log('Lobby received GAME_STARTED:', data);
+        setStartGameFlag(true);
+    }, []);
+
+    const handlePlayerJoin = useCallback((data: any) => {
+        console.log("Lobby received PLAYER_JOIN:", data.playerId);
+        setPlayers(prevPlayers =>
+            prevPlayers.includes(data.playerId) ? prevPlayers : [...prevPlayers, data.playerId]
+        );
+
+        if (data.playerId === playerID) {
+            setPlayerChat(["You joined a lobby."]);
+        } else {
+            setPlayerChat(prevChat => [...prevChat, `Player ${getUserName(data.playerId)} joined the lobby.`]);
+        }
+    }, [playerID]);
+
+    const handlePlayerLeave = useCallback((data: any) => {
+        console.log("Lobby received PLAYER_LEAVE:", data.playerId);
+        setPlayers(prevPlayers => prevPlayers.filter(id => id !== data.playerId));
+        if (data.newHost) {
+            setHostIdState(data.newHost);
         }
 
-        const ws = new WebSocket("ws://localhost:1738");
-        wsRef.current = ws; 
+        setPlayerChat(prevChat => [...prevChat, `Player ${getUserName(data.playerId)} left the lobby.`]);
+    }, []);
 
-        ws.onopen = () => {         
-            ws.send(JSON.stringify({ type: "joinLobby", gameId, playerID }));
+    const handleMessageUpdate = useCallback((data: any) => {
+        console.log("Lobby received MESSAGE_UPDATE:", data.playerId, data.playerMessage);
+        setPlayerChat(prevChat => [...prevChat, `${getUserName(data.playerId)}: ${data.playerMessage}`]);
+    }, []);
 
-            if(playerID === hostId) {
+    // Navigate to game when flag is set
+    useEffect(() => {
+        if (startGameFlag) {
+            navigate("/Game", { state: { toBasee: toBasee, playerNum, gameMode, difficulty, gameId, playerID, roundCount } });
+        }
+    }, [startGameFlag, navigate, toBasee, playerNum, gameMode, difficulty, gameId, playerID, roundCount]);
+
+    // Join lobby and subscribe to messages
+    useEffect(() => {
+        if (startGameFlag) return;
+
+        // Join lobby via WebSocket
+        if (!hasJoinedLobby.current) {
+            sendMessage({ type: "joinLobby", gameId, playerID });
+            hasJoinedLobby.current = true;
+
+            if (playerID === hostId) {
                 setPlayerChat(prevChat => [...prevChat, "You created a lobby."]);
-            }
-            else {
+            } else {
                 setPlayerChat(["You joined a lobby."]);
             }
-        };
-        
-        ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            if(data.type === IdPrefixes.GAME_STARTED) {
-                console.log(data);
-                setStartGameFlag(true);
-            }
-            else if(data.type === IdPrefixes.PLAYER_JOIN) {
-                console.log("Player joined the lobby: ",data.playerId);
-                setPlayers(prevPlayers => 
-                    prevPlayers.includes(data.playerId) ? prevPlayers : [...prevPlayers, data.playerId]
-                );
+        }
 
-                
-
-                if (data.playerId === playerID) {
-                    setPlayerChat(["You joined a lobby."]); // Clear old chat
-                } else {
-                    setPlayerChat(prevChat => [...prevChat, `Player ${getUserName(data.playerId)} joined the lobby.`]);
-                }
-            }
-            else if(data.type === IdPrefixes.PLAYER_LEAVE) {
-                console.log("Player left the lobby: ",data.playerId);
-                setPlayers(prevPlayers => prevPlayers.filter(id => id !== data.playerId));
-                if(data.newHost){
-                    setHostIdState(data.newHost);  
-                }
-
-                setPlayerChat(prevChat => [...prevChat, `Player ${getUserName(data.playerId)} left the lobby.`]);
-            }
-            else if(data.type === IdPrefixes.MESSAGE_UPDATE) {
-                console.log("player: ", data.playerId, "message: ", data.playerMessage);
-                setPlayerChat(prevChat => [...prevChat, `${getUserName(data.playerId)}: ${data.playerMessage}`]);
-            }
-        };
-
-        ws.onerror = (error) => {
-            console.error("WebSocket error in Lobby:", error);
-        };
-
-        ws.onclose = () => {
-            console.log("WebSocket connection closed from Lobby");
-        };
+        // Subscribe to lobby messages
+        subscribe(IdPrefixes.GAME_STARTED, handleGameStarted);
+        subscribe(IdPrefixes.PLAYER_JOIN, handlePlayerJoin);
+        subscribe(IdPrefixes.PLAYER_LEAVE, handlePlayerLeave);
+        subscribe(IdPrefixes.MESSAGE_UPDATE, handleMessageUpdate);
 
         return () => {
-            console.log("Lobby cleanup: Closing WebSocket");
-            if (ws.readyState === WebSocket.OPEN) {
-                ws.close(1000, "Component unmounting");
-            }
-            wsRef.current = null;
+            unsubscribe(IdPrefixes.GAME_STARTED, handleGameStarted);
+            unsubscribe(IdPrefixes.PLAYER_JOIN, handlePlayerJoin);
+            unsubscribe(IdPrefixes.PLAYER_LEAVE, handlePlayerLeave);
+            unsubscribe(IdPrefixes.MESSAGE_UPDATE, handleMessageUpdate);
         };
-
-    }, [gameId, playerID, startGameFlag, navigate, toBasee, playerNum, gameMode, difficulty, roundCount, hostId]);  // Include all dependencies
+    }, [gameId, playerID, hostId, startGameFlag, subscribe, unsubscribe, sendMessage, handleGameStarted, handlePlayerJoin, handlePlayerLeave, handleMessageUpdate]);
 
     // function handleStartGame() {
     //     setStartGameFlag(true);
@@ -171,13 +171,12 @@ export default function Lobby () {
     };
 
     const handleLeaveLobby = async () => {
-        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-        wsRef.current.send(JSON.stringify({
+        // Send leave message via WebSocket context
+        sendMessage({
             type: IdPrefixes.PLAYER_LEAVE,
             gameId,
             playerID,
-        }));
-        }
+        });
         navigate("/");
     };
 

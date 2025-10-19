@@ -156,7 +156,7 @@ gameRouter.post("/submitResult", authUser, async (req:any, res:any) => {
         const scoreboard = await redisClient.zRangeWithScores(scoreboardKey, 0, -1);
         scoreboard.reverse();
 
-        publisher.publish(RedisKeys.scoreboardUpdate(gameId),
+        await publisher.publish(RedisKeys.scoreboardUpdate(gameId),
             JSON.stringify({scoreboard, playerId, points:pointsToAdd}));
 
         // NOW increment to next round
@@ -320,7 +320,7 @@ gameRouter.post("/joinLobby", authUser, async (req:any, res:any) => {
         const roundCount = await redisClient.lLen(roundsKey);
         //needed since we may join after the message is sent
 
-        publisher.publish(RedisKeys.playerJoin(gameId),
+        await publisher.publish(RedisKeys.playerJoin(gameId),
                             JSON.stringify({playerID:playerId, gameData}));
 
         return res.send({message:"Success", gameId:gameId,
@@ -415,7 +415,7 @@ gameRouter.post("/setGameState", authUser, async (req:any, res:any) => {
         await setRounds(orderPointsKey,
                         parcedData.roundCount, Number(currPlayers) + 1);
 
-        publisher.publish(
+        await publisher.publish(
         RedisKeys.gameStart(gameId),
          JSON.stringify({message:"GAME STARTED"}));      
 
@@ -465,7 +465,7 @@ gameRouter.post("/playerComplete", authUser,  async (req:any, res:any) => {
     const scoreboard = await redisClient.zRangeWithScores(scoreboardKey, 0, -1);
     scoreboard.reverse();
 
-    publisher.publish(RedisKeys.scoreboardUpdate(gameId),
+    await publisher.publish(RedisKeys.scoreboardUpdate(gameId),
         JSON.stringify({scoreboard, playerId, pointsToAdd:0}));
     
     const gameEndKey = RedisKeys.gameEnd(gameId);
@@ -502,9 +502,9 @@ gameRouter.post("/playerComplete", authUser,  async (req:any, res:any) => {
             JSON.stringify({ results })
         );
 
-        results.forEach((playerResult: PlayerResult) => {
+        for (const playerResult of results) {
             const playerId = playerResult.username;
-            publisher.publish(
+            await publisher.publish(
                 RedisKeys.gameResult(playerId),  // Publish to individual player channel
                 JSON.stringify({
                     place: playerResult.placement,
@@ -513,7 +513,7 @@ gameRouter.post("/playerComplete", authUser,  async (req:any, res:any) => {
                     fullResults: results
                 })
             );
-        });
+        }
     }
     catch(err:any) {
         return res.send({message: `Error with cleanup: ${err}`})
@@ -571,7 +571,7 @@ gameRouter.post("/leaveLobby", authUser, async (req: any, res: any) => {
         }
 
 
-        publisher.publish(RedisKeys.playerLeave(gameId), JSON.stringify({
+        await publisher.publish(RedisKeys.playerLeave(gameId), JSON.stringify({
             type:Prefixes.PLAYER_LEAVE,
             playerID,
             newHost: newHost
@@ -621,10 +621,10 @@ gameRouter.post("/leaveGame", authUser, async (req: any, res: any) => {
             await redisClient.del(gameId);
         }
 
-        publisher.publish(RedisKeys.scoreboardUpdate(gameId),
+        await publisher.publish(RedisKeys.scoreboardUpdate(gameId),
             JSON.stringify({scoreboard, playerID, points: 0}));
 
-        publisher.publish(RedisKeys.playerLeave(gameId), JSON.stringify({
+        await publisher.publish(RedisKeys.playerLeave(gameId), JSON.stringify({
             type:Prefixes.PLAYER_LEAVE,
             playerID,
         }));
@@ -652,7 +652,7 @@ gameRouter.post("/sendLobbyMessage", authUser, async (req:any, res:any) => {
 
         await redisClient.rPush(lobbyMessageKey,
                                 JSON.stringify({ playerId, message }));
-        publisher.publish(RedisKeys.messageUpdate(gameId),
+        await publisher.publish(RedisKeys.messageUpdate(gameId),
              JSON.stringify({ playerId, message }));
         return res.send({ Message:"SENT", playerId, message });
     } 
@@ -679,7 +679,7 @@ gameRouter.post("/getLobbyMessages", authUser, async (req:any, res:any) => {
             return JSON.parse(e);
         })
  
-        return res.send({message:"SUCCESS", gmaeId:gameId, messages:messages });
+        return res.send({message:"SUCCESS", gameId:gameId, messages:messages });
     } 
     catch (err) {
         console.error('[ERROR]:',err);

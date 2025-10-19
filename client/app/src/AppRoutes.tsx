@@ -11,8 +11,9 @@ import { FriendProvider } from './utils/FriendContext';
 import { LobbyProvider } from "./utils/LobbyContext";
 import Profile from './components/Profile';
 import Sidebar from './components/Sidebar';
-import { AuthProvider } from './utils/AuthContext';
+import { AuthProvider, useAuth } from './utils/AuthContext';
 import Leaderboard from './components/Leaderboard';
+import { WebSocketProvider } from './utils/WebSocketContext';
 
 
 const routes = [
@@ -27,23 +28,36 @@ const routes = [
     // { path: "/register/:token", element: <Register /> },
 ];
 
+// Inner component that has access to AuthContext
+const AppContent = () => {
+    const { playerID } = useAuth();
+
+    return (
+        <AuthProvider>
+            <WebSocketProvider username={playerID}>
+                <FriendProvider>
+                    <LobbyProvider>
+                        <Header />
+                        <div className='BelowHeader'>
+                            <Routes>
+                                {routes.map((route, index) => (
+                                    <Route key={index} path={route.path} element={route.element} />
+                                ))}
+                            </Routes>
+                        </div>
+                    </LobbyProvider>
+                </FriendProvider>
+            </WebSocketProvider>
+        </AuthProvider>
+    );
+};
+
 const AppRoutes = () => {       //Header se poziva odavde, moze i iz index.tsx ali mora da bude i tamo BrowswerRouter
     return (
         <AuthProvider>
-        <BrowserRouter>
-        <FriendProvider>
-        <LobbyProvider>
-            <Header />
-            <div className='BelowHeader'>
-                <Routes>
-                    {routes.map((route, index) => (
-                        <Route key={index} path={route.path} element={route.element} />
-                    ))}
-                </Routes>
-            </div>
-        </LobbyProvider>
-        </FriendProvider>
-        </BrowserRouter>
+            <BrowserRouter>
+                <AppContent />
+            </BrowserRouter>
         </AuthProvider>
     );
 };

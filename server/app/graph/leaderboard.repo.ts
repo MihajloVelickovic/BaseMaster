@@ -332,10 +332,10 @@ export async function getAllPlayersHighscores(): Promise<Array<{username: string
     const result = await session.executeRead(async tx => {
       return await tx.run(`
         MATCH (p:Player)-[:PARTICIPATES_IN]->(lb:Leaderboard {id: 'global'})
-        RETURN 
+        RETURN
           p.username as username,
           COALESCE(p.bestScore, 0) as bestScore
-        ORDER BY p.totalScore DESC
+        ORDER BY COALESCE(p.totalScore, 0) DESC
       `);
     });
     
@@ -386,12 +386,18 @@ export async function getFriendsWithAchievements(username: string) {
         MATCH (p:Player {username: $username})-[:FRIEND]-(friend:Player)
         OPTIONAL MATCH (friend)-[r:PARTICIPATES_IN]->(lb:Leaderboard {id: 'global'})
         OPTIONAL MATCH (friend)-[:ACHIEVED]->(a:Achievement)
-        RETURN 
+        WITH
           friend.username as friendUsername,
-          r.bestScore as bestScore,
-          r.totalGames as totalGames,
+          COALESCE(r.bestScore, 0) as bestScore,
+          COALESCE(r.totalGames, 0) as totalGames,
+          COALESCE(r.totalScore, 0) as totalScore,
           collect(DISTINCT a.name) as achievements
-        ORDER BY r.totalScore DESC
+        RETURN
+          friendUsername,
+          bestScore,
+          totalGames,
+          achievements
+        ORDER BY totalScore DESC
       `, { username });
     });
 

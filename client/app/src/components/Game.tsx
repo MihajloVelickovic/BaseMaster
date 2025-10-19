@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import "../styles/Game.css";
 import { useLocation, useNavigate } from "react-router-dom";
 import { GameModes, Difficulties, DifficultyValues, IdPrefixes } from "../shared_modules/shared_enums";
 import axiosInstance from "../utils/axiosInstance";
+import { useWebSocket } from "../utils/WebSocketContext";
 
 var maxVal:bigint = BigInt(255);
 var numToFind = getRandomNumber(1, Number(maxVal));   //this appears to be unneeded
@@ -44,7 +45,9 @@ function Game() {
   const [playerChat, setPlayerChat] = useState<string[]>([]);
   const [chatInput, setChatInput] = useState("");
   const chatEndRef = useRef<HTMLDivElement>(null);
-  const wsRef = useRef<WebSocket | null>(null);
+  const { subscribe, unsubscribe, sendMessage } = useWebSocket();
+  const hasJoinedLobby = useRef(false);
+
 useEffect(() => {
   chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
 }, [playerChat]);
@@ -115,126 +118,102 @@ console.log("toBasee je: ", toBasee);
       console.log("something went wrong for this to show up");
   }
 
-useEffect(() => {
-  if (wsRef.current) {
-    console.log("WebSocket already exists, skipping");
-    return;
-  }
+  // Message handlers
+  const handleScoreboardUpdate = useCallback((data: any) => {
+    console.log('Game received SCOREBOARD_UPDATE:', data);
+    setScoreboard(data.scores);
 
-  // Guard against missing data
-  if (!gameId || !playerID) {
-    console.error("Missing gameId or playerID:", { gameId, playerID });
-    alert("Missing game information. Redirecting to home...");
-    navigate("/");
-    return;
-  }
+    if (data.points !== undefined && data.points !== 0) {
+      const isCurrentPlayer = playerID === String(data.playerId);
+      const message = isCurrentPlayer
+        ? `You scored ${data.points} points.`
+        : `Player ${getUserName(data.playerId)} scored ${data.points} points.`;
 
-  let mounted = true; // Track if component is still mounted
-  const ws = new WebSocket("ws://localhost:1738");
-
-  // Configure game mode
-  switch (gameMode) {
-    case "Classic":
-      break;
-    case "Reverse":
-      setFromBase(toBasee); // Fixed: was using toBase instead of toBasee
-      setToBase(10);
-      break;
-    case "Chaos":
-      break;
-    default:
-      break;
-  }
-
-  // Configure difficulty
-  switch (difficulty) {
-    case Difficulties.LAYMAN.toString(): 
-      maxVal = BigInt(DifficultyValues.LAYMAN);
-      break;
-    case Difficulties.CHILL_GUY.toString(): 
-      maxVal = BigInt(DifficultyValues.CHILL_GUY);
-      break;
-    case Difficulties.ELFAK_ENJOYER.toString(): 
-      maxVal = BigInt(DifficultyValues.ELFAK_ENJOYER);
-      break;
-    case Difficulties.BASED_MASTER.toString(): 
-      maxVal = BigInt(DifficultyValues.BASED_MASTER);
-      break;
-    default:
-      maxVal = BigInt(DifficultyValues.LAYMAN);
-      console.log("something went wrong for this to show up");
-  }
-
-  ws.onopen = () => {
-    if (!mounted) return;
-    
-    console.log("WebSocket connected");
-    ws.send(JSON.stringify({ 
-      type: IdPrefixes.SCOREBOARD_UPDATE, 
-      gameId, 
-      playerID 
-    }));
-    
-    // NOW it's safe to get the first number - moved here from outside
-    //getNumberFromServer(false);
-    fetchInitialNumber();
-  };
-
-  ws.onmessage = (event) => {
-    if (!mounted) return; // Don't process if unmounted
-    
-    try {
-      const data = JSON.parse(event.data);
-      console.log("WS received:", data); // Debug log
-      
-      if (data.type === IdPrefixes.SCOREBOARD_UPDATE) {
-        setScoreboard(data.scores);
-        
-        // Fixed comparison and check
-        if (data.points !== undefined && data.points !== 0) {
-          const isCurrentPlayer = playerID === String(data.playerId);
-          const message = isCurrentPlayer 
-            ? `You scored ${data.points} points.`
-            : `Player ${getUserName(data.playerId)} scored ${data.points} points.`;
-          
-          setPlayerChat(prevChat => [...prevChat, message]);
-        }
-      }
-      else if (data.type === IdPrefixes.PLAYER_LEAVE) {
-        setPlayerChat(prevChat => [...prevChat, 
-          `Player ${getUserName(data.playerId)} left the game.`
-        ]);
-      }
-      else if (data.type === IdPrefixes.MESSAGE_UPDATE) {
-        setPlayerChat(prevChat => [...prevChat, 
-          `${getUserName(data.playerId)}: ${data.playerMessage}`
-        ]);
-      }
-    } catch (error) {
-      console.error("Error parsing WebSocket message:", error);
+      setPlayerChat(prevChat => [...prevChat, message]);
     }
-  };
+  }, [playerID]);
 
-  ws.onerror = (error) => {
-    console.error("WebSocket error:", error);
-  };
+  const handlePlayerLeave = useCallback((data: any) => {
+    console.log('Game received PLAYER_LEAVE:', data);
+    setPlayerChat(prevChat => [...prevChat,
+      `Player ${getUserName(data.playerId)} left the game.`
+    ]);
+  }, []);
 
-  ws.onclose = (event) => {
-    if (mounted) {
-      console.log("WebSocket closed:", event.code, event.reason);
+  const handleMessageUpdate = useCallback((data: any) => {
+    console.log('Game received MESSAGE_UPDATE:', data);
+    setPlayerChat(prevChat => [...prevChat,
+      `${getUserName(data.playerId)}: ${data.playerMessage}`
+    ]);
+  }, []);
+
+  // Join game lobby and subscribe to messages
+  useEffect(() => {
+    // Guard against missing data
+    if (!gameId || !playerID) {
+      console.error("Missing gameId or playerID:", { gameId, playerID });
+      alert("Missing game information. Redirecting to home...");
+      navigate("/");
+      return;
     }
-  };
 
-  // Cleanup function
-  return () => {
-    mounted = false;
-    if (ws.readyState === WebSocket.OPEN) {
-      ws.close(1000, "Component unmounting");
-    } else {
-      ws.close();
+    // Configure game mode
+    switch (gameMode) {
+      case "Classic":
+        break;
+      case "Reverse":
+        setFromBase(toBasee);
+        setToBase(10);
+        break;
+      case "Chaos":
+        break;
+      default:
+        break;
     }
-  };
-}, []); // Added dependencies
+
+    // Configure difficulty
+    switch (difficulty) {
+      case Difficulties.LAYMAN.toString():
+        maxVal = BigInt(DifficultyValues.LAYMAN);
+        break;
+      case Difficulties.CHILL_GUY.toString():
+        maxVal = BigInt(DifficultyValues.CHILL_GUY);
+        break;
+      case Difficulties.ELFAK_ENJOYER.toString():
+        maxVal = BigInt(DifficultyValues.ELFAK_ENJOYER);
+        break;
+      case Difficulties.BASED_MASTER.toString():
+        maxVal = BigInt(DifficultyValues.BASED_MASTER);
+        break;
+      default:
+        maxVal = BigInt(DifficultyValues.LAYMAN);
+        console.log("something went wrong for this to show up");
+    }
+
+    // Join the game lobby via WebSocket
+    if (!hasJoinedLobby.current) {
+      sendMessage({
+        type: IdPrefixes.SCOREBOARD_UPDATE,
+        gameId,
+        playerID
+      });
+      hasJoinedLobby.current = true;
+
+      // Fetch initial number
+      fetchInitialNumber();
+    }
+
+    // Subscribe to game messages
+    subscribe(IdPrefixes.SCOREBOARD_UPDATE, handleScoreboardUpdate);
+    subscribe(IdPrefixes.PLAYER_LEAVE, handlePlayerLeave);
+    subscribe(IdPrefixes.MESSAGE_UPDATE, handleMessageUpdate);
+
+    return () => {
+      unsubscribe(IdPrefixes.SCOREBOARD_UPDATE, handleScoreboardUpdate);
+      unsubscribe(IdPrefixes.PLAYER_LEAVE, handlePlayerLeave);
+      unsubscribe(IdPrefixes.MESSAGE_UPDATE, handleMessageUpdate);
+    };
+  }, [gameId, playerID, gameMode, difficulty, toBasee, subscribe, unsubscribe, sendMessage, handleScoreboardUpdate, handlePlayerLeave, handleMessageUpdate, navigate]);
 
 console.log("toBase: "+toBase+" playerNum: "+playerNum+" gameMode: "+gameMode+" difficulty: "+difficulty+ " gameId: "+gameId);
 

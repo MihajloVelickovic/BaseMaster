@@ -591,8 +591,9 @@ userRouter.post("/getAchievements", authUser,  async (req: any, res: any) => {
     try {
         const achievements = await getPlayerAchievements(username);
         return res.status(200).json({ achievements });
-    } catch (error) {
-        return res.status(500).json({ message: "Failed to fetch achievements" });
+    } catch (error: any) {
+        console.error("Error in getAchievements:", error);
+        return res.status(500).json({ message: "Failed to fetch achievements", error: error.message });
     }
 });
 
@@ -625,8 +626,8 @@ userRouter.post("/getPlayerStats", authUser, async (req: any, res: any) => {
         }
         
     } catch (error:any) {
-        console.log(error)
-        return res.status(500).json({ message: "Failed to fetch player stats" });
+        console.error("Error in getPlayerStats:", error);
+        return res.status(500).json({ message: "Failed to fetch player stats", error: error.message });
     }
 });
 
@@ -641,7 +642,8 @@ userRouter.post("/getFriendsWithAchievements", authUser, async (req: any, res: a
         const friends = await getFriendsWithAchievements(username);
         return res.status(200).json({ friends });
     } catch (error:any) { //any any any any
-        return res.status(500).json({ message: "Failed to fetch friends data" });
+        console.error("Error in getFriendsWithAchievements:", error);
+        return res.status(500).json({ message: "Failed to fetch friends data", error: error.message });
     }
 });
 
@@ -701,11 +703,11 @@ userRouter.post("/sendMessage", authUser, async (req:any, res:any) => {
             timestamp: Date.now()
         };
 
-        await redisClient.setEx(inboxKey, 
+        await redisClient.setEx(inboxKey,
                                 CACHE_DURATION[CacheTypes.DISSAPEARING_MESSAGE],
                                 JSON.stringify(message));
 
-        publisher.publish(
+        await publisher.publish(
             RedisKeys.privateMessageUpdate(sender,receiver),
             JSON.stringify(message)
         );
@@ -761,7 +763,7 @@ userRouter.get("/getAllAchievementsWithStats", authUser, async (req: any, res: a
     return res.status(200).json({ stats });
   } catch (error: any) {
     console.error('[ERROR]: Failed to fetch global stats', error);
-    return res.status(500).json({ message: "Failed to fetch global stats" });
+    return res.status(500).json({ message: "Failed to fetch global stats", error: error.message });
   }
 });
 
