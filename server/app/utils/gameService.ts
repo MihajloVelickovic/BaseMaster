@@ -1,7 +1,7 @@
 import { recordGameResult } from "../graph/leaderboard.repo";
 import { PlayerResult, ScoreboardEntry } from "../models/types";
 import { redisClient } from "../redisClient";
-import { BaseValues, GameModes, getGamemode } from "../shared_modules/shared_enums";
+import { BaseValues, GameModes, getGamemode, IdPrefixes } from "../shared_modules/shared_enums";
 import { RedisKeys } from "./redisKeyService";
 
 
@@ -38,7 +38,7 @@ export async function CleanupGameContext(gameId: string) {
   const gameEndKey = RedisKeys.gameEnd(gameId);
   const lobbyMessageKey = RedisKeys.lobbyMessage(gameId);
   const orderPointsKey = RedisKeys.orderPoints(gameId);
-  
+  const lobbyCurrPlayer = IdPrefixes.LOBBIES_CURR_PLAYERS;
   const pattern = `current_number:${gameId}:*`;
   const keys = await redisClient.keys(pattern);
   if (keys.length > 0)
@@ -53,7 +53,8 @@ export async function CleanupGameContext(gameId: string) {
   multi.del(gameEndKey);
   multi.del(lobbyMessageKey);
   multi.del(orderPointsKey);
-  
+  multi.del(lobbyCurrPlayer);
+
   if (getGamemode(gameId) === GameModes.CHAOS) {
     const fromBaseArrayKey = RedisKeys.fromBaseArray(gameId);
     const toBaseArrayKey = RedisKeys.toBaseArray(gameId);

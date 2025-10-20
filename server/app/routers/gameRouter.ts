@@ -452,14 +452,10 @@ gameRouter.post("/setGameState", authUser, async (req:any, res:any) => {
             redisClient.expire(RedisKeys.scoreboard(gameId), gameTTL),
             redisClient.expire(RedisKeys.fromBaseArray(gameId), gameTTL),
             redisClient.expire(RedisKeys.toBaseArray(gameId), gameTTL),
-        ]);
-
-        await redisClient.hDel(Prefixes.LOBBIES_CURR_PLAYERS, gameId); // remove the data
+        ]);        
 
         await redisClient.hDel(Prefixes.LOBBIES_MAX_PLAYERS, gameId);
-
-        await redisClient.del(RedisKeys.lobbyPlayers(gameId));
-
+        
         const orderPointsKey = RedisKeys.orderPoints(gameId);
 
         await setRounds(orderPointsKey,
@@ -575,14 +571,17 @@ gameRouter.post("/leaveLobby", authUser, async (req: any, res: any) => {
     }
 
     try {
-        const lobbyData = await redisClient.hGet(Prefixes.LOBBIES_CURR_PLAYERS, gameId);
+        const currPlayerCountRaw = await redisClient.hGet(Prefixes.LOBBIES_CURR_PLAYERS, gameId);
         const gameData = await redisClient.get(gameId);
 
-        if (!lobbyData || !gameData) {
+        if (!currPlayerCountRaw || !gameData)
             return res.status(404).send({ message: "Lobby or game not found" });
-        }
-
-        let parsedData = JSON.parse(gameData);
+        
+        const currPlayerCount = Number(currPlayerCountRaw);
+        
+        if(isNaN(currPlayerCount))
+            return res.status(404).send({ message: "Player count is NaN" });
+        const parsedData:GameOptions = JSON.parse(gameData);
 
         const scoreboardKey = RedisKeys.scoreboard(gameId);
         const lobbyPlayersKey = RedisKeys.lobbyPlayers(gameId);
@@ -595,8 +594,7 @@ gameRouter.post("/leaveLobby", authUser, async (req: any, res: any) => {
         const remainingPlayers = await redisClient.zRange(lobbyPlayersKey,0,-1);
 
         var newHost : string|null=null;
-        if (parsedData.currPlayerCount > 1) {
-            parsedData.currPlayerCount -= 1;
+        if (currPlayerCount > 1) {           
             await redisClient.set(gameId, JSON.stringify(parsedData));
             await redisClient.hIncrBy(Prefixes.LOBBIES_CURR_PLAYERS, gameId, -1);
 
@@ -608,11 +606,10 @@ gameRouter.post("/leaveLobby", authUser, async (req: any, res: any) => {
                 
         } else {
             await CleanupGameContext(gameId);
-            await redisClient.hDel(Prefixes.LOBBIES_CURR_PLAYERS, gameId);
+            //await redisClient.hDel(Prefixes.LOBBIES_CURR_PLAYERS, gameId);
             await redisClient.hDel(Prefixes.LOBBIES_MAX_PLAYERS, gameId);
             await redisClient.del(lobbyPlayersKey);
         }
-
 
         await publisher.publish(RedisKeys.playerLeave(gameId), JSON.stringify({
             type:Prefixes.PLAYER_LEAVE,
@@ -634,14 +631,17 @@ gameRouter.post("/leaveGame", authUser, async (req: any, res: any) => {
     }
 
     try {
-        const gameData = await redisClient.get(gameId);
+        const lobbyCurrPlayersKey = Prefixes.LOBBIES_CURR_PLAYERS;
+        const lobbyCurrPlayerRaw = 
+        await redisClient.hGet(lobbyCurrPlayersKey, gameId);
 
-        if (!gameData) {
-            return res.status(404).send({ message: "Game not found" });
-        }
+        if (!lobbyCurrPlayerRaw)
+            return res.status(404).send({ message: "Curr player count not found" });
+        
+        const lobbyCurrPlayers = Number(lobbyCurrPlayerRaw);
 
-        let parsedData = JSON.parse(gameData);
-
+        if(isNaN(lobbyCurrPlayers))
+            return res.status(404).send({ message: "Player count is NaN" });
         const scoreboardID = RedisKeys.scoreboard(gameId);
         const gameEndKey = RedisKeys.gameEnd(gameId);
         const lobbyPlayersKey = RedisKeys.lobbyPlayers(gameId);
@@ -655,11 +655,10 @@ gameRouter.post("/leaveGame", authUser, async (req: any, res: any) => {
         const remainingPlayers = await redisClient.decr(gameEndKey);
         await redisClient.zRem(lobbyPlayersKey, playerID);
 
-        if (parsedData.currPlayerCount > 1) {
-            parsedData.currPlayerCount -= 1;
-            await redisClient.set(gameId, JSON.stringify(parsedData));
-
-        } else {
+        if (remainingPlayers > 1) {
+            await redisClient.hIncrBy(Prefixes.LOBBIES_CURR_PLAYERS, gameId, -1);           
+        } 
+        else {
             await CleanupGameContext(gameId);
             await redisClient.del(gameId);
         }
@@ -673,7 +672,7 @@ gameRouter.post("/leaveGame", authUser, async (req: any, res: any) => {
         }));
 
         return res.status(200).send({ message: "Player left the game successfully" });
-    } catch (err) {
+    } catch (err:any) {
         console.error(err);
         return res.status(500).send({ message: "Error processing leave request" });
     }
