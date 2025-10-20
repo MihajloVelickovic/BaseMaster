@@ -400,8 +400,9 @@ const getNotificationKey = (type: string, from?: string, actionData?: any) => {
                 <Link to="/" className={`nav-link ${isActive('/') ? 'active' : ''}`}>
                     Play
                 </Link>
-                <Link to="/Leaderboard" 
-                    state={{ username: playerID }}
+                <Link
+                    to={playerID ? "/Leaderboard" : "/LoginSignup"}
+                    state={playerID ? { username: playerID } : undefined}
                     className={`nav-link ${isActive('/Leaderboard') ? 'active' : ''}`}>
                     Leaderboard
                 </Link>

@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Home from './components/Home';
 import Game from './components/Game';
@@ -10,22 +9,24 @@ import "./styles/AppRoutes.css";
 import { FriendProvider } from './utils/FriendContext';
 import { LobbyProvider } from "./utils/LobbyContext";
 import Profile from './components/Profile';
-import Sidebar from './components/Sidebar';
 import { AuthProvider, useAuth } from './utils/AuthContext';
 import Leaderboard from './components/Leaderboard';
 import { WebSocketProvider } from './utils/WebSocketContext';
+import ProtectedRoute from './components/ProtectedRoute';
 
-
-const routes = [
+// Public routes - accessible without authentication
+const publicRoutes = [
     { path: "/", element: <Home /> },
-    { path: "/Game", element: <Game />},
-    { path: "/Lobby", element: <Lobby />},
-    { path: "/LoginSignup", element: <LoginSignup />},
-    { path: "/FriendList", element: <FriendList />},
-    {path:"/Profile", element:<Profile/>},
-    {path:"/Leaderboard", element:<Leaderboard/>}
-    // { path: "/login", element: <LoginSignupPage /> },
-    // { path: "/register/:token", element: <Register /> },
+    { path: "/LoginSignup", element: <LoginSignup /> },
+];
+
+// Protected routes - require authentication
+const protectedRoutes = [
+    { path: "/Game", element: <Game /> },
+    { path: "/Lobby", element: <Lobby /> },
+    { path: "/FriendList", element: <FriendList /> },
+    { path: "/Profile", element: <Profile /> },
+    { path: "/Leaderboard", element: <Leaderboard /> }
 ];
 
 // Inner component that has access to AuthContext
@@ -41,8 +42,22 @@ const AppContent = () => {
                     <Header />
                     <div className='BelowHeader'>
                         <Routes>
-                            {routes.map((route, index) => (
-                                <Route key={index} path={route.path} element={route.element} />
+                            {/* Public routes - no authentication required */}
+                            {publicRoutes.map((route, index) => (
+                                <Route key={`public-${index}`} path={route.path} element={route.element} />
+                            ))}
+
+                            {/* Protected routes - authentication required */}
+                            {protectedRoutes.map((route, index) => (
+                                <Route
+                                    key={`protected-${index}`}
+                                    path={route.path}
+                                    element={
+                                        <ProtectedRoute>
+                                            {route.element}
+                                        </ProtectedRoute>
+                                    }
+                                />
                             ))}
                         </Routes>
                     </div>

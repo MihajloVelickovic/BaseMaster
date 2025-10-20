@@ -498,6 +498,7 @@ gameRouter.post("/playerComplete", authUser,  async (req:any, res:any) => {
 
     try {
         await CleanupGameContext(gameId);
+
         const results = await SaveResults(scoreboard); // <— now returns standings
 
         await publisher.publish(

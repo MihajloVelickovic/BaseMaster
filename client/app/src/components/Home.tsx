@@ -41,8 +41,9 @@ function Home() {
   const [roundCount, setRoundCount] = useState(Number(5));    //switch to 15 later
   const [clickedLobbies, setClickedLobbies] = useState<Map<string, boolean>>(new Map());
   // const [playerId, setPlayerId] = useState(playerID);
-  
+
   const [loggedIn, setLoggedIn] = useState<boolean>(true); // TODO: replace with real auth state
+  const [createGameError, setCreateGameError] = useState<string>("");
 
   const navigate = useNavigate();
   const bases = Array.from({ length: 31}, (_, i) => i+2);
@@ -237,6 +238,16 @@ function Home() {
   };
 
   const createGame = async () => {
+    // Check if user is logged in
+    if (!playerID) {
+      setCreateGameError("You must be logged in to create a game");
+      setTimeout(() => setCreateGameError(""), 3000);
+      return;
+    }
+
+    // Clear any previous error
+    setCreateGameError("");
+
     try {
         const toSend = {
           gamemode: gameMode,
@@ -496,6 +507,11 @@ function Home() {
                 {renderAdvancedOptions()}
                 <button className="advancedOptions" onClick={handleAdvanceOptions}>˄</button>
               </>
+            )}
+            {createGameError && (
+              <div className="create-game-error">
+                {createGameError}
+              </div>
             )}
             <button className="createLobbyButton" onClick={createGame}>Create Lobby</button>
           </>

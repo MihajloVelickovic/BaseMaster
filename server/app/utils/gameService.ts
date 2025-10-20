@@ -75,40 +75,45 @@ export async function setRounds(gameId:string, roundCount:number, initialValue:n
 }
 //ranke used as placement, need to add it to enriched rows instead of how it is
 export async function SaveResults(scoreboard: ScoreboardEntry[]): Promise<PlayerResult[]> {
-  const enrichedRows: Array<{username: string, score: number,
-                     placement: number, rank: number | null}> = [];
+  const results = scoreboard.map((entry, index) => ({
+    username: entry.value,
+    score: Math.floor(Number(entry.score) || 0),
+    placement: index + 1,
+  }));
+  console.log("PLAYER COUNT", scoreboard.length)
+  // Early exit for singleplayer
+  if (scoreboard.length === 1)
+    return results;
+  
 
+  // Batch fetch old scores
+  const usernames = scoreboard.map(user => user.value);
+  const oldBestScores = await Promise.all(
+    usernames.map(username => redisClient.zScore(RedisKeys.leaderboardRankings(), username))
+  );
 
-  for (let index = 0; index < scoreboard.length; index++) {
-    const entry = scoreboard[index];
-    const username = entry.value;
-    const score = Math.floor(Number(entry.score) || 0);
-    const placement = index + 1;
-    const oldBestScore = await redisClient.zScore(RedisKeys.leaderboardRankings(), username) || 0;
-    
-    if (score > oldBestScore) {
-      await updatePlayerScoreInRedis(username, score);
-      console.log(`[RANK UPDATE] ${username}: ${oldBestScore} -> ${score}`);
-    }
-    
-    const rank = await getPlayerRankFromRedis(username);
-    
-    enrichedRows.push({
-      username,
-      score,
-      rank,
-      placement
-    });
-  }
+  // Find and update improved scores
+  const updates = scoreboard.map((entry, index) => ({
+      username: entry.value,
+      score: results[index].score,
+      oldScore: oldBestScores[index] || 0,
+  })).filter(player => player.score > player.oldScore);
+
+  await Promise.all(
+    updates.map(player => {
+      console.log(`[RANK UPDATE] ${player.username}: ${player.oldScore} => ${player.score}`);
+      return updatePlayerScoreInRedis(player.username, player.score);
+    })
+  );
+
+  // Batch fetch ranks and record results
+  const ranks = await Promise.all(usernames.map(username => getPlayerRankFromRedis(username)));
+  const enrichedRows = results.map((result, index) => ({ ...result, rank: ranks[index] }));
 
   await recordGameResult(enrichedRows);
   await invalidateLeaderboardCache();
 
-  return scoreboard.map((row, index) => ({
-    username: row.value,
-    score: Math.floor(Number(row.score) || 0),
-    placement: index + 1,
-  }));
+  return results;
 }
 
 export async function getPlayerRankFromRedis(username: string): Promise<number | null> {

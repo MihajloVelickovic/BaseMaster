@@ -2,6 +2,7 @@ import { useEffect, useState, memo } from "react";
 import axiosInstance from "../utils/axiosInstance";
 import "../styles/Leaderboard.css";
 import { useLocation } from "react-router-dom";
+import { useAuth } from "../utils/AuthContext";
 
 interface LeaderboardEntry {
   username: string;
@@ -24,6 +25,7 @@ interface LeaderboardResponse {
 const Leaderboard = () => {
   const location = useLocation();
   var {username } = location.state || {};
+  const { playerID } = useAuth(); // Get logged-in user from AuthContext
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,13 +35,20 @@ const Leaderboard = () => {
   const [hasNextPage, setHasNextPage] = useState(false);
 
   const [playerDetails, setPlayerDetails] = useState<(LeaderboardEntry & { rank: number }) | null>(null);
-  const [currentUsername, setCurrentUsername] = useState<string | null>(username);
+  // Prioritize playerID from AuthContext, fallback to location.state
+  const [currentUsername, setCurrentUsername] = useState<string | null>(playerID || username);
   
+  useEffect(() => {
+    // Update currentUsername when playerID changes (login/logout)
+    setCurrentUsername(playerID || username);
+  }, [playerID, username]);
+
   useEffect(() => {
     fetchLeaderboard();
   }, [currentPage]); // Only refetch leaderboard when page changes
 
   useEffect(() => {
+    // Only fetch player details if user is logged in
     if (currentUsername) {
       fetchPlayerDetails();
     }

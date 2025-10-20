@@ -320,19 +320,28 @@
 
 .empty-state {
   padding: 80px 20px;
-  text-align: center;
+  text-align: center !important;
+}
+
+.empty-state > div,
+.empty-state > p {
+  text-align: center !important;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .empty-icon {
   font-size: 64px;
   margin-bottom: 16px;
   opacity: 0.5;
+  text-align: center;
 }
 
 .empty-state p {
   color: #7f8c8d;
   font-size: 16px;
-  margin: 8px 0;
+  margin: 8px auto;
+  text-align: center;
 }
 
 .empty-subtext {
