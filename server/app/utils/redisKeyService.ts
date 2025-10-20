@@ -162,5 +162,9 @@ export class RedisKeys {
   static createGameLock(playerId: string): string {
     return `${IdPrefixes.CREATE_GAME_LOCK}:${playerId}`;
   }
+
+  static joinLobbyLock(gameId:string):string {
+    return `${IdPrefixes.JOIN_LOBBY_LOCK}:${gameId}`;
+  }
 }
 

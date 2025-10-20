@@ -49,7 +49,8 @@ export enum IdPrefixes {
     COMPLETED_ROUNDS = "completed_rounds",
     REFRESH_TOKEN = "refresh_token",
     GAME_STATE_LCOK = "GAME_STATE_LOCK",
-    CREATE_GAME_LOCK = "CREATE_GAME_LOCK"
+    CREATE_GAME_LOCK = "CREATE_GAME_LOCK",
+    JOIN_LOBBY_LOCK = "JOIN_LOBBY_LOCK"
 }
 
 export enum WebServerTypes {

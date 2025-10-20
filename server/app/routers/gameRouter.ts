@@ -285,11 +285,18 @@ gameRouter.post("/joinLobby", authUser, async (req:any, res:any) => {
 
     if(isNullOrWhitespace(gameId) || isNullOrWhitespace(playerId))
         return res.status(400).send('Invalid body for join lobby');
-
-    
-    
-
+    const lockKey = RedisKeys.joinLobbyLock(gameId);
+    let lockAcquired = false;
     try {
+        lockAcquired = await redisClient.set(
+            lockKey,
+            playerId,
+            { NX: true, EX: 5 } // 5 second expiration
+        ) !== null;
+        
+        if (!lockAcquired) 
+            return res.status(409).send({message: "Another player is joining, please retry"});
+
         const scoreboardKey = RedisKeys.scoreboard(gameId);
 
         const currPlayerCount = await redisClient.hGet(Prefixes.LOBBIES_CURR_PLAYERS, gameId);
@@ -345,8 +352,13 @@ gameRouter.post("/joinLobby", authUser, async (req:any, res:any) => {
         gameData: {...parsedData, roundCount:roundCount}, players:players, lobbyName: lobbyName || gameId.slice(-5)});
     }
     catch(err:any) {
+        console.log("[ ERROR ]: ", err);
         return res.status(404).send({message: err.message});
     }    
+    finally {
+        if (lockAcquired)
+            await redisClient.del(lockKey);
+    }
 });
 
 gameRouter.get("/getLobbies", authUser, async (req:any, res:any) => {
@@ -655,7 +667,7 @@ gameRouter.post("/leaveGame", authUser, async (req: any, res: any) => {
         const remainingPlayers = await redisClient.decr(gameEndKey);
         await redisClient.zRem(lobbyPlayersKey, playerID);
 
-        if (remainingPlayers > 1) {
+        if (remainingPlayers >= 1) {
             await redisClient.hIncrBy(Prefixes.LOBBIES_CURR_PLAYERS, gameId, -1);           
         } 
         else {
@@ -790,5 +802,3 @@ gameRouter.get("/globalLeaderboard", authUser, async (req: any, res: any) => {
 
 
 export default gameRouter;
-
-

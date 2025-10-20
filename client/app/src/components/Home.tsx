@@ -369,26 +369,22 @@ function Home() {
       //       )) : <p>No available lobbies.</p>}
       //     </div>
       <div className="lobby-list">
+        <div className="lobbyColumnNames">
+          <div className="lobbyColumnNameItem">Game</div>
+          <div className="lobbyColumnNameItem lobbyColumnNameItemPlayer">Players</div>
+          <button className="refresh-button-small" onClick={fetchLobbies}>
+            🔄
+          </button>
+        </div>
+
         {lobbies.length > 0 ? (
-        <>
-          <div className="lobbyColumnNames">
-            <div className="lobbyColumnNameItem">Game</div>
-            <div className="lobbyColumnNameItem lobbyColumnNameItemPlayer">Players
-            </div>
-            <button className="refresh-button-small" onClick={fetchLobbies}>
-              🔄
-            </button>  
-            
-          </div>
-          
-          {lobbies.map((lobby) => (
-              renderLobbyButton(lobby)
-          ))}          
-      </>
-      ) : (
-        <p className="no-lobbies">No available lobbies.</p>
-      )}
-    </div>
+          lobbies.map((lobby) => (
+            renderLobbyButton(lobby)
+          ))
+        ) : (
+          <p className="no-lobbies">No available lobbies.</p>
+        )}
+      </div>
 
     );
   }
