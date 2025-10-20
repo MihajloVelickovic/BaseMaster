@@ -98,8 +98,10 @@ console.log("toBasee je: ", toBasee);
     } else {
       setArrayOfValues(Array.from({length: numOfButtons}, () => 0));
     }
+    return hasNext && !finished;
   } catch (error: any) {
     console.error("Error submitting result:", error.response?.data || error.message);
+    return false;
   }
 };
 
@@ -266,7 +268,11 @@ const leaveGame = async () => {
   }
 };
 
-
+  const [feedback, setFeedback] = useState<{show: boolean, correct: boolean}>({ 
+    show: false, 
+    correct: false 
+  });
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const [numOfButtons, setNumOfButtons] = useState(clcBtnCount(BigInt(toBase), maxVal));
   const [arrayOfValues, setArrayOfValues] = useState(Array.from({length: numOfButtons}, (_, i) => 0));  
@@ -295,18 +301,30 @@ const leaveGame = async () => {
   }
 
   const confirmButtonHandler = async () => {
-    //alert("Idk bro... Maybe it's right, maybe it's not.. That's like moral.. what is good, what is bad? Who knows?!");
-    const result = arrayOfValues.map((val, index) => val * btnArrayLabels[index])
-                                .reduce((sum, val) => sum + val, 0);
-    if (result==currNum){
-      alert("You got the right answer!");
-    }else
-      alert("Better luck next time");
+    // Prevent multiple clicks
+    if (isProcessing) return;
+    
+    // Disable button and show processing state
+    setIsProcessing(true);
+    setIsConfirmDisabled(true);
+    
+    const result = arrayOfValues.map((val, index) => 
+      val * btnArrayLabels[index]
+    ).reduce((sum, val) => sum + val, 0);
+    
+    const isCorrect = result === currNum;
+    
+   
+    setFeedback({ show: true, correct: isCorrect });
 
-    await getNumberFromServer(result==currNum);
+    setTimeout(() => {
+      setFeedback({ show: false, correct: false });            
+    }, 1500);
+    // Submit to server
+    await getNumberFromServer(isCorrect);
     
-    //clearButtonHandler();
-    
+    setIsProcessing(false);
+    setIsConfirmDisabled(false);
   }
 
   function numtoBase(num:number, tobase:number) {
@@ -375,11 +393,24 @@ const leaveGame = async () => {
           <div className="Game">
             {generateTargetNumLabel(currNum, gameMode)}
             {generateBaseButtons(numOfButtons)}
-  
-            <button className="ClearButton" onClick={clearButtonHandler}>Clear</button>
-            <button className="ConfirmButton" onClick={confirmButtonHandler} disabled={isConfirmDisabled}>
-              Confirm
+            
+            <button className="ClearButton" onClick={clearButtonHandler}>
+              Clear
             </button>
+            <button 
+              className="ConfirmButton" 
+              onClick={confirmButtonHandler} 
+              disabled={isConfirmDisabled || isProcessing}
+            >
+              {isProcessing ? 'Checking...' : 'Confirm'}
+            </button>
+            
+            {/* Add the feedback toast here */}
+            {feedback.show &&  (
+              <div className={`feedback-toast ${feedback.correct ? 'correct' : 'incorrect'}`}>
+                {feedback.correct ? '✓ Correct!' : '✗ Better luck next time'}
+              </div>
+            )}
           </div>
         )}
   
@@ -457,7 +488,7 @@ const leaveGame = async () => {
         </div>
       )}
   
-      {finished && (
+      {finished && !feedback.show && (
         <div className="finishedGameButtons">
           <button className="finishedGameButton" onClick={() => navigate("/")}>Back to Home</button>
         </div>

@@ -270,6 +270,17 @@ function Home() {
 
     } catch (error:any) {
         console.error('Error creating game:', error.response ? error.response.data : error.message);
+
+        // Handle 409 Conflict error (game already starting)
+        if (error.response?.status === 409) {
+          setCreateGameError(error.response.data.message || "Game is already starting, please wait");
+          setTimeout(() => setCreateGameError(""), 3000);
+        } else {
+          // Handle other errors
+          const errorMessage = error.response?.data?.message || "Failed to create game. Please try again.";
+          setCreateGameError(errorMessage);
+          setTimeout(() => setCreateGameError(""), 3000);
+        }
     }
   };
 

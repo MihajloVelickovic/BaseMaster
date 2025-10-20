@@ -387,4 +387,64 @@
     border-left: 3px solid green;
   }
   
+/* Add this to your Game.css file */
 
+/* Feedback Toast Notification */
+.feedback-toast {
+  position: fixed;
+  top: 90%;
+  left: 44%;
+  transform: translate(-50%, -50%);
+  padding: 25px 45px;
+  border-radius: 15px;
+  font-size: 28px;
+  font-weight: bold;
+  font-family: 'JetBrains Mono', monospace;
+  animation: fadeInOut 1.5s ease-in-out;
+  z-index: 1000;
+  pointer-events: none;
+  white-space: nowrap;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.feedback-toast.correct {
+  background: linear-gradient(135deg, #009900, #007700);
+  color: white;
+  border: 2px solid #00bb00;
+}
+
+.feedback-toast.incorrect {
+  background: linear-gradient(135deg, #E00029, #B30031);
+  color: white;
+  border: 2px solid #ff0040;
+}
+
+@keyframes fadeInOut {
+  0% { 
+    opacity: 0; 
+    transform: translate(-50%, -50%) scale(0.8); 
+  }
+  20% { 
+    opacity: 1; 
+    transform: translate(-50%, -50%) scale(1.05); 
+  }
+  80% { 
+    opacity: 1; 
+    transform: translate(-50%, -50%) scale(1); 
+  }
+  100% { 
+    opacity: 0; 
+    transform: translate(-50%, -50%) scale(0.95); 
+  }
+}
+
+/* Update the disabled state for the Confirm button */
+.ConfirmButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: #555555 !important;
+}
+
+.ConfirmButton:disabled:hover {
+  background-color: #555555 !important;
+}

@@ -47,7 +47,9 @@ export enum IdPrefixes {
     ACHIEVEMENT_UNLOCKED = "ACHIEVEMENT_UNLOCKED",
     CURRENT_ROUND = "current_number",
     COMPLETED_ROUNDS = "completed_rounds",
-    REFRESH_TOKEN = "refresh_token"
+    REFRESH_TOKEN = "refresh_token",
+    GAME_STATE_LCOK = "GAME_STATE_LOCK",
+    CREATE_GAME_LOCK = "CREATE_GAME_LOCK"
 }
 
 export enum WebServerTypes {
@@ -69,6 +71,7 @@ export enum GameStates {
 export enum CacheTypes {
     GENERIC_CACHE = "GENERIC_CACHE",
     DISSAPEARING_MESSAGE = "DISSAPEARING_MESSAGE",
+    GAME_CONTEXT = "GAME_CONTEXT",
     LOBBY_CONTEXT = "LOBBY_CONTEXT"
 }
 // If only commits could write themselves... oh wait, they can’t.  

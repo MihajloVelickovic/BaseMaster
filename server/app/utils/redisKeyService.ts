@@ -152,7 +152,15 @@ export class RedisKeys {
   }
 
   static refreshToken(jtiHash: string): string {
-  return `${IdPrefixes.REFRESH_TOKEN}:${jtiHash}`;
-}
+    return `${IdPrefixes.REFRESH_TOKEN}:${jtiHash}`;
+  }
+
+  static gameStateLock(gameId: string): string {
+    return `${IdPrefixes.GAME_STATE_LCOK}:${gameId}`;
+  }
+
+  static createGameLock(playerId: string): string {
+    return `${IdPrefixes.CREATE_GAME_LOCK}:${playerId}`;
+  }
 }
 

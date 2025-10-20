@@ -367,3 +367,15 @@
   font-size: 20px;
   cursor: pointer;
 }
+
+.start-game-error {
+  background: #ffe6e6;
+  color: #d32f2f;
+  padding: 12px !important;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: center;
+  margin-top: 15px !important;
+  margin-bottom: 15px !important;
+}

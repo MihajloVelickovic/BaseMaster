@@ -41,6 +41,7 @@ export default function Lobby () {
     const [isInviteOpen, setIsInviteOpen] = useState<boolean>(false);
     const { onlineUsers } = useFriendContext();
     const [lobbyName, setLobbyName] = useState(transferedLobbyName)
+    const [startGameError, setStartGameError] = useState<string>("");
     console.log("playerChat: ", playerChat);
    
     useEffect(() => {
@@ -192,13 +193,29 @@ export default function Lobby () {
     }
 
     const handleStartGame = async () => {
-        var response = await axiosInstance.post('/game/setGameState', {gameId, gameState:GameStates.STARTED});      //ovde treba da se posalje i lobby name i roundCount
-        console.log(response);
-        // const ws = new WebSocket("ws://localhost:1738");
-        // ws.onopen = () => {
-        //     ws.send(JSON.stringify({ type: "startGame", gameId }));
-        // }; 
-        setStartGameFlag(true);
+        // Clear any previous error
+        setStartGameError("");
+
+        try {
+            var response = await axiosInstance.post('/game/setGameState', {gameId, gameState:GameStates.STARTED});
+            console.log(response);
+            setStartGameFlag(true);
+        } catch (error: any) {
+            console.error("Error starting game:", error);
+
+            // Handle different error cases with proper error messages
+            if (error.response?.status === 409) {
+                setStartGameError(error.response.data.message || "Game is already starting, please wait");
+            } else if (error.response?.status === 404) {
+                setStartGameError("Game not found. Please try rejoining the lobby.");
+            } else {
+                const errorMessage = error.response?.data?.message || "Failed to start game. Please try again.";
+                setStartGameError(errorMessage);
+            }
+
+            // Auto-dismiss error after 3 seconds
+            setTimeout(() => setStartGameError(""), 3000);
+        }
     }
 
     
@@ -390,17 +407,24 @@ export default function Lobby () {
             </div>
 
             <div className="LobbyContainer ">
-                <label className="mainLobbyText"> {lobbyName} Lobby </label>            
+                <label className="mainLobbyText"> {lobbyName} Lobby </label>
                 {showLobbyStats()}
 
                 {playerID === hostIdState ? (
-                    <button className="startGameButton" onClick={handleStartGame}>
-                        Start Game!
-                    </button>
+                    <>
+                        {startGameError && (
+                            <div className="start-game-error">
+                                {startGameError}
+                            </div>
+                        )}
+                        <button className="startGameButton" onClick={handleStartGame}>
+                            Start Game!
+                        </button>
+                    </>
                 ) : (
                     <div className="waitingText">Waiting for host to start the game....</div>
                 )}
-                
+
                 <button className="startGameButton leaveLobbyButton" onClick={handleLeaveLobby}>
                     Leave Lobby
                 </button>
