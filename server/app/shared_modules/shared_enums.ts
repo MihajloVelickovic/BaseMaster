@@ -97,4 +97,5 @@ export const getGamemode = (input: string): GameModes | undefined => {
 };
 
 export const PAGE_SIZE = 5;
+export const MAX_ROUNT_COUNT = 64;
 

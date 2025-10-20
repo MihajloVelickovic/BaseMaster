@@ -48,24 +48,42 @@ export default function Lobby () {
     }, [playerChat]); 
 
     useEffect(() => {
+        let isMounted = true;
+
         const fetchFriends = async () => {
             try {
-                const response = await axiosInstance.post("/user/getFriends", { username: playerID });                    
-                setFriends(response.data.friends || []);
+                const response = await axiosInstance.post("/user/getFriends", { username: playerID });
+                if (isMounted) {
+                    setFriends(response.data.friends || []);
+                }
             } catch (err: any) {
-                console.error("Failed to fetch friends:", err.message);
+                if (isMounted) {
+                    console.error("Failed to fetch friends:", err.message);
+                }
             }
         };
-    
-        fetchFriends();
-    }, [playerID]);
+
+        if (playerID) {
+            fetchFriends();
+        }
+
+        return () => {
+            isMounted = false;
+        };
+    }, [playerID, setFriends]);
 
     const startGameRef = useRef(false);
     useEffect(() => {
         startGameRef.current = startGameFlag;
     }, [startGameFlag]);
 
-    // Message handlers
+    // Use ref to store current playerID to avoid recreating handlers
+    const playerIDRef = useRef(playerID);
+    useEffect(() => {
+        playerIDRef.current = playerID;
+    }, [playerID]);
+
+    // Message handlers - now stable (won't recreate)
     const handleGameStarted = useCallback((data: any) => {
         console.log('Lobby received GAME_STARTED:', data);
         setStartGameFlag(true);
@@ -77,12 +95,12 @@ export default function Lobby () {
             prevPlayers.includes(data.playerId) ? prevPlayers : [...prevPlayers, data.playerId]
         );
 
-        if (data.playerId === playerID) {
+        if (data.playerId === playerIDRef.current) {
             setPlayerChat(["You joined a lobby."]);
         } else {
             setPlayerChat(prevChat => [...prevChat, `Player ${getUserName(data.playerId)} joined the lobby.`]);
         }
-    }, [playerID]);
+    }, []);
 
     const handlePlayerLeave = useCallback((data: any) => {
         console.log("Lobby received PLAYER_LEAVE:", data.playerId);
@@ -116,7 +134,7 @@ export default function Lobby () {
         }
     }, [startGameFlag, navigate, toBasee, playerNum, gameMode, difficulty, gameId, playerID, roundCount]);
 
-    // Join lobby and subscribe to messages
+    // Join lobby via WebSocket (runs once)
     useEffect(() => {
         if (startGameFlag) return;
 
@@ -131,8 +149,13 @@ export default function Lobby () {
                 setPlayerChat(["You joined a lobby."]);
             }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [gameId, playerID]);
 
-        // Subscribe to lobby messages
+    // Subscribe to lobby messages (separate effect to avoid re-subscriptions)
+    useEffect(() => {
+        if (startGameFlag) return;
+
         subscribe(IdPrefixes.GAME_STARTED, handleGameStarted);
         subscribe(IdPrefixes.PLAYER_JOIN, handlePlayerJoin);
         subscribe(IdPrefixes.PLAYER_LEAVE, handlePlayerLeave);
@@ -144,7 +167,9 @@ export default function Lobby () {
             unsubscribe(IdPrefixes.PLAYER_LEAVE, handlePlayerLeave);
             unsubscribe(IdPrefixes.MESSAGE_UPDATE, handleMessageUpdate);
         };
-    }, [gameId, playerID, hostId, startGameFlag, subscribe, unsubscribe, sendMessage, handleGameStarted, handlePlayerJoin, handlePlayerLeave, handleMessageUpdate]);
+        // Handlers are now stable, so this effect only runs when startGameFlag changes or on mount
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [startGameFlag]);
 
     // function handleStartGame() {
     //     setStartGameFlag(true);

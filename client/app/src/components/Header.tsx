@@ -77,7 +77,7 @@ const unreadCount = uniqueFriendRequests.length + uniqueUnreadNotifications.leng
         ]);
     }, [setFriendRequests, setNotifications]);
 
-    const handleFriendAccept = useCallback((data: any) => {
+    const handleFriendAccept = useCallback(async (data: any) => {
         const key = getNotificationKey('FRIEND_ACCEPT', data.from);
 
         if (processedNotifications.current.has(key)) {
@@ -91,11 +91,23 @@ const unreadCount = uniqueFriendRequests.length + uniqueUnreadNotifications.leng
             return [...prev, data.from];
         });
 
+        // Re-fetch friends list to get updated online status
+        if (playerID) {
+            try {
+                const response = await axiosInstance.post('/user/getFriends', { username: playerID });
+                const onlineFriends = response.data.onlineFriends || [];
+                setOnlineUsers(onlineFriends);
+                console.log('[Header] Refreshed online friends after FRIEND_ACCEPT:', onlineFriends);
+            } catch (error) {
+                console.error('[Header] Failed to refresh online friends:', error);
+            }
+        }
+
         setNotifications((prev) => [
             createNotification('FRIEND_ACCEPT', `${data.from} accepted your friend request`, data.from),
             ...prev
         ]);
-    }, []);
+    }, [playerID, setOnlineUsers]);
 
     const handleFriendDeny = useCallback((data: any) => {
         const key = getNotificationKey('FRIEND_DENY', data.from);

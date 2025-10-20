@@ -139,7 +139,7 @@ userRouter.post("/logout", authUser, async (req, res) => {
             console.log(`[LOGOUT] JTI not found for ${username}, might be already logged out`);
         
         await redisClient.sRem(RedisKeys.onlinePlayers(), username);
-        return res.status(400).json({message: "Invalid refresh token"});
+        return res.status(200).json({message: "Logout success"});
     } catch (error) {
         console.error('[LOGOUT ERROR]', error);
         return res.status(400).json({message: "Invalid token"});

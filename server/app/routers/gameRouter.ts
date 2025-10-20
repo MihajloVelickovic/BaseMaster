@@ -44,7 +44,7 @@ gameRouter.post("/createGame", authUser, async (req: any, res:any) => {
 
     if(playerCount <= 0)
         return res.status(400).send({message: "Invalid player count"});
-    if(roundCount <= 0)
+    if(roundCount <= 0 || roundCount > 64)
         return res.status(400).send({message: "Invalid round count"});
     console.log(gameOptions.difficulty)
     if(gameOptions.difficulty === undefined)
@@ -286,7 +286,14 @@ gameRouter.post("/joinLobby", authUser, async (req:any, res:any) => {
     if(Number(lobbyData) >= Number(maxPlayerCount))
         return res.status(404).send({message: "Lobby is full"});  
 
-    try {        
+    try {
+        const lobbyPlayersKey = RedisKeys.lobbyPlayers(gameId);
+
+        // Check if player is already in the lobby
+        const playerExists = await redisClient.zScore(lobbyPlayersKey, playerId);
+        if(playerExists !== null)
+            return res.status(400).send({message: "You are already in this lobby"});
+        
         parsedData.currPlayerCount = 
         (Number(parsedData.currPlayerCount) + 1).toString();
         
@@ -299,9 +306,7 @@ gameRouter.post("/joinLobby", authUser, async (req:any, res:any) => {
         const playerRoundKey = RedisKeys.playerCurrentRound(gameId, playerId);
         await redisClient.set(playerRoundKey, 0);
 
-        const now=Date.now();
-
-        const lobbyPlayersKey = RedisKeys.lobbyPlayers(gameId);
+        const now=Date.now();        
 
         await redisClient.zAdd(lobbyPlayersKey, {
             score: now,
