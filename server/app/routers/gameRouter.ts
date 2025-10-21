@@ -622,11 +622,11 @@ gameRouter.post("/leaveLobby", authUser, async (req: any, res: any) => {
             await redisClient.hIncrBy(Prefixes.LOBBIES_CURR_PLAYERS, gameId, -1);
 
             if(remainingPlayers.length>0)
-            {
                 newHost = remainingPlayers[0];
-            }
+            
 
-        } else {
+        } 
+        else {
             await CleanupGameContext(gameId);
             //await redisClient.hDel(Prefixes.LOBBIES_CURR_PLAYERS, gameId);
             await redisClient.hDel(Prefixes.LOBBIES_MAX_PLAYERS, gameId);

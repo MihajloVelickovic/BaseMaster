@@ -4,8 +4,6 @@ import { redisClient } from "../redisClient";
 import { BaseValues, GameModes, getGamemode, IdPrefixes } from "../shared_modules/shared_enums";
 import { RedisKeys } from "./redisKeyService";
 
-
-
 export async function invalidateLeaderboardCache() {
     const pattern = `${RedisKeys.globalLeaderboard()}:page:*`;
     const keys = await redisClient.keys(pattern);
