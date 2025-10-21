@@ -179,7 +179,7 @@ userRouter.post("/refreshAccess", async (req, res) => {
         );
         
         return res.status(200).json({accessTok: newTok, refreshTok: newRefreshToken});
-    }
+        }
         return res.status(403).json({message: "Invalid token format"});
     }
     catch (error: any) {
