@@ -63,7 +63,6 @@ const {
   roundCount 
 } = location.state || {};
 
-console.log("toBasee je: ", toBasee);
 
   const getNumberFromServer = async (correct: boolean) => {
   try {
@@ -117,12 +116,10 @@ console.log("toBasee je: ", toBasee);
       break;
     default:
       maxVal = BigInt(DifficultyValues.LAYMAN);
-      console.log("something went wrong for this to show up");
   }
 
   // Message handlers
   const handleScoreboardUpdate = useCallback((data: any) => {
-    console.log('Game received SCOREBOARD_UPDATE:', data);
     setScoreboard(data.scores);
 
     if (data.points !== undefined && data.points !== 0) {
@@ -136,14 +133,12 @@ console.log("toBasee je: ", toBasee);
   }, [playerID]);
 
   const handlePlayerLeave = useCallback((data: any) => {
-    console.log('Game received PLAYER_LEAVE:', data);
     setPlayerChat(prevChat => [...prevChat,
       `Player ${getUserName(data.playerId)} left the game.`
     ]);
   }, []);
 
   const handleMessageUpdate = useCallback((data: any) => {
-    console.log('Game received MESSAGE_UPDATE:', data);
     setPlayerChat(prevChat => [...prevChat,
       `${getUserName(data.playerId)}: ${data.playerMessage}`
     ]);
@@ -189,7 +184,6 @@ console.log("toBasee je: ", toBasee);
         break;
       default:
         maxVal = BigInt(DifficultyValues.LAYMAN);
-        console.log("something went wrong for this to show up");
     }
 
     // Join the game lobby via WebSocket
@@ -217,8 +211,6 @@ console.log("toBasee je: ", toBasee);
     };
   }, [gameId, playerID, gameMode, difficulty, toBasee, subscribe, unsubscribe, sendMessage, handleScoreboardUpdate, handlePlayerLeave, handleMessageUpdate, navigate]);
 
-console.log("toBase: "+toBase+" playerNum: "+playerNum+" gameMode: "+gameMode+" difficulty: "+difficulty+ " gameId: "+gameId);
-
 const sendPlayerChatMessage = async () => {
   if (!chatInput.trim()) return;
   try {
@@ -241,8 +233,7 @@ const fetchInitialNumber = async () => {
     
     const num = Number(response.data.currRndNum);
     setCurrNum(num);
-    // REMOVE setCurrRound - not needed
-    
+
     if (response.data.scoreboard) 
       setScoreboard(response.data.scoreboard);
     
@@ -279,11 +270,6 @@ const leaveGame = async () => {
   const btnArrayLabels = Array.from({ length: numOfButtons}, (_, i) => Math.pow(Number(toBase), numOfButtons - 1 - i));
 
   function handleButtonClick(key: number) {
-    // if (!arrayOfValues[key]) {
-    //   console.log("I guess It doesn't exist..");
-    //   return;
-    // }
-
     const newArray = [...arrayOfValues];
     newArray[key] = newArray[key] + 1 < toBase ? newArray[key] + 1: 0;
     setArrayOfValues(newArray);
@@ -349,7 +335,6 @@ const leaveGame = async () => {
                </label>
         break;
       case "Chaos":
-        console.log(toBase, fromBase, num, gameMode);
         text = <label className="NumToFindLabel">
                 ({numtoBase(num, fromBase)})<label className="smallNumToFindLabel">{fromBase}</label> → (?)<label className="smallNumToFindLabel">{toBase}</label> 
               </label>

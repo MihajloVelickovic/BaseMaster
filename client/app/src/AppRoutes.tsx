@@ -33,8 +33,6 @@ const protectedRoutes = [
 const AppContent = () => {
     const { playerID } = useAuth();
 
-    console.log('[AppContent] Current playerID for WebSocket:', playerID);
-
     return (
         <WebSocketProvider username={playerID}>
             <FriendProvider>

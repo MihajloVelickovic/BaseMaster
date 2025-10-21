@@ -20,13 +20,10 @@ export function initRedisWsBridge({
       if (client.readyState === 1) {
         const message = JSON.stringify(payload);
         client.send(message);
-        console.log(`[RedisWsBridge] Sent message:`, message);
       } else {
-        console.log(`[RedisWsBridge] Cannot send - client readyState is ${client.readyState} (not OPEN)`);
       }
     } catch (err) {
       // optional: log or remove client if broken
-      console.error("[WS SEND ERROR]", err);
     }
   };
 
@@ -47,7 +44,6 @@ export function initRedisWsBridge({
         );
       }
     } catch (err) {
-      console.error("[SCOREBOARD handler error]", err);
     }
   });
 
@@ -81,7 +77,6 @@ export function initRedisWsBridge({
         );
       }
     } catch (err) {
-      console.error("[ALL_PLAYERS_COMPLETE handler error]", err);
     }
   });
 
@@ -98,7 +93,6 @@ export function initRedisWsBridge({
         );
       }
     } catch (err) {
-      console.error("[PLAYER_JOIN handler error]", err);
     }
   });
 
@@ -116,7 +110,6 @@ export function initRedisWsBridge({
         );
       }
     } catch (err) {
-      console.error("[PLAYER_LEAVE handler error]", err);
     }
   });
 
@@ -137,7 +130,6 @@ export function initRedisWsBridge({
         );
       }
     } catch (err) {
-      console.error("[MESSAGE_UPDATE handler error]", err);
     }
   });
 
@@ -146,25 +138,18 @@ export function initRedisWsBridge({
   friendPatterns.forEach(pattern => {
     subscriber.pSubscribe(pattern, (message:any, channel:any) => {
       try {
-        console.log(`[RedisWsBridge] Received message on channel: ${channel}`);
-        console.log(`[RedisWsBridge] Message content:`, message);
         const parts = channel.split(":"); // supports underscores in username
         const toUser = parts[parts.length - 1];
         const messageType = pattern.split(":")[0];
-        console.log(`[RedisWsBridge] Extracted toUser: ${toUser}, messageType: ${messageType}`);
 
         if (userSockets.has(toUser)) {
           const sockets = userSockets.get(toUser)!;
-          console.log(`[RedisWsBridge] Found ${sockets.size} socket(s) for user ${toUser}`);
           sockets.forEach(client => {
-            console.log(`[RedisWsBridge] Client readyState: ${client.readyState}`);
             safeSend(client, { type: messageType, ...JSON.parse(message) });
           });
         } else {
-          console.log(`[RedisWsBridge] No sockets found for user: ${toUser}`);
         }
       } catch (err) {
-        console.error(`[${pattern} handler error]`, err);
       }
     });
   });
@@ -180,7 +165,6 @@ export function initRedisWsBridge({
         userSockets.get(toUser)!.forEach(client => safeSend(client, { type: IdPrefixes.INVITE, ...JSON.parse(message) }));
       }
     } catch (err) {
-      console.error("[INVITE handler error]", err);
     }
   });
 
@@ -203,7 +187,6 @@ export function initRedisWsBridge({
         }
       });
     } catch (err) {
-      console.error("[PRIVATE_MESSAGE_UPDATE handler error]", err);
     }
   }
 );
@@ -223,9 +206,7 @@ export function initRedisWsBridge({
       }
       // Or disconnect entirely:
       // await subscriber.disconnect();
-      console.log("[RedisWsBridge] unsubscribed/cleaned up");
     } catch (err) {
-      console.error("[RedisWsBridge dispose error]", err);
     }
   };
 
@@ -242,20 +223,16 @@ export function initRedisWsBridge({
                 })
             );
         }
-    } 
+    }
     catch (err) {
-        console.error("[ACHIEVEMENT_UNLOCKED handler error]", err);
     }
   });
 
   subscriber.pSubscribe(`${IdPrefixes.GAME_RESULT}:*`, (message:any, channel:any) => {
-    console.log("RedisWSBridge enter");
-    
+
     try {
         const playerId = channel.replace(`${IdPrefixes.GAME_RESULT}:`, "");
         const payload = JSON.parse(message);
-        console.log("PLAYERID:", playerId);
-        console.log("Payload: ", payload);    
         if (userSockets.has(playerId)) {
             userSockets.get(playerId)!.forEach((client) =>
                 safeSend(client, {
@@ -265,7 +242,6 @@ export function initRedisWsBridge({
             );
         }
     } catch (err) {
-        console.error("[GAME_RESULT handler error]", err);
     }
 });
 

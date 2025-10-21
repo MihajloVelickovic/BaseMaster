@@ -100,8 +100,6 @@ function Profile() {
         }
       });
 
-      console.log("catalog", globalData);
-
       // Map over globalData.achievements, not globalData itself
       const allAchievementsWithStatus = globalData.achievements.map((achievement: any) => {
         const unlocked = unlockedAchievements.find((a: any) => a.code === achievement.code);
@@ -116,7 +114,6 @@ function Profile() {
 
       setAchievements(allAchievementsWithStatus);
     } catch (error) {
-      console.error('Error fetching player data:', error);
     } finally {
       setLoading(false);
     }

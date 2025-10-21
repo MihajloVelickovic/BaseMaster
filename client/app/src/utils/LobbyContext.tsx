@@ -51,7 +51,6 @@ export const LobbyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       });
 
     } catch (error: any) {
-      console.error('Error joining lobby:', error.response?.data || error.message);
     }
   };
 

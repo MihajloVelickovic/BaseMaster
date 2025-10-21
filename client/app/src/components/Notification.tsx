@@ -71,7 +71,6 @@ const Notification: React.FC<NotificationDropdownProps> = ({
     const { place, score, totalPlayers, fullResults } = notification.actionData || {};
     const isExpanded = expandedResults.has(notification.id);
     let medalEmoji = '';
-    console.log("ACTION DATA", notification.actionData);
     if (place === 1) medalEmoji = '🥇';
     else if (place === 2) medalEmoji = '🥈';
     else if (place === 3) medalEmoji = '🥉';

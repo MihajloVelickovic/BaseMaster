@@ -11,7 +11,6 @@ import { useWebSocket } from '../utils/WebSocketContext';
 const maxValue = 255;
 const gameID = "gameID";
 const playerID = Math.floor(Math.random()*10000).toString();
-console.log(playerID);
 
 interface LeaderboardEntry {
   username: string;
@@ -91,14 +90,12 @@ function Home() {
 
       setChatUnreadCount(totalUnread);
     } catch (error) {
-      console.error('Error fetching friends:', error);
     }
   };
 
   const { subscribe, unsubscribe } = useWebSocket();
 
   const handlePrivateMessageUpdate = useCallback((data: any) => {
-    console.log("Home received PRIVATE_MESSAGE_UPDATE:", data);
     const { from, to, text, timestamp } = data;
 
     const otherPerson = from === playerID ? to : from;
@@ -115,7 +112,6 @@ function Home() {
         );
 
         if (isDuplicate) {
-          console.log("Duplicate private message detected, skipping");
           return prev;
         }
 
@@ -154,7 +150,7 @@ function Home() {
         );
         setMessages(sortedMessages)
       })
-      .catch((err) => console.error("Failed to load messages", err));
+      .catch((err) => {});
   }, [activeFriend, playerId]);;
 
   const handleClickFriend = (friend : Friend) => {
@@ -168,7 +164,7 @@ function Home() {
         const sortedMessages = (res.data.messages || []).sort((a:any, b:any) => a.timestamp - b.timestamp);
         setMessages(sortedMessages)
       })
-      .catch(err => console.error("Failed to load messages", err));
+      .catch(err => {});
   }
 
     setFriends(prev =>
@@ -231,7 +227,6 @@ function Home() {
     try {
       await axiosInstance.post("/user/sendMessage", payload);
     } catch (err) {
-      console.error("Send failed", err);
       // Optionally remove the optimistic message on error
       // setMessages((prev) => prev.filter(m => m !== optimisticMessage));
     }
@@ -259,18 +254,13 @@ function Home() {
           lobbyName: lobbyName.trim() || "NONE"
         };
         var response = await axiosInstance.post('/game/createGame', toSend);
-        console.log("response za createGame je: ", response);
         const gId = response.data[`${gameID}`];        //check the name.. if changed
-        //console.log("gameId je: ", gId);
-        console.log("LOBBY NAME IS", response.data.gameData.lobbyName)
         setGameId(gId);
 
         const finalLobbyName = response.data.gameData.lobbyName?.trim() || "Ennie's";
         setLobbyName(finalLobbyName);
 
     } catch (error:any) {
-        console.error('Error creating game:', error.response ? error.response.data : error.message);
-
         // Handle 409 Conflict error (game already starting)
         if (error.response?.status === 409) {
           setCreateGameError(error.response.data.message || "Game is already starting, please wait");
@@ -286,13 +276,10 @@ function Home() {
 
   const fetchLobbies = async () => {
     try {
-      console.log("fetching lobbies...");
       const response = await axiosInstance.get('/game/getLobbies');
-      console.log("response: ", response);
       setLobbies(response.data['lobbies']);
 
     } catch (error:any) {
-      console.error('Error fetching lobbies: ', error.response ? error.response.data : error.message);
     }
   };
 
@@ -316,7 +303,6 @@ function Home() {
 
   try {
       const response = await axiosInstance.post('/game/joinLobby', { gameId: selectedGameId, playerId: playerId!=""? playerId : playerID });
-      console.log(response);
 
       const { gameId, gameData, players } = response.data;
       const toBase = Number(gameData.toBase);
@@ -333,8 +319,6 @@ function Home() {
                             hostId, roundCount, playerIds:playerIds, lobbyName:finalLobbyName } });
 
   } catch (error: any) {
-      console.error('Error joining lobby:', error.response ? error.response.data : error.message);
-
       if (error.response?.data?.message === "Lobby is full") {
           setClickedLobbies(prev => {
               const newMap = new Map(prev);

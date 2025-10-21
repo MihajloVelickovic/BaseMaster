@@ -8,27 +8,35 @@ const client = {
     password: NEO4J_PASSWORD ?? ""
 };
 
-let n4jDriver: Driver;
+let n4jDriver: Driver | null = null;
 
-const connectionSuccess = await (async () => {
-    try{
-        console.log(client.uri + ' ' + client.username + ' ' + client.password);
+/**
+ * Initialize and verify Neo4j connection
+ * Throws error if connection fails
+ */
+async function initializeNeo4j(): Promise<void> {
+    try {
+
         n4jDriver = n4j.driver(
             client.uri,
             n4j.auth.basic(client.username, client.password),
             { disableLosslessIntegers: true }  // ← this makes integers come back as JS numbers
-            );
+        );
+
+        // Verify connection by getting server info
         await n4jDriver.getServerInfo();
-        return "[SYSTEM]: Successfully connected to Neo4J database";
     }
-    catch(err){
-        return `[ERROR]: Couldn't connect to Neo4J database, ${err}`;
+    catch (err) {
+        throw new Error(`Neo4j connection failed: ${err}`);
     }
-})();
+}
 
 const n4jSession = () => {
+    if (!n4jDriver) {
+        throw new Error("Neo4j driver not initialized. Call initializeNeo4j() first.");
+    }
     return n4jDriver.session({database: NEO4J_USERNAME});
 }
 
-export {n4jDriver, n4jSession, connectionSuccess};
+export { n4jDriver, n4jSession, initializeNeo4j };
 

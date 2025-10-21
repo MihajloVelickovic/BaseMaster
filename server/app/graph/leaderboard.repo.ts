@@ -73,11 +73,10 @@ export async function initializeGraphStructure() {
             player.peakRank = rank,
             player.peakRankDate = datetime()
       `);
-    
+
     });
 
-    
-    console.log("[SYSTEM]: Graph structure initialized.");
+
   } finally {
     await session.close();
   }
@@ -115,7 +114,6 @@ export async function connectPlayerToLeaderboard(username: string) {
     await syncLeaderboardToRedis();
   }
   catch(error:any) {
-    console.log("[ ERROR ]", error);
   }
   finally {
     await session.close();
@@ -128,7 +126,6 @@ export async function recordGameResult(
   rows: Array<{username: string, score: number,placement: number,
                rank: number | null}>
 ): Promise<void> {
-  console.log("RECORD RESULTS input", rows);
   const session = n4jSession();
   try {
     await session.executeWrite(async (tx) => {
@@ -524,32 +521,28 @@ export async function getAllAchievementsWithStats() {
 
 export async function syncLeaderboardToRedis(): Promise<void> {
   try {
-    console.log('[SYSTEM] Starting leaderboard sync to Redis...');
-    
+
     // Get all players from Neo4j
     const players = await getAllPlayersHighscores();
-    
+
     if (players.length === 0) {
-      console.log('[SYSTEM] No players to sync');
       return;
     }
-    
-    const redisRankingsKey = RedisKeys.leaderboardRankings(); 
+
+    const redisRankingsKey = RedisKeys.leaderboardRankings();
 
     // Clear existing ZSet
     await redisClient.del(redisRankingsKey);
-    
+
     // Batch add to Redis ZSet
     const members = players.map(p => ({
       score: p.totalScore,
       value: p.username
     }));
-    
+
     await redisClient.zAdd(redisRankingsKey, members);
-    
-    console.log(`[ SYSTEM ] Synced ${players.length} players to Redis ZSet`);
+
   } catch (error) {
-    console.error('[ ERROR ] Failed to sync leaderboard to Redis:', error);
     throw error;
   }
 }
@@ -615,7 +608,6 @@ export async function checkAndAwardFriendAchievements(username: string): Promise
     });
   }
   catch(err:any) {
-    console.log(err);
   }
   finally {
     await session.close();

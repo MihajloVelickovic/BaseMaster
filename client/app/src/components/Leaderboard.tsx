@@ -61,9 +61,8 @@ const Leaderboard = () => {
         params: { 
           page: currentPage
         }
-      });            
+      });
 
-      console.log(res);
       const items = res.data.items || [];
       setLeaderboard(items);
       // If we got fewer items than requested, there's no next page
@@ -71,7 +70,6 @@ const Leaderboard = () => {
       setHasNextPage(res.data.hasNextPage);
       setError(null);
     } catch (err) {
-      console.error("Error fetching leaderboard", err);
       setError("Failed to load leaderboard");
     } finally {
       setLoading(false);
@@ -85,10 +83,8 @@ const Leaderboard = () => {
       const res = await axiosInstance.get("/user/getPlayerRank", {
         params: { username: currentUsername }
       });
-      console.log("PlAYER RANK", res.data);
       setPlayerDetails(res.data);
     } catch (err) {
-      console.error("Error fetching player details", err);
       // Don't show error, just don't display player rank
       setPlayerDetails(null);
     }

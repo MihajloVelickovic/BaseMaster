@@ -4,8 +4,7 @@ import { n4jSession } from "../neo4jClient";
 export async function migrateUsersToPlayers() {
   const session = n4jSession();
   try {
-    console.log("[MIGRATION] Starting User → Player migration...");
-    
+
     // Add Player label to all User nodes
     const result = await session.executeWrite(async tx => {
       return await tx.run(`
@@ -27,12 +26,10 @@ export async function migrateUsersToPlayers() {
         RETURN count(u) as migrated
       `);
     });
-    
+
     const migratedCount = result.records[0]?.get('migrated');
-    console.log(`[MIGRATION] Added Player label to ${migratedCount} User nodes`);
-    
+
   } catch (error: any) {
-    console.error("[MIGRATION ERROR]", error.message);
     throw error;
   } finally {
     await session.close();

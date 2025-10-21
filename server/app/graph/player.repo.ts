@@ -44,7 +44,6 @@ export async function upsertPlayer(username: string, email?: string, hashedPassw
     );
   }
   catch(error:any) {
-    console.log("[ ERROR ]", error);
   }
   finally {
     await session.close();

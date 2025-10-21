@@ -23,9 +23,6 @@ export default function Lobby () {
     var { toBasee = 2, playerNum = 1, gameMode = GameModes.CLASSIC.toString(),
          difficulty = Difficulties.LAYMAN.toString(), gameId = "", playerID,
           transferedLobbyName, hostId, roundCount, playerIds} = location.state || {};
-    // console.log(playerID, 'ovo je player id');
-    // console.log(hostId);
-    console.log("Lobby Name Entered Lobby: ", transferedLobbyName)
     const navigate = useNavigate();
     const [startGameFlag, setStartGameFlag] = useState(false);
     //const [friends, setFriends] = useState<string[]>([]);
@@ -42,7 +39,6 @@ export default function Lobby () {
     const { onlineUsers } = useFriendContext();
     const [lobbyName, setLobbyName] = useState(transferedLobbyName)
     const [startGameError, setStartGameError] = useState<string>("");
-    console.log("playerChat: ", playerChat);
    
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -58,9 +54,6 @@ export default function Lobby () {
                     setFriends(response.data.friends || []);
                 }
             } catch (err: any) {
-                if (isMounted) {
-                    console.error("Failed to fetch friends:", err.message);
-                }
             }
         };
 
@@ -86,12 +79,10 @@ export default function Lobby () {
 
     // Message handlers - now stable (won't recreate)
     const handleGameStarted = useCallback((data: any) => {
-        console.log('Lobby received GAME_STARTED:', data);
         setStartGameFlag(true);
     }, []);
 
     const handlePlayerJoin = useCallback((data: any) => {
-        console.log("Lobby received PLAYER_JOIN:", data.playerId);
         setPlayers(prevPlayers =>
             prevPlayers.includes(data.playerId) ? prevPlayers : [...prevPlayers, data.playerId]
         );
@@ -104,7 +95,6 @@ export default function Lobby () {
     }, []);
 
     const handlePlayerLeave = useCallback((data: any) => {
-        console.log("Lobby received PLAYER_LEAVE:", data.playerId);
         setPlayers(prevPlayers => prevPlayers.filter(id => id !== data.playerId));
         if (data.newHost) {
             setHostIdState(data.newHost);
@@ -114,14 +104,12 @@ export default function Lobby () {
     }, []);
 
     const handleMessageUpdate = useCallback((data: any) => {
-        console.log("Lobby received MESSAGE_UPDATE:", data.playerId, data.playerMessage);
         const newMessage = `${getUserName(data.playerId)}: ${data.playerMessage}`;
 
         // Avoid adding duplicate messages if we already added it optimistically
         setPlayerChat(prevChat => {
             // Check if the last message is identical (happens when we sent it ourselves)
             if (prevChat.length > 0 && prevChat[prevChat.length - 1] === newMessage) {
-                console.log("Duplicate message detected (own message echoed back), skipping");
                 return prevChat;
             }
             return [...prevChat, newMessage];
@@ -188,7 +176,6 @@ export default function Lobby () {
 
             await axiosInstance.post('/game/sendLobbyMessage', { playerId: playerID, message: messageToSend, gameId });
         } catch (error) {
-            console.error("Error sending message:", error);
         }
     }
 
@@ -198,11 +185,8 @@ export default function Lobby () {
 
         try {
             var response = await axiosInstance.post('/game/setGameState', {gameId, gameState:GameStates.STARTED});
-            console.log(response);
             setStartGameFlag(true);
         } catch (error: any) {
-            console.error("Error starting game:", error);
-
             // Handle different error cases with proper error messages
             if (error.response?.status === 409) {
                 setStartGameError(error.response.data.message || "Game is already starting, please wait");
@@ -223,7 +207,6 @@ export default function Lobby () {
         try {
             await axiosInstance.post("/game/leaveLobby", { gameId, playerID });
         } catch (error) {
-            console.error("Error leaving lobby:", error);
         }
     };
 
@@ -299,8 +282,6 @@ export default function Lobby () {
         try {
             const response = await axiosInstance.post('/user/sendFriendRequest',
                  {sender:playerID, receiver:targetPlayerID});
-            
-            console.log(response);
 
             if(response === null)
                 return;
@@ -309,7 +290,6 @@ export default function Lobby () {
             setFriendRequests((prev) => [...prev, receiverUsername]);
         }
         catch(err:any) {
-            console.log(err.message);
         }
     };
 
@@ -321,10 +301,8 @@ export default function Lobby () {
     async function sendInvite(friend:string) {
         try {
             const response = await axiosInstance.post("/user/sendInvite", {sender:playerID, receiver:friend, gameId:gameId});
-            console.log(response.data['message']);
         }
         catch(err:any) {
-            console.log(err.message)
         }
         finally
         {

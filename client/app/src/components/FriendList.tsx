@@ -37,10 +37,7 @@ function FriendList() {
       // Always set onlineFriends, even if it's an empty array
       const onlineFriends = response.data.onlineFriends || [];
       setOnlineUsers(onlineFriends);
-      console.log('[FriendList] Friends:', response.data.friends);
-      console.log('[FriendList] Initial online friends:', onlineFriends);
     } catch (error) {
-      console.error('Error fetching friends:', error);
     }
   };
 
@@ -114,10 +111,9 @@ function FriendList() {
         user.username === receiver ? { ...user, requestSent: true } : user
       ));
       
-      //alert(`Friend request sent to ${receiver}!`);
+      
     } catch (error: any) {
-      console.error('Error sending friend request:', error);
-      //alert(error.response?.data?.message || 'Failed to send friend request');
+      
     }
   };
 
@@ -137,7 +133,6 @@ function FriendList() {
       setFriendRequests(prev => prev.filter(req => req !== sender));
       setSearchResults(prev => prev.filter(user => user.username !== sender));
     } catch (error) {
-      console.error('Error handling friend request:', error);
     }
   };
 
@@ -156,7 +151,6 @@ function FriendList() {
       
       setFriends(prev => prev.filter(f => f !== friend));
     } catch (error) {
-      console.error('Error removing friend:', error);
     }
   };
 

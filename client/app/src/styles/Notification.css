@@ -383,10 +383,6 @@
     word-break: break-word;
 }
 
-/* ============================================================================
-   ADD THESE STYLES TO YOUR EXISTING Notification.css FILE
-   ============================================================================ */
-
 /* Update the existing .notification-header-bar or add if it doesn't exist */
 .notification-header-bar {
     display: flex;

@@ -57,11 +57,9 @@ const unreadCount = uniqueFriendRequests.length + uniqueUnreadNotifications.leng
 
     // Message handlers using useCallback to maintain stable references
     const handleFriendRequest = useCallback((data: any) => {
-        console.log('Received FRIEND_REQUEST:', data);
         const key = getNotificationKey('FRIEND_REQUEST', data.from);
 
         if (processedNotifications.current.has(key)) {
-            console.log('Duplicate FRIEND_REQUEST ignored:', data.from);
             return;
         }
         processedNotifications.current.add(key);
@@ -97,9 +95,7 @@ const unreadCount = uniqueFriendRequests.length + uniqueUnreadNotifications.leng
                 const response = await axiosInstance.post('/user/getFriends', { username: playerID });
                 const onlineFriends = response.data.onlineFriends || [];
                 setOnlineUsers(onlineFriends);
-                console.log('[Header] Refreshed online friends after FRIEND_ACCEPT:', onlineFriends);
             } catch (error) {
-                console.error('[Header] Failed to refresh online friends:', error);
             }
         }
 
@@ -113,7 +109,6 @@ const unreadCount = uniqueFriendRequests.length + uniqueUnreadNotifications.leng
         const key = getNotificationKey('FRIEND_DENY', data.from);
 
         if (processedNotifications.current.has(key)) {
-            console.log('Duplicate FRIEND_DENY ignored:', data.from);
             return;
         }
         processedNotifications.current.add(key);
@@ -128,7 +123,6 @@ const unreadCount = uniqueFriendRequests.length + uniqueUnreadNotifications.leng
         const key = getNotificationKey('FRIEND_REMOVED', data.from);
 
         if (processedNotifications.current.has(key)) {
-            console.log('Duplicate FRIEND_REMOVED ignored:', data.from);
             return;
         }
         processedNotifications.current.add(key);
@@ -142,10 +136,8 @@ const unreadCount = uniqueFriendRequests.length + uniqueUnreadNotifications.leng
     }, []);
 
     const handleUserOnline = useCallback((data: any) => {
-        console.log('[Header] Received USER_ONLINE:', data.username);
         setOnlineUsers((prev) => {
             if (!prev.includes(data.username)) {
-                console.log('[Header] Adding user to online list:', data.username);
                 return [...prev, data.username];
             }
             return prev;
@@ -153,15 +145,12 @@ const unreadCount = uniqueFriendRequests.length + uniqueUnreadNotifications.leng
     }, [setOnlineUsers]);
 
     const handleUserOffline = useCallback((data: any) => {
-        console.log('[Header] Received USER_OFFLINE:', data.username);
         setOnlineUsers((prev) => {
-            console.log('[Header] Removing user from online list:', data.username);
             return prev.filter(name => name !== data.username);
         });
     }, [setOnlineUsers]);
 
     const handleOnlineFriends = useCallback((data: any) => {
-        console.log('[Header] Received ONLINE_FRIENDS:', data.friends);
         setOnlineUsers(data.friends);
     }, [setOnlineUsers]);
 
@@ -181,7 +170,6 @@ const unreadCount = uniqueFriendRequests.length + uniqueUnreadNotifications.leng
         const key = getNotificationKey('GAME_RESULT', undefined, { place, score, totalPlayers });
 
         if (processedNotifications.current.has(key)) {
-            console.log('Duplicate GAME_RESULT ignored:', place, score);
             return;
         }
         processedNotifications.current.add(key);
@@ -202,7 +190,6 @@ const unreadCount = uniqueFriendRequests.length + uniqueUnreadNotifications.leng
         const key = getNotificationKey('ACHIEVEMENT_UNLOCKED', undefined, { name, code });
 
         if (processedNotifications.current.has(key)) {
-            console.log('Duplicate ACHIEVEMENT_UNLOCKED ignored:', name);
             return;
         }
         processedNotifications.current.add(key);
@@ -300,7 +287,6 @@ const getNotificationKey = (type: string, from?: string, actionData?: any) => {
             const response = await axiosInstance.post('/user/friendRequests', { username: playerID });
             setFriendRequests(response.data.requests);
         } catch (err: any) {
-            console.log(err.message);
         }
     }
 };
@@ -313,15 +299,9 @@ const getNotificationKey = (type: string, from?: string, actionData?: any) => {
         });
         
         if (selection === true) {
-            setFriends(prev => [...prev, username]); 
-            console.log("SUCCESSFULLY BECAME FRIENDS!!!!!!");
+            setFriends(prev => [...prev, username]);
         }
     } catch (err: any) {
-        if (err.response) {
-            console.error("Server responded with error:", err.response.status, err.response.data);
-        } else {
-            console.error("Request error:", err.message);
-        }
     } finally {
         setFriendRequests((prev) => prev.filter((req) => req !== username));
     

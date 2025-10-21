@@ -42,32 +42,25 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children, 
 
   const connect = useCallback(() => {
     if (!username) {
-      console.log('[WebSocketContext] Cannot connect - no username');
       return;
     }
 
-    console.log(`[WebSocketContext] Attempting to connect for user: ${username}`);
-
     // Clear any existing connection
     if (wsRef.current) {
-      console.log('[WebSocketContext] Closing existing connection before reconnecting');
       isManualCloseRef.current = true;
       wsRef.current.close();
       wsRef.current = null;
     }
 
     try {
-      console.log('[WebSocketContext] Creating new WebSocket connection to ws://localhost:1738');
       const ws = new WebSocket('ws://localhost:1738');
       wsRef.current = ws;
 
       ws.onopen = () => {
-        console.log('[WebSocketContext] WebSocket connected');
         setIsConnected(true);
         reconnectAttemptsRef.current = 0;
 
         // Send LOGIN message to identify this connection
-        console.log(`[WebSocketContext] Sending LOGIN message for user: ${username}`);
         ws.send(JSON.stringify({
           type: 'login',
           username: username
@@ -79,22 +72,15 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children, 
           const data = JSON.parse(event.data);
           const messageType = data.type;
 
-          console.log('[WebSocketContext] Received message:', messageType, data);
-          console.log('[WebSocketContext] Current subscribers:', Array.from(subscribersRef.current.keys()));
-
           // Notify all subscribers for this message type
           const handlers = subscribersRef.current.get(messageType);
           if (handlers && handlers.size > 0) {
-            console.log(`[WebSocketContext] Found ${handlers.size} handlers for ${messageType}`);
             handlers.forEach(handler => {
               try {
                 handler(data);
               } catch (error) {
-                console.error(`Error in message handler for ${messageType}:`, error);
               }
             });
-          } else {
-            console.log(`[WebSocketContext] No handlers found for message type: ${messageType}`);
           }
 
           // Also notify wildcard subscribers (*)
@@ -104,41 +90,33 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children, 
               try {
                 handler(data);
               } catch (error) {
-                console.error('Error in wildcard message handler:', error);
               }
             });
           }
         } catch (error) {
-          console.error('Error parsing WebSocket message:', error);
         }
       };
 
       ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
       };
 
       ws.onclose = (event) => {
-        console.log('WebSocket closed:', event.code, event.reason);
         setIsConnected(false);
         wsRef.current = null;
 
         // Only attempt reconnection if not manually closed and user is still logged in
         if (!isManualCloseRef.current && username && reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS) {
           const delay = INITIAL_RECONNECT_DELAY * Math.pow(2, reconnectAttemptsRef.current);
-          console.log(`Reconnecting in ${delay}ms (attempt ${reconnectAttemptsRef.current + 1}/${MAX_RECONNECT_ATTEMPTS})`);
 
           reconnectTimeoutRef.current = setTimeout(() => {
             reconnectAttemptsRef.current++;
             connect();
           }, delay);
-        } else if (reconnectAttemptsRef.current >= MAX_RECONNECT_ATTEMPTS) {
-          console.error('Max reconnection attempts reached');
         }
 
         isManualCloseRef.current = false;
       };
     } catch (error) {
-      console.error('Error creating WebSocket:', error);
     }
   }, [username]);
 
@@ -153,7 +131,6 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children, 
 
       // Send LOGOUT message before closing
       if (wsRef.current.readyState === WebSocket.OPEN) {
-        console.log(`[WebSocketContext] Sending LOGOUT message for user: ${username}`);
         wsRef.current.send(JSON.stringify({
           type: 'logout',
           username: username
@@ -173,14 +150,12 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children, 
       subscribersRef.current.set(messageType, new Set());
     }
     subscribersRef.current.get(messageType)!.add(handler);
-    console.log(`[WebSocketContext] Subscribed to ${messageType}, total handlers: ${subscribersRef.current.get(messageType)!.size}`);
   }, []);
 
   const unsubscribe = useCallback((messageType: string, handler: MessageHandler) => {
     const handlers = subscribersRef.current.get(messageType);
     if (handlers) {
       handlers.delete(handler);
-      console.log(`[WebSocketContext] Unsubscribed from ${messageType}, remaining handlers: ${handlers.size}`);
       if (handlers.size === 0) {
         subscribersRef.current.delete(messageType);
       }
@@ -190,8 +165,6 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children, 
   const sendMessage = useCallback((message: any) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(message));
-    } else {
-      console.warn('WebSocket not connected, cannot send message:', message);
     }
   }, []);
 

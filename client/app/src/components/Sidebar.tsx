@@ -28,7 +28,6 @@ function Sidebar({ onLogout }: { onLogout: () => void }) {
     }, [location]); 
 
   const handleFriendList = () => {
-    console.log("sidebar username", username)
     navigate("/FriendList", { state: { playerIdTransfered: username} });
     toggleSidebar();
   }

@@ -82,7 +82,6 @@ const LoginSignup = () => {
                     userName = response.data.user.username;
                     accessTok = response.data.token;
                     refreshTok = response.data.refresh;
-                    console.log(msg, userName);
                     localStorage.setItem("playerID",userName);      //will be absolite soon
                     localStorage.setItem("accessTok", accessTok);
                     localStorage.setItem("refreshTok", refreshTok);
@@ -96,12 +95,10 @@ const LoginSignup = () => {
                         username: formValues.username,
                         password: formValues.password
                     });
-                    console.log(response);
                     msg = response.data['message'];
                     userName = response.data.user.username;
                     accessTok = response.data.token;
                     refreshTok = response.data.refresh;
-                    console.log(msg, userName);
                     localStorage.setItem("playerID",userName);      //will be absolite soon
                     localStorage.setItem("accessTok", accessTok);
                     localStorage.setItem("refreshTok", refreshTok);
@@ -110,8 +107,7 @@ const LoginSignup = () => {
                     //setUserId(response.data.userId);
                     navigate("/", { state: { playerIdTransfered: userName} });
                 } else {
-                    console.log("Unknown action..");
-                    setFormErrors({ serverResponse: "Unknown action.." });    
+                    setFormErrors({ serverResponse: "Unknown action.." });
                 }
             } catch (error: any) {
                 let msg = "Something went wrong. Please try again.";

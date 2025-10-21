@@ -324,7 +324,6 @@ input.inputFont {
   .LeaderboardContainer { flex-basis: auto; width: 100%; position: static; }
 }
 
-/* Add to Home.css */
 .HomeAndLeaderboard {
   display: flex;
   padding: 2rem;

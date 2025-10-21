@@ -18,7 +18,6 @@ import { TimeUnit, toSeconds } from "../utils/timeConversion";
 const userRouter = Router();
 
 userRouter.post("/register", async(req: any, res: any) => {
-    console.log("someone is registering 🤫🤫🤫");
     const {email, username, password} = req.body;
     let player = {
         username: username,
@@ -56,14 +55,11 @@ userRouter.post("/register", async(req: any, res: any) => {
         return res.status(200).json({message: "Successfully added player!", user: player, token: token, refresh: refreshToken});
     }
     catch(error:any){
-        console.log("[ ERROR ]",error);
         return res.status(500).json({message:"How did this happen....", error: error.message});
     }
 });
 
 userRouter.post("/login", async(req: any, res: any) => {
-    console.log("someone is signing in 🕺🕺🕺");
-
     const {emailOrUsername, password} = req.body;
 
     if(isNullOrWhitespace(emailOrUsername) || isNullOrWhitespace(password))
@@ -135,13 +131,11 @@ userRouter.post("/logout", authUser, async (req, res) => {
         // DELETE JTI FROM REDIS (revoke the token)
         const deleted = await redisClient.del(RedisKeys.refreshToken(jtiHash));
         
-        if (deleted === 0)
-            console.log(`[LOGOUT] JTI not found for ${username}, might be already logged out`);
-        
+        if (deleted === 0) {}
+
         await redisClient.sRem(RedisKeys.onlinePlayers(), username);
         return res.status(200).json({message: "Logout success"});
     } catch (error) {
-        console.error('[LOGOUT ERROR]', error);
         return res.status(400).json({message: "Invalid token"});
     }
 });
@@ -187,16 +181,13 @@ userRouter.post("/refreshAccess", async (req, res) => {
         return res.status(200).json({accessTok: newTok, refreshTok: newRefreshToken});
     }
         return res.status(403).json({message: "Invalid token format"});
-    } 
+    }
     catch (error: any) {
-        console.error('[REFRESH ACCESS ERROR]', error);
         return res.status(500).json({message: "Error refreshing token", error: error.message});
     }
 });
 
 userRouter.post("/friendRequests", authUser, async(req: any, res: any) => {
-    console.log("na prste ruke prebroj prijatelje ☝️ ✌️ 🖐️");
-
     const {username} = req.body;
 
     if(isNullOrWhitespace(username))
@@ -237,8 +228,6 @@ userRouter.post("/friendRequests", authUser, async(req: any, res: any) => {
 });
 
 userRouter.post("/sendFriendRequest", authUser, async(req:any, res:any)=>{
-    console.log("woo friends 👋👋👋");
-    
     const {sender, receiver} = req.body;
 
     if(isNullOrWhitespace(sender) || isNullOrWhitespace(receiver))
@@ -325,14 +314,11 @@ userRouter.post("/sendFriendRequest", authUser, async(req:any, res:any)=>{
         return res.status(200).json({message: `Friend request to '${receiver}' successfully sent!`});
     }
     catch(error:any){
-        console.log(error);
         return res.status(500).json({message:"How did this happen....", error: error.message});
     }
 });
 
 userRouter.post("/handleFriendRequest", authUser, async(req:any, res:any)=>{
-    console.log("handling friend request 🧛🧛🧛");
-
     const {username, sender, userResponse} = req.body;
     if(isNullOrWhitespace(username) || isNullOrWhitespace(sender) 
       ||userResponse === null || userResponse === undefined)
@@ -430,7 +416,6 @@ userRouter.post("/getFriends", authUser, async(req: any, res: any) => {
     if(expired)
         return res.status(403).json({message: "Token expired"});
     if(isNullOrWhitespace(username)) {
-        console.log("[ERROR]: Argument username missing");
         return res.status(400).json({message: "Username needed to retrieve friends"});
     }
    
@@ -451,9 +436,7 @@ userRouter.post("/getFriends", authUser, async(req: any, res: any) => {
         );
 
         const onlineFriends = friends.filter((_, index) => onlineStatuses[index]);
-        
-        console.log(`[getFriends] User: ${username}, Total: ${friends.length}, Online: ${onlineFriends.length}`);
-        
+
         return res.status(200).json({
             message: `All friends of player '${username}'`,
             friends: friends,
@@ -467,10 +450,7 @@ userRouter.post("/getFriends", authUser, async(req: any, res: any) => {
 userRouter.post("/removeFriend", authUser, async (req: any, res: any) => {
     const {username, friend} = req.body;
 
-    console.log(`Removing friend '${friend}' from '${username}' 💔`);
-
     if (isNullOrWhitespace(username) || isNullOrWhitespace(friend)) {
-        console.log("[ERROR]: Argument username or friend username missing");
         return res.status(400).json({ message: "Both username and friend are required" });
     }
 
@@ -531,7 +511,6 @@ userRouter.post("/removeFriend", authUser, async (req: any, res: any) => {
         return res.status(200).json({message: `Successfully removed '${friend}' from '${username}' friend list`});
     }
     catch (error:any) {
-        console.log(`[ERROR]: Something very wrong happened....:${error.message}`)
         return res.status(500).json({message: "How did this happen...", error: error.message});
     }
 });
@@ -556,7 +535,6 @@ userRouter.post("/sendInvite", authUser, async (req:any, res:any) => {
         return res.status(200).json({message: `Successfully sent invite to '${receiver}' from '${sender}'`});
     }
     catch(err:any) {
-        console.log("[ERROR]: ", err.message);
         return res.status(500).json({message: "How did this happen...", error: err.message})
     }
 });
@@ -576,7 +554,6 @@ userRouter.post("/getInvites", authUser, async (req:any, res:any) => {
         return res.status(200).json({message:"Found invites", invites:invites});
     }
     catch(err:any) {
-        console.log(`[ERROR]: Something very wrong happened....:${err.message}`)        
     }
 });
 
@@ -591,7 +568,6 @@ userRouter.post("/getAchievements", authUser,  async (req: any, res: any) => {
         const achievements = await getPlayerAchievements(username);
         return res.status(200).json({ achievements });
     } catch (error: any) {
-        console.error("Error in getAchievements:", error);
         return res.status(500).json({ message: "Failed to fetch achievements", error: error.message });
     }
 });
@@ -623,9 +599,8 @@ userRouter.post("/getPlayerStats", authUser, async (req: any, res: any) => {
         else {
             return res.status(200).json({ stats: JSON.parse(cachedStats) });
         }
-        
+
     } catch (error:any) {
-        console.error("Error in getPlayerStats:", error);
         return res.status(500).json({ message: "Failed to fetch player stats", error: error.message });
     }
 });
@@ -641,7 +616,6 @@ userRouter.post("/getFriendsWithAchievements", authUser, async (req: any, res: a
         const friends = await getFriendsWithAchievements(username);
         return res.status(200).json({ friends });
     } catch (error:any) { //any any any any
-        console.error("Error in getFriendsWithAchievements:", error);
         return res.status(500).json({ message: "Failed to fetch friends data", error: error.message });
     }
 });
@@ -711,10 +685,9 @@ userRouter.post("/sendMessage", authUser, async (req:any, res:any) => {
             JSON.stringify(message)
         );
 
-        return res.status(200).json({ receiver });                                
+        return res.status(200).json({ receiver });
     }
     catch(err:any) {
-        console.log(err);
         return res.status(500).json({ message: "Error sending message" });
     }
 });
@@ -761,7 +734,6 @@ userRouter.get("/getAllAchievementsWithStats", authUser, async (req: any, res: a
     
     return res.status(200).json({ stats });
   } catch (error: any) {
-    console.error('[ERROR]: Failed to fetch global stats', error);
     return res.status(500).json({ message: "Failed to fetch global stats", error: error.message });
   }
 });
@@ -806,7 +778,6 @@ try {
     });
 
   } catch (err) {
-    console.error(err);
     return res.status(500).json({ error: "Internal server error" });
   }
 });

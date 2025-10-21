@@ -115,7 +115,7 @@
   cursor: pointer;
   border-radius: 10px;
   transition: all 0.3s ease;
-  position: relative; /* ADD THIS */
+  position: relative;
 }
 
 .tab-button:hover {

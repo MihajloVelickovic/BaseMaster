@@ -32,10 +32,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         await axiosInstance.post('/user/logout', {
           token: refreshToken
         });
-        console.log('[AuthContext] Successfully logged out from backend');
       }
     } catch (error) {
-      console.error('[AuthContext] Error logging out:', error);
       // Continue with local cleanup even if backend call fails
     } finally {
       // Always clear local state, even if backend call fails

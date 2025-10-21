@@ -71,7 +71,6 @@ export async function setRounds(gameId:string, roundCount:number, initialValue:n
   for (let i = 0; i < roundCount; i++) {
     roundData[`${i}`] = initialValue;
   }
-  //console.log("Order data: ", roundData);
   await redisClient.hSet(gameId, roundData);
 }
 //ranke used as placement, need to add it to enriched rows instead of how it is
@@ -81,7 +80,6 @@ export async function SaveResults(scoreboard: ScoreboardEntry[]): Promise<Player
     score: Math.floor(Number(entry.score) || 0),
     placement: index + 1,
   }));
-  console.log("PLAYER COUNT", scoreboard.length)
   // Early exit for singleplayer
   if (scoreboard.length === 1)
     return results;
@@ -102,7 +100,6 @@ export async function SaveResults(scoreboard: ScoreboardEntry[]): Promise<Player
 
   await Promise.all(
     updates.map(player => {
-      console.log(`[RANK UPDATE] ${player.username}: ${player.oldScore} => ${player.score}`);
       return updatePlayerScoreInRedis(player.username, player.score);
     })
   );
@@ -123,7 +120,6 @@ export async function getPlayerRankFromRedis(username: string): Promise<number |
     const rank = await redisClient.zRevRank(rankingKey, username);
     return rank !== null ? rank + 1 : null; // Convert 0-indexed to 1-indexed
   } catch (error) {
-    console.error('[REDIS ERROR] Failed to get player rank:', error);
     return null;
   }
 }
@@ -135,6 +131,5 @@ export async function updatePlayerScoreInRedis(username: string, newScore: numbe
       value: username
     });
   } catch (error) {
-    console.error('[REDIS ERROR] Failed to update player score:', error);
   }
 }

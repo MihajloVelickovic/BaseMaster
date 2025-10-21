@@ -6,7 +6,7 @@ import WebSocket, { WebSocketServer } from "ws"
 import http from "http";
 import { IdPrefixes, WebServerTypes } from "./shared_modules/shared_enums";
 import userRouter from "./routers/userRouter";
-import { connectionSuccess, n4jSession, n4jDriver } from "./neo4jClient";
+import { initializeNeo4j, n4jSession, n4jDriver } from "./neo4jClient";
 import { UserService } from "./utils/userService";
 import { ensureGraphConstraints } from "./utils/ensureConstraints";
 import { initializeGraphStructure, syncLeaderboardToRedis } from './graph/leaderboard.repo';
@@ -139,7 +139,6 @@ wss.on("connection", (ws) => {
                             }
                         }
                         catch (err:any) {
-                            console.error(`[ERROR] Failed to process friend notifications for ${username}:`, err);
                         }
                     }
                     break;
@@ -158,7 +157,6 @@ wss.on("connection", (ws) => {
                                     await redisClient.sRem(RedisKeys.onlinePlayers(), username);
                                 }
                                 catch (err) {
-                                    console.error(`[ERROR] Failed to remove ${username} from Redis online players:`, err);
                                 }
 
                                 // Notify friends that user went offline
@@ -179,7 +177,6 @@ wss.on("connection", (ws) => {
                                     });
                                 }
                                 catch (err) {
-                                    console.error(`[ERROR] Failed to notify friends of logout:`, err);
                                 }
                             }
                         }
@@ -190,7 +187,6 @@ wss.on("connection", (ws) => {
             }
         }
         catch (err:any) {
-            console.error("[ERROR] Failed to parse WebSocket message:", err);
         }
     });
 
@@ -234,7 +230,6 @@ wss.on("connection", (ws) => {
                             });
                         }
                         catch (err:any) {
-                            console.error(`[ERROR] Failed to notify friends of ${currentUsername} going offline:`, err);
                         }
                     }
                 }
@@ -243,7 +238,6 @@ wss.on("connection", (ws) => {
     });
 
     ws.on("error", (err:any) => {
-        console.error("[ERROR] WebSocket error:", err);
     });
 });
 
@@ -268,11 +262,13 @@ async function initializeServer() {
     try {
         console.log("[SYSTEM] Initializing server components...");
 
+        // Initialize Neo4j connection first
+        await initializeNeo4j();
+
         try {
             await redisClient.del(RedisKeys.onlinePlayers());
         }
         catch (err:any) {
-            console.error("[ERROR] Failed to clear online players from Redis:", err);
         }
 
         await ensureGraphConstraints();
@@ -286,7 +282,7 @@ async function initializeServer() {
         await new Promise<void>((resolve) => {
             server.listen(SERVER_PORT, () => {
                 console.log(`[SYSTEM] Server running on port ${SERVER_PORT}`);
-                console.log(connectionSuccess);
+                console.log("[SYSTEM] All components initialized successfully");
                 resolve();
             });
         });
@@ -316,7 +312,7 @@ async function gracefulShutdown(signal: string) {
                 ws.once('close', resolve);
                 setTimeout(resolve, 5000);
             }
-            else 
+            else
                 resolve();
         });
     });
@@ -372,17 +368,14 @@ process.once('SIGINT', () => gracefulShutdown('SIGINT'));
 
 // Error handlers
 process.on('uncaughtException', (error) => {
-    console.error('[FATAL] Uncaught Exception:', error);
     gracefulShutdown('UNCAUGHT_EXCEPTION');
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-    console.error('[FATAL] Unhandled Rejection at:', promise, 'reason:', reason);
     gracefulShutdown('UNHANDLED_REJECTION');
 });
 
 // Initialize and start the server
 initializeServer().catch((error) => {
-    console.error("[FATAL] Server initialization failed:", error);
     process.exit(1);
 });

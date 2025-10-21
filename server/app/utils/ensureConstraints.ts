@@ -23,7 +23,6 @@ export async function ensureGraphConstraints() {
       await tx.run(`CREATE CONSTRAINT unique_leaderboard_id IF NOT EXISTS
                     FOR (l:Leaderboard) REQUIRE l.id IS UNIQUE;`);
     });
-    console.log("[SYSTEM]: Neo4j constraints ensured.");
   } finally {
     await session.close();
   }
