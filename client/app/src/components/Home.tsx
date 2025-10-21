@@ -188,9 +188,6 @@ function Home() {
         hostId: playerId? playerId : "" 
       } });
     }
-    // console.log("here");
-    // console.log(location.state?.playerIdTransfered, "this is it");
-    // setPlayerId(location.state?.playerIdTransfered);
   }, [gameId]);  // This effect runs when `gameId` is updated
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -341,17 +338,6 @@ function Home() {
   
   function showLobbies() {
     return (
-      // <div className="lobby-list">
-      //       {lobbies.length > 0 ? lobbies.map((lobby) => (
-      //         // <li key={lobby.gameId} className="lobby-item" onClick={() => joinLobby(lobby.gameId)}>
-      //         //   Game ID: {lobby.gameId}, Players: {lobby.currentPlayers}/{lobby.maximumPlayers}
-      //         // </li>
-              
-      //         <button key={lobby[0]} className="btn btn-info lobby-item" style={{margin: "15px"}} onClick={() => joinLobby(lobby[0])}>
-      //           Game id: {lobby[0].slice(-5)}, Players: {lobby[1]}/{lobby[2]}
-      //         </button>
-      //       )) : <p>No available lobbies.</p>}
-      //     </div>
       <div className="lobby-list">
         <div className="lobbyColumnNames">
           <div className="lobbyColumnNameItem">Game</div>

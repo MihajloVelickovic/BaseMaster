@@ -406,13 +406,13 @@
 }
 
 .feedback-toast.correct {
-  background: linear-gradient(135deg, #009900, #007700);
+  background: #009900;
   color: white;
   border: 2px solid #00bb00;
 }
 
 .feedback-toast.incorrect {
-  background: linear-gradient(135deg, #E00029, #B30031);
+  background: #E00029;
   color: white;
   border: 2px solid #ff0040;
 }
