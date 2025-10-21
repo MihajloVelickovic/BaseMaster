@@ -68,7 +68,7 @@ NEO4J_DATABASE=neo4j
 # Redis
 REDIS_HOST=localhost
 REDIS_PORT=6379
-REDIS_PASSWORD=
+REDIS_PASSWORD=vasa_redis_lozinka
 
 # JWT Secrets
 JWT_SECRET=vas_access_token_secret
